@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GemiOS Web Environment RC1</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; background: black; }
+        
+        /* Boot & Login Screens */
+        #boot-screen, #login-screen { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2147483647; transition: opacity 1s ease-in-out; }
+        #boot-screen h1 { font-size: 45px; margin-bottom: 10px; color: #0078d7; letter-spacing: 3px; text-shadow: 0 0 10px rgba(0, 120, 215, 0.5);}
+        .power-btn { padding: 15px 35px; font-size: 18px; background: transparent; color: white; border: 2px solid #0078d7; border-radius: 5px; cursor: pointer; transition: all 0.3s; margin-top: 20px; }
+        .power-btn:hover { background: #0078d7; box-shadow: 0 0 20px #0078d7; }
+        
+        #login-screen { background: linear-gradient(135deg, #001f3f, #004e92); z-index: 2147483646; display: none; opacity: 0;}
+        .user-avatar { width: 100px; height: 100px; background: #fff; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 50px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);}
+        .login-box { display: flex; gap: 5px; margin-top: 15px; }
+        .login-box input { padding: 8px 15px; border-radius: 20px; border: none; outline: none; text-align: center; }
+        .login-box button { padding: 8px 15px; border-radius: 20px; border: none; background: #0078d7; color: white; cursor: pointer; font-weight: bold;}
+        .login-box button:hover { background: #005a9e; }
+
+        /* Desktop Environment */
+        #desktop { width: 100vw; height: 100vh; background: linear-gradient(135deg, #004e92, #000428); background-size: cover; background-position: center; position: absolute; top: 0; left: 0; opacity: 0; transition: opacity 1s ease-in-out, background 0.5s ease; pointer-events: none; }
+
+        /* Context Menu (Right Click) */
+        #context-menu { position: absolute; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid #ccc; box-shadow: 2px 2px 10px rgba(0,0,0,0.3); border-radius: 5px; padding: 5px 0; z-index: 2147483645; display: none; min-width: 150px; color: #333; font-size: 13px;}
+        .ctx-item { padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .ctx-item:hover { background: #0078d7; color: white; }
+        .ctx-divider { height: 1px; background: #ddd; margin: 5px 0; }
+
+        /* Desktop Icons */
+        .desktop-icon { position: absolute; width: 75px; text-align: center; color: white; cursor: pointer; padding: 10px; border-radius: 5px; text-shadow: 1px 1px 3px black; transition: background 0.2s; }
+        .desktop-icon:hover { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); }
+        .desktop-icon div { font-size: 35px; margin-bottom: 5px; }
+
+        /* Aero Window Style WITH RESIZING */
+        .window { position: absolute; width: 450px; min-height: 300px; background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; backdrop-filter: blur(10px); pointer-events: auto; opacity: 0; transform: scale(0.85); transition: opacity 0.2s ease-out, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        resize: both; overflow: hidden; /* Added native resizing */ }
+        .window.open-anim { opacity: 1; transform: scale(1); }
+        .window.close-anim { opacity: 0; transform: scale(0.85); transition: opacity 0.2s ease-in, transform 0.2s ease-in; }
+        .title-bar { padding: 8px 10px; background: rgba(255, 255, 255, 0.5); border-bottom: 1px solid #ccc; cursor: grab; display: flex; justify-content: space-between; align-items: center; border-top-left-radius: 8px; border-top-right-radius: 8px; font-weight: bold; font-size: 14px; color: #333; flex-shrink: 0;}
+        .close-btn { background: #ff4d4d; color: white; border: none; padding: 2px 10px; border-radius: 3px; cursor: pointer; font-weight: bold;}
+        .close-btn:hover { background: #ff1a1a; }
+        .window-content { padding: 15px; flex-grow: 1; background: #fff; overflow-y: auto; color: #000; display: flex; flex-direction: column;}
+
+        /* Universal App Styles */
+        .toolbar { padding: 5px; background: #f0f0f0; border-bottom: 1px solid #ddd; display: flex; align-items: center; flex-shrink: 0;}
+        .toolbar button { padding: 5px 10px; cursor: pointer; margin-right: 10px; background: #fff; border: 1px solid #ccc; border-radius: 3px;}
+        .toolbar button:hover { background: #e9e9e9; }
+        .file-grid { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; }
+        .file-item { width: 70px; text-align: center; cursor: pointer; padding: 5px; border-radius: 4px; }
+        .file-item:hover { background: #d9ebf9; outline: 1px solid #84c4ee; }
+        .file-item .icon { font-size: 35px; }
+        textarea.notepad-area { width: 100%; height: 100%; box-sizing: border-box; border: none; resize: none; font-family: Consolas, monospace; padding: 5px; outline: none; flex-grow: 1;}
+        .log-content { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 13px; line-height: 1.5; }
+        .log-content h3 { color: #0078d7; margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .log-content ul { padding-left: 20px; margin-top: 5px; margin-bottom: 15px; }
+        
+        /* GemiSweeper Game */
+        .minesweeper-board { display: grid; gap: 2px; background: #bbb; padding: 5px; border: 2px solid #999; border-radius: 4px; margin: 0 auto;}
+        .ms-cell { width: 30px; height: 30px; background: #e0e0e0; border: 2px outset #fff; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 16px; cursor: pointer; user-select: none;}
+        .ms-cell:active { border-style: inset; }
+        .ms-cell.revealed { background: #ddd; border: 1px solid #999; cursor: default;}
+        .ms-cell.mine { background: #ff4d4d; border: 1px solid #999;}
+        .ms-header { display: flex; justify-content: space-between; align-items: center; background: #333; color: red; font-family: 'Consolas', monospace; font-size: 24px; padding: 5px 10px; border: 3px inset #555; margin-bottom: 10px; flex-shrink: 0;}
+        .ms-btn { font-size: 20px; cursor: pointer; background: #e0e0e0; border: 2px outset #fff; padding: 0 10px;}
+        .ms-btn:active { border-style: inset; }
+
+        /* Specific Apps */
+        .settings-section { margin-bottom: 20px; }
+        .settings-section h4 { margin: 0 0 10px 0; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+        .bg-btn { padding: 8px 12px; margin: 0 5px 5px 0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background: #f9f9f9; }
+        .bg-btn:hover { background: #e9e9e9; }
+        .url-input-group { display: flex; gap: 5px; }
+        .url-input-group input { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .browser-toolbar { display: flex; gap: 5px; padding-bottom: 10px; border-bottom: 1px solid #ddd; margin-bottom: 10px; align-items: center; flex-shrink: 0;}
+        .browser-toolbar input[type="text"] { flex-grow: 1; padding: 6px; border: 1px solid #ccc; border-radius: 3px; font-family: sans-serif;}
+        .browser-toolbar button { padding: 5px 12px; cursor: pointer; border: 1px solid #ccc; background: #f0f0f0; border-radius: 3px;}
+        .browser-toolbar button:hover { background: #e0e0e0; }
+        .browser-iframe { flex-grow: 1; width: 100%; border: 1px solid #ddd; border-radius: 4px; background: #fff;}
+        .proxy-toggle { font-size: 12px; display: flex; align-items: center; gap: 3px; cursor: pointer; color: #555;}
+        .task-row { display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 5px; flex-shrink: 0; }
+        .task-row:hover { background: #f1f1f1; }
+        .task-title { font-weight: bold; font-size: 13px; color: #333; }
+        .kill-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .kill-btn:hover { background: #cc0000; }
+        .paint-toolbar { display: flex; gap: 5px; padding-bottom: 10px; border-bottom: 1px solid #ddd; margin-bottom: 10px; align-items: center; flex-shrink: 0; }
+        .color-swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer; }
+        .color-swatch:hover { transform: scale(1.1); }
+        .paint-canvas-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; background: #e0e0e0; border-radius: 4px; overflow: auto; border: 1px solid #ccc;}
+        .paint-canvas { background: white; cursor: crosshair; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; height: 100%; }
+        .calc-display { grid-column: span 4; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; font-size: 28px; text-align: right; padding: 10px; font-family: 'Consolas', monospace; margin-bottom: 10px; overflow-x: hidden; flex-shrink: 0;}
+        .calc-btn { background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; font-size: 18px; cursor: pointer; transition: background 0.1s; display: flex; align-items: center; justify-content: center; padding: 10px 0;}
+        .calc-btn:hover { background: #e9e9e9; }
+        .calc-btn.op { background: #e0f0ff; color: #005a9e; font-weight: bold; }
+        .calc-btn.op:hover { background: #cce0ff; }
+        .calc-btn.equals { background: #0078d7; color: white; font-weight: bold;}
+        .calc-btn.equals:hover { background: #005a9e; }
+        .calc-btn.clear { background: #ff4d4d; color: white; font-weight: bold;}
+        .calc-btn.clear:hover { background: #cc0000; }
+        .editor-area { flex-grow: 1; border: 1px solid #ccc; padding: 10px; outline: none; background: white; overflow-y: auto; font-family: 'Segoe UI', sans-serif;}
+        .editor-area:focus { border-color: #0078d7; box-shadow: 0 0 5px rgba(0, 120, 215, 0.3); }
+
+        /* GemiAssist (Clippy Clone) */
+        #gemi-assist { position: absolute; bottom: 60px; right: 20px; width: 120px; text-align: center; z-index: 2147483640; display: none; pointer-events: auto; cursor: pointer; transition: transform 0.3s; }
+        #gemi-assist:hover { transform: scale(1.05); }
+        .assist-bubble { background: #fffca8; border: 1px solid #ccc; border-radius: 8px; padding: 10px; font-size: 12px; box-shadow: 2px 2px 10px rgba(0,0,0,0.2); margin-bottom: 10px; position: relative; color: #333; display: none; }
+        .assist-bubble::after { content: ''; position: absolute; bottom: -10px; left: 50%; margin-left: -10px; border-width: 10px 10px 0; border-style: solid; border-color: #fffca8 transparent transparent transparent; }
+        .assist-character { font-size: 50px; animation: float 3s ease-in-out infinite; text-shadow: 0 5px 10px rgba(0,0,0,0.3);}
+        @keyframes float { 0% { transform: translateY(0); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0); } }
+
+        /* Calendar Applet */
+        #calendar-applet { position: absolute; bottom: 45px; right: 10px; width: 250px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border: 1px solid rgba(0,0,0,0.2); border-radius: 8px; box-shadow: -2px 5px 20px rgba(0,0,0,0.5); z-index: 2147483645; display: none; flex-direction: column; padding: 15px; box-sizing: border-box; color: #333; transform: translateY(10px); opacity: 0; transition: all 0.2s ease; }
+        #calendar-applet.show { display: flex; transform: translateY(0); opacity: 1; }
+        .cal-header { font-size: 16px; font-weight: bold; margin-bottom: 10px; text-align: center; color: #005a9e; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+        .cal-day-header { font-size: 11px; font-weight: bold; color: #888; padding-bottom: 5px; }
+        .cal-day { font-size: 12px; padding: 6px 0; border-radius: 3px; cursor: default; }
+        .cal-day:hover { background: #e0e0e0; }
+        .cal-today { background: #0078d7; color: white; font-weight: bold; border-radius: 50%;}
+        .cal-today:hover { background: #005a9e; }
+
+        /* Taskbar & Start Menu */
+        #taskbar { position: absolute; bottom: 0; width: 100%; height: 40px; background: rgba(10, 20, 35, 0.85); backdrop-filter: blur(15px); display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; z-index: 2147483646; pointer-events: auto; border-top: 1px solid rgba(255,255,255,0.1);}
+        #start-btn { width: 36px; height: 36px; background: radial-gradient(circle, #4db8ff, #005a9e); border-radius: 50%; border: 2px solid rgba(255,255,255,0.8); cursor: pointer; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 18px; box-shadow: 0 0 10px rgba(0, 120, 215, 0.8); transition: transform 0.1s;}
+        #start-btn:active { transform: scale(0.95); }
+        #tray-icons { display: flex; align-items: center; gap: 10px; margin-left: auto; color: white; font-size: 14px; margin-right: 15px; }
+        .tray-icon { text-shadow: 1px 1px 2px black; }
+        #clock-container { padding: 5px 10px; cursor: pointer; border-radius: 4px; transition: background 0.2s; display: flex; flex-direction: column; align-items: flex-end; justify-content: center;}
+        #clock-container:hover { background: rgba(255,255,255,0.1); }
+        #clock-time { color: white; font-size: 14px; text-shadow: 1px 1px 2px black;}
+        #clock-date { color: #aaa; font-size: 10px; }
+
+        #start-menu { position: absolute; bottom: 45px; left: 10px; width: 320px; height: 600px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border: 1px solid rgba(0,0,0,0.2); border-radius: 8px; box-shadow: 2px 5px 20px rgba(0,0,0,0.5); flex-direction: column; z-index: 2147483645; pointer-events: auto; overflow: hidden; visibility: hidden; opacity: 0; transform: translateY(20px); transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.2s; }
+        #start-menu.open { visibility: visible; opacity: 1; transform: translateY(0); }
+        .start-header { background: #005a9e; color: white; padding: 15px; font-weight: bold; font-size: 16px; border-bottom: 1px solid #004e92;}
+        .start-apps { padding: 10px; flex-grow: 1; overflow-y: auto;}
+        .start-item { padding: 8px; margin-bottom: 5px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.2s; font-size: 14px;}
+        .start-item:hover { background: #d9ebf9; outline: 1px solid #84c4ee;}
+        .start-item div { font-size: 20px; width: 25px; text-align: center;}
+        .start-footer { background: #f0f0f0; padding: 10px; border-top: 1px solid #ddd; display: flex; justify-content: flex-end;}
+        .start-footer button { padding: 5px 15px; cursor: pointer; background: #e0e0e0; border: 1px solid #ccc; border-radius: 3px;}
+
+        /* Notifications System */
+        #notification { position: absolute; bottom: 50px; right: -400px; width: 320px; background: rgba(255, 255, 255, 0.95); border-left: 5px solid #0078d7; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); padding: 15px; transition: right 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 2147483647; backdrop-filter: blur(10px); pointer-events: auto; color: #000; }
+        #notification h4 { margin: 0 0 8px 0; color: #0078d7; font-size: 15px; display: flex; align-items: center; gap: 5px;}
+        #notification p { margin: 0; font-size: 13px; line-height: 1.5; color: #333; }
+        .close-notif { position: absolute; top: 10px; right: 10px; cursor: pointer; font-weight: bold; color: #999; font-size: 12px;}
+    </style>
+</head>
+<body>
+
+<audio id="startup-audio" src="startup.mp3" preload="auto"></audio>
+
+<div id="boot-screen">
+    <h1>GemiOS</h1>
+    <p>System Environment Initialization</p>
+    <button class="power-btn" onclick="powerOn()">Power On</button>
+</div>
+
+<div id="login-screen">
+    <div class="user-avatar">👤</div>
+    <div style="font-size: 24px; font-weight: bold; margin-bottom: 5px;">Admin User</div>
+    <div style="color: #aaa; font-size: 14px;">Enter password to continue</div>
+    <div class="login-box">
+        <input type="password" placeholder="Password" id="login-pass" onkeydown="if(event.key==='Enter') loginOS()">
+        <button onclick="loginOS()">→</button>
+    </div>
+</div>
+
+<div id="desktop">
+    <div class="desktop-icon" style="top: 20px; left: 20px;" onclick="openExplorer()"><div>💻</div>Computer</div>
+    <div class="desktop-icon" style="top: 120px; left: 20px;" onclick="openBrowser()"><div>🌐</div>Browser</div>
+    <div class="desktop-icon" style="top: 220px; left: 20px;" onclick="openWordPad()"><div>📝</div>WordPad</div>
+    <div class="desktop-icon" style="top: 320px; left: 20px;" onclick="openPaint()"><div>🎨</div>Paint</div>
+    <div class="desktop-icon" style="top: 420px; left: 20px;" onclick="openCalculator()"><div>🧮</div>Calc</div>
+    <div class="desktop-icon" style="top: 520px; left: 20px;" onclick="openSettings()"><div>⚙️</div>Settings</div>
+    <div class="desktop-icon" style="top: 620px; left: 20px;" onclick="openTaskManager()"><div>📊</div>Tasks</div>
+    
+    <div class="desktop-icon" style="top: 20px; left: 120px;" onclick="openTerminal()"><div>⌨️</div>GemiTerm</div>
+    <div class="desktop-icon" style="top: 120px; left: 120px;" onclick="openTTS()"><div>🗣️</div>Talker</div>
+    <div class="desktop-icon" style="top: 220px; left: 120px;" onclick="openMedia()"><div>🎬</div>Media</div>
+    <div class="desktop-icon" style="top: 320px; left: 120px;" onclick="openSticky()"><div>📌</div>Sticky</div>
+    <div class="desktop-icon" style="top: 420px; left: 120px;" onclick="openMinesweeper()"><div>💣</div>Sweeper</div>
+    <div class="desktop-icon" style="top: 520px; left: 120px;" onclick="openSnake()"><div>🐍</div>Snake</div>
+    <div class="desktop-icon" style="top: 620px; left: 120px;" onclick="openTicTacToe()"><div>❌</div>TicTac</div>
+
+    <div id="window-container"></div>
+
+    <div id="gemi-assist" onclick="assistSpeak()">
+        <div class="assist-bubble" id="assist-msg">Hi! I'm Gemi, your digital assistant!</div>
+        <div class="assist-character">🤖</div>
+    </div>
+
+    <div id="context-menu">
+        <div class="ctx-item" onclick="openExplorer()">📁 Open File Explorer</div>
+        <div class="ctx-item" onclick="openTerminal()">⌨️ Open Terminal</div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item" onclick="openSticky()">📌 New Sticky Note</div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item" onclick="openSettings()">⚙️ Personalize Desktop</div>
+    </div>
+
+    <div id="calendar-applet">
+        <div class="cal-header" id="cal-month-year">Month Year</div>
+        <div class="cal-grid" id="cal-days-container"></div>
+    </div>
+
+    <div id="start-menu">
+        <div class="start-header">👤 Admin User</div>
+        <div class="start-apps">
+            <div style="font-size: 11px; font-weight: bold; color: #888; margin: 5px 0;">Core Applications</div>
+            <div class="start-item" onclick="openExplorer(); toggleStartMenu();"><div>💻</div> Computer</div>
+            <div class="start-item" onclick="openBrowser(); toggleStartMenu();"><div>🌐</div> Web Browser</div>
+            <div class="start-item" onclick="openTerminal(); toggleStartMenu();"><div>⌨️</div> GemiTerm</div>
+            <div class="start-item" onclick="openMedia(); toggleStartMenu();"><div>🎬</div> Media Player</div>
+            <div class="start-item" onclick="openCamera(); toggleStartMenu();"><div>📷</div> Camera</div>
+            
+            <div style="font-size: 11px; font-weight: bold; color: #888; margin: 10px 0 5px 0;">Utilities</div>
+            <div class="start-item" onclick="openWordPad(); toggleStartMenu();"><div>📝</div> WordPad</div>
+            <div class="start-item" onclick="openTTS(); toggleStartMenu();"><div>🗣️</div> Text-to-Speech</div>
+            <div class="start-item" onclick="openSticky(); toggleStartMenu();"><div>📌</div> Sticky Notes</div>
+            <div class="start-item" onclick="openCalculator(); toggleStartMenu();"><div>🧮</div> Calculator</div>
+            <div class="start-item" onclick="openPaint(); toggleStartMenu();"><div>🎨</div> GemiPaint</div>
+            
+            <div style="font-size: 11px; font-weight: bold; color: #888; margin: 10px 0 5px 0;">Games</div>
+            <div class="start-item" onclick="openMinesweeper(); toggleStartMenu();"><div>💣</div> GemiSweeper</div>
+            <div class="start-item" onclick="openSnake(); toggleStartMenu();"><div>🐍</div> Snake</div>
+            <div class="start-item" onclick="openTicTacToe(); toggleStartMenu();"><div>❌</div> Tic-Tac-Toe</div>
+
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+            <div class="start-item" onclick="openSettings(); toggleStartMenu();"><div>⚙️</div> System Settings</div>
+            <div class="start-item" onclick="openTaskManager(); toggleStartMenu();"><div>📊</div> Task Manager</div>
+            <div class="start-item" onclick="openUpdateLog(); toggleStartMenu();"><div>📋</div> System Updates</div>
+        </div>
+        <div class="start-footer"><button onclick="location.reload()">Shut Down</button></div>
+    </div>
+
+    <div id="taskbar">
+        <div id="start-btn" onclick="toggleStartMenu()">G</div>
+        <div id="tray-icons">
+            <div class="tray-icon" id="wifi-icon" title="Network Status">📶</div>
+            <div class="tray-icon" id="battery-icon" title="Battery Status">🔋 100%</div>
+        </div>
+        <div id="clock-container" onclick="toggleCalendar()">
+            <div id="clock-time">12:00 AM</div>
+            <div id="clock-date">1/1/2024</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Boot & Login Sequence ---
+    function powerOn() {
+        const audio = document.getElementById('startup-audio');
+        audio.volume = 0.5; audio.play().catch(e => console.warn("Audio skipped."));
+        
+        document.getElementById('boot-screen').style.opacity = '0';
+        document.getElementById('login-screen').style.display = 'flex';
+        
+        setTimeout(() => { 
+            document.getElementById('boot-screen').style.display = 'none'; 
+            document.getElementById('login-screen').style.opacity = '1';
+            document.getElementById('login-pass').focus();
+        }, 1000);
+    }
+
+    function loginOS() {
+        // We accept any password for the simulation, but it fulfills the OS requirement!
+        document.getElementById('login-screen').style.opacity = '0';
+        document.getElementById('desktop').style.opacity = '1';
+        document.getElementById('desktop').style.pointerEvents = 'auto';
+        
+        if(localStorage.getItem('gemi_assist') !== 'off') { setTimeout(() => { document.getElementById('gemi-assist').style.display = 'block'; }, 2000); }
+        setTimeout(() => { document.getElementById('login-screen').style.display = 'none'; showStartupNotification(); }, 1000);
+    }
+
+    // --- Right Click Context Menu ---
+    document.getElementById('desktop').addEventListener('contextmenu', function(e) {
+        if(e.target.id === 'desktop') { // Only trigger on empty desktop space
+            e.preventDefault();
+            const menu = document.getElementById('context-menu');
+            menu.style.display = 'block';
+            
+            // Boundary checking so menu doesn't go off screen
+            let x = e.pageX; let y = e.pageY;
+            if(x + menu.offsetWidth > window.innerWidth) x = window.innerWidth - menu.offsetWidth;
+            if(y + menu.offsetHeight > window.innerHeight - 40) y = window.innerHeight - menu.offsetHeight - 40;
+            
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        document.getElementById('context-menu').style.display = 'none';
+    });
+
+    // --- Core Systems, Clock, Tray ---
+    setInterval(() => { 
+        const now = new Date();
+        document.getElementById('clock-time').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); 
+        document.getElementById('clock-date').innerText = now.toLocaleDateString();
+        document.getElementById('wifi-icon').innerText = navigator.onLine ? '📶' : '❌';
+    }, 1000);
+
+    if (navigator.getBattery) { navigator.getBattery().then(function(b) { function up() { let l = Math.round(b.level * 100); let c = b.charging ? "⚡" : ""; let i = l > 20 ? "🔋" : "🪫"; document.getElementById('battery-icon').innerText = `${i} ${c}${l}%`; } up(); b.addEventListener('levelchange', up); b.addEventListener('chargingchange', up); }); } else { document.getElementById('battery-icon').style.display = 'none'; }
+    
+    function toggleStartMenu() { document.getElementById('start-menu').classList.toggle('open'); document.getElementById('calendar-applet').classList.remove('show'); }
+    function toggleCalendar() { const cal = document.getElementById('calendar-applet'); if (cal.classList.contains('show')) { cal.classList.remove('show'); } else { renderCalendar(); cal.classList.add('show'); document.getElementById('start-menu').classList.remove('open'); } }
+
+    document.addEventListener('mousedown', function(e) {
+        const menu = document.getElementById('start-menu'), btn = document.getElementById('start-btn');
+        if (menu.classList.contains('open') && !menu.contains(e.target) && !btn.contains(e.target)) menu.classList.remove('open');
+        const cal = document.getElementById('calendar-applet'), clk = document.getElementById('clock-container');
+        if (cal.classList.contains('show') && !cal.contains(e.target) && !clk.contains(e.target)) cal.classList.remove('show');
+    });
+
+    function renderCalendar() {
+        const now = new Date(); const year = now.getFullYear(); const month = now.getMonth(); const todayDate = now.getDate();
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        document.getElementById('cal-month-year').innerText = `${monthNames[month]} ${year}`;
+        const firstDay = new Date(year, month, 1).getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate();
+        let html = '<div class="cal-day-header">Su</div><div class="cal-day-header">Mo</div><div class="cal-day-header">Tu</div><div class="cal-day-header">We</div><div class="cal-day-header">Th</div><div class="cal-day-header">Fr</div><div class="cal-day-header">Sa</div>';
+        for (let i = 0; i < firstDay; i++) { html += '<div></div>'; }
+        for (let i = 1; i <= daysInMonth; i++) { const isToday = (i === todayDate) ? 'cal-today' : ''; html += `<div class="cal-day ${isToday}">${i}</div>`; }
+        document.getElementById('cal-days-container').innerHTML = html;
+    }
+
+    function showStartupNotification() {
+        const notif = document.createElement('div'); notif.id = 'notification';
+        notif.innerHTML = `<span class="close-notif" onclick="this.parentElement.remove()">❌</span><h4><span>✨</span> Welcome to GemiOS</h4><p>wow this is cool right? windows 7 cloned into the browser... no this is NOT windows 7. This is GemiOS an artificially created operating system designed and fully created by google's Gemini. This system focuses on having a custom environment seperated from windows and linux. Fully built from scratch. This system gets updated regularly but stays within a browser for now since Iso development is not a priority until we have a finished beta/version! For now enjoy this os!</p>`;
+        document.body.appendChild(notif); setTimeout(() => { notif.style.right = '20px'; }, 500);
+    }
+
+    const gemiTips = ["Did you know you can resize windows from the bottom right corner?", "Try right-clicking the desktop for a quick menu!", "Try opening GemiTerm and typing 'dir'!", "Double click the Bomb icon to play Minesweeper.", "Your sticky notes save locally in your browser cache!"];
+    function assistSpeak() { const bubble = document.getElementById('assist-msg'); bubble.innerText = gemiTips[Math.floor(Math.random() * gemiTips.length)]; bubble.style.display = 'block'; setTimeout(() => { bubble.style.display = 'none'; }, 4000); }
+
+    // --- Window Manager ---
+    let zIndexCounter = 100;
+    function focusIfExists(id) { const win = document.getElementById(id); if (win) { win.style.zIndex = ++zIndexCounter; win.classList.remove('close-anim'); win.classList.add('open-anim'); return true; } return false; }
+
+    function createWindow(title, contentHTML, width = 500, height = 350, staticId = null) {
+        const winId = staticId ? staticId : 'win_' + Date.now();
+        const win = document.createElement('div'); win.className = 'window'; win.id = winId;
+        win.style.left = (Math.random() * 50 + 100) + 'px'; win.style.top = (Math.random() * 50 + 50) + 'px';
+        win.style.width = width + 'px'; win.style.height = height + 'px'; win.style.zIndex = ++zIndexCounter;
+        win.innerHTML = `<div class="title-bar" onmousedown="startDrag(event, '${winId}')"><span>${title}</span><button class="close-btn" onclick="closeWindow('${winId}')">X</button></div><div class="window-content" style="padding:0; display:flex; flex-direction:column; overflow:hidden; height:100%;"><div style="padding:15px; flex-grow:1; display:flex; flex-direction:column; overflow-y:auto; height:100%;">${contentHTML}</div></div>`;
+        win.onmousedown = () => win.style.zIndex = ++zIndexCounter;
+        document.getElementById('window-container').appendChild(win);
+        setTimeout(() => win.classList.add('open-anim'), 10);
+        return winId;
+    }
+    
+    function closeWindow(id) {
+        const win = document.getElementById(id);
+        if(win) { win.classList.remove('open-anim'); win.classList.add('close-anim'); setTimeout(() => win.remove(), 200); }
+        if(id === 'sys_calc') window.calcExpr = "";
+        if(id === 'sys_camera' && window.camStream) { window.camStream.getTracks().forEach(t => t.stop()); window.camStream = null; }
+    }
+
+    let draggedWin = null, offsetX = 0, offsetY = 0;
+    function startDrag(e, id) { draggedWin = document.getElementById(id); draggedWin.style.zIndex = ++zIndexCounter; offsetX = e.clientX - draggedWin.offsetLeft; offsetY = e.clientY - draggedWin.offsetTop; document.querySelectorAll('iframe').forEach(f => f.style.pointerEvents = 'none'); document.onmousemove = moveDrag; document.onmouseup = stopDrag; }
+    function moveDrag(e) { if (draggedWin) { let newX = e.clientX - offsetX; let newY = e.clientY - offsetY; if (newY < 0) newY = 0; draggedWin.style.left = newX + 'px'; draggedWin.style.top = newY + 'px'; } }
+    function stopDrag() { draggedWin = null; document.onmousemove = null; document.onmouseup = null; document.querySelectorAll('iframe').forEach(f => f.style.pointerEvents = 'auto'); }
+
+    // --- File Explorer ---
+    const fileSystem = { "C:": { "Documents": { "notes.txt": "File" }, "GemiSys": { "kernel.gmi": "File" } } }; let currentPath = ["C:"];
+    function openExplorer() { const winId = createWindow("File Explorer", `<div class="toolbar"><button onclick="goBack(this)">⬅️ Back</button><span class="path-display" style="margin-left:10px;">C:\\</span></div><div class="file-grid"></div>`); renderFolder(winId, currentPath); }
+    function renderFolder(winId, pathArray) { const win = document.getElementById(winId); if(!win) return; let currentDir = fileSystem; for (let folder of pathArray) { currentDir = currentDir[folder]; } win.querySelector('.path-display').innerText = pathArray.join('\\') + '\\'; const grid = win.querySelector('.file-grid'); grid.innerHTML = ''; for (let item in currentDir) { const isFolder = typeof currentDir[item] === 'object'; grid.innerHTML += `<div class="file-item" onclick="${isFolder ? `Maps(this, '${item}')` : `alert('Opening file: ${item}')`}"><div class="icon">${isFolder ? '📁' : '📄'}</div><div>${item}</div></div>`; } }
+    function navigate(el, folder) { currentPath.push(folder); renderFolder(el.closest('.window').id, currentPath); }
+    function goBack(el) { if (currentPath.length > 1) { currentPath.pop(); renderFolder(el.closest('.window').id, currentPath); } }
+
+    // --- Apps ---
+    function openNotepad() { createWindow("Notepad", `<textarea class="notepad-area" placeholder="Type here..."></textarea>`); }
+    function openWordPad() { const winId = 'wordpad_' + Date.now(); const content = `<div class="toolbar"><button onclick="document.getElementById('editor_${winId}').focus(); document.execCommand('bold', false, null)"><b>B</b></button><button onclick="document.getElementById('editor_${winId}').focus(); document.execCommand('italic', false, null)"><i>I</i></button><button onclick="document.getElementById('editor_${winId}').focus(); document.execCommand('underline', false, null)"><u>U</u></button><button onclick="document.getElementById('editor_${winId}').focus(); document.execCommand('insertUnorderedList', false, null)">• List</button></div><div id="editor_${winId}" class="editor-area" contenteditable="true">Start typing your document here...</div>`; createWindow("WordPad", content, 550, 400); }
+    function openTTS() { if(focusIfExists('sys_tts')) return; const content = `<div style="padding: 10px; display: flex; flex-direction: column; gap: 10px; height: 100%;"><div style="font-size: 13px; color: #555;">Type a phrase and GemiOS will speak it using your system's voice engine!</div><textarea id="tts-input" style="flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: none; font-family: 'Segoe UI', sans-serif;" placeholder="Hello world!"></textarea><button onclick="speakTTS()" style="padding: 10px; background: #0078d7; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Speak 🗣️</button></div>`; createWindow("Text-to-Speech", content, 350, 250, 'sys_tts'); }
+    function speakTTS() { const text = document.getElementById('tts-input').value; if(text && 'speechSynthesis' in window) { const utterance = new SpeechSynthesisUtterance(text); speechSynthesis.speak(utterance); } else if (!('speechSynthesis' in window)) { alert("Your browser does not support Speech Synthesis."); } }
+    function openTerminal() { if(focusIfExists('sys_term')) return; const content = `<div id="term-out" style="background:#000; color:#0f0; height:220px; overflow-y:auto; padding:5px; font-family:Consolas, monospace; font-size:13px; flex-grow:1;">GemiOS Terminal v1.0<br>Type 'help' for available commands.<br></div><div style="display:flex; background:#000; padding:5px; border-top:1px solid #333;"><span style="color:#0f0; font-family:Consolas, monospace; margin-right:5px;">C:\\></span><input type="text" id="term-in" style="flex-grow:1; background:#000; color:#0f0; border:none; outline:none; font-family:Consolas, monospace; font-size:13px;" onkeydown="if(event.key==='Enter') runTermCmd(this.value)"></div>`; createWindow("Command Prompt", content, 450, 350, 'sys_term'); setTimeout(()=> document.getElementById('term-in').focus(), 100); }
+    function runTermCmd(cmd) { const out = document.getElementById('term-out'); const input = document.getElementById('term-in'); out.innerHTML += `<div>C:\\> ${cmd}</div>`; const args = cmd.trim().split(' '); const c = args[0].toLowerCase(); if(c === 'help') out.innerHTML += `<div style="color:#aaa;">Commands: help, date, echo, dir, clear</div>`; else if(c === 'date') out.innerHTML += `<div style="color:#aaa;">${new Date().toString()}</div>`; else if(c === 'echo') out.innerHTML += `<div style="color:#aaa;">${args.slice(1).join(' ')}</div>`; else if(c === 'dir') out.innerHTML += `<div style="color:#aaa;">Directory of C:\\<br>Documents &nbsp;&nbsp;&lt;DIR&gt;<br>GemiSys &nbsp;&nbsp;&nbsp;&lt;DIR&gt;</div>`; else if(c === 'clear') out.innerHTML = ''; else if(c !== '') out.innerHTML += `<div style="color:#aaa;">'${c}' is not recognized as an internal command.</div>`; input.value = ''; out.scrollTop = out.scrollHeight; }
+    function openSticky() { if(focusIfExists('sys_sticky')) return; const saved = localStorage.getItem('gemi_sticky') || ''; const content = `<textarea style="width:100%; height:100%; box-sizing:border-box; background:#fffca8; border:none; resize:none; padding:15px; font-family:'Comic Sans MS', cursive, sans-serif; font-size:16px; outline:none;" oninput="localStorage.setItem('gemi_sticky', this.value)" placeholder="Type here... notes are saved to your browser!">${saved}</textarea>`; createWindow("Sticky Note", content, 250, 250, 'sys_sticky'); }
+    function openMedia() { if(focusIfExists('sys_media')) return; const content = `<div style="display:flex; gap:5px; margin-bottom:10px; flex-shrink:0;"><input type="text" id="media-url" placeholder="Paste direct .mp4 or .mp3 URL..." style="flex-grow:1; padding:5px; border:1px solid #ccc; border-radius:3px;"><button onclick="document.getElementById('mplayer').src = document.getElementById('media-url').value; document.getElementById('mplayer').play();" style="padding:5px 15px; cursor:pointer;">Play</button></div><video id="mplayer" controls style="width:100%; flex-grow:1; background:#000; border-radius:4px; min-height: 200px;"></video>`; createWindow("Media Player", content, 500, 350, 'sys_media'); }
+    function openCamera() { if(focusIfExists('sys_camera')) return; const content = `<div id="cam-error" style="color:red; font-size:12px; display:none; padding-bottom:5px; text-align:center;">Error: Cannot access webcam.</div><video id="cam-feed" autoplay playsinline style="width:100%; flex-grow:1; background:#000; border-radius:4px; transform: scaleX(-1); min-height:200px;"></video>`; createWindow("Camera", content, 400, 350, 'sys_camera'); navigator.mediaDevices.getUserMedia({ video: true }).then(stream => { const vid = document.getElementById('cam-feed'); if(vid) { vid.srcObject = stream; window.camStream = stream; } }).catch(err => { document.getElementById('cam-error').style.display = 'block'; }); }
+    function openPaint() { const paintId = 'paint_' + Date.now(); const content = `<div class="paint-toolbar"><span style="font-size: 12px; font-weight: bold; margin-right: 5px;">Colors:</span><div class="color-swatch" style="background: black;" onclick="window['setColor_${paintId}']('#000000')"></div><div class="color-swatch" style="background: red;" onclick="window['setColor_${paintId}']('#ff0000')"></div><div class="color-swatch" style="background: blue;" onclick="window['setColor_${paintId}']('#0000ff')"></div><div class="color-swatch" style="background: green;" onclick="window['setColor_${paintId}']('#008000')"></div><div class="color-swatch" style="background: white; border-color: #999;" title="Eraser" onclick="window['setColor_${paintId}']('#ffffff')"></div><span style="font-size: 12px; font-weight: bold; margin-left: 10px; margin-right: 5px;">Size:</span><input type="range" min="1" max="20" value="3" onchange="window['setSize_${paintId}'](this.value)" style="width: 70px;"><button onclick="window['clear_${paintId}']()" style="margin-left: auto; padding: 3px 8px; cursor: pointer;">Clear</button></div><div class="paint-canvas-container"><canvas id="canvas_${paintId}" class="paint-canvas" width="800" height="600" style="width: 100%; height: 100%;"></canvas></div>`; createWindow("GemiPaint", content, 600, 500); setTimeout(() => { const canvas = document.getElementById(`canvas_${paintId}`); if(!canvas) return; const ctx = canvas.getContext('2d'); let isDrawing = false; let currentColor = '#000000'; let currentSize = 3; ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); canvas.addEventListener('mousedown', (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); }); canvas.addEventListener('mousemove', (e) => { if (isDrawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.strokeStyle = currentColor; ctx.lineWidth = currentSize; ctx.lineCap = 'round'; ctx.stroke(); } }); canvas.addEventListener('mouseup', () => isDrawing = false); canvas.addEventListener('mouseout', () => isDrawing = false); window[`setColor_${paintId}`] = (c) => currentColor = c; window[`setSize_${paintId}`] = (s) => currentSize = s; window[`clear_${paintId}`] = () => { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }; }, 50); }
+    window.calcExpr = ""; function openCalculator() { if(focusIfExists('sys_calc')) return; const content = `<div style="display: flex; flex-direction: column; height: 100%;"><div class="calc-display" id="calc-display">0</div><div class="calc-grid"><button class="calc-btn clear" onclick="calcClear()">C</button><button class="calc-btn op" onclick="calcAppend('(')">(</button><button class="calc-btn op" onclick="calcAppend(')')">)</button><button class="calc-btn op" onclick="calcAppend('/')">÷</button><button class="calc-btn" onclick="calcAppend('7')">7</button><button class="calc-btn" onclick="calcAppend('8')">8</button><button class="calc-btn" onclick="calcAppend('9')">9</button><button class="calc-btn op" onclick="calcAppend('*')">×</button><button class="calc-btn" onclick="calcAppend('4')">4</button><button class="calc-btn" onclick="calcAppend('5')">5</button><button class="calc-btn" onclick="calcAppend('6')">6</button><button class="calc-btn op" onclick="calcAppend('-')">-</button><button class="calc-btn" onclick="calcAppend('1')">1</button><button class="calc-btn" onclick="calcAppend('2')">2</button><button class="calc-btn" onclick="calcAppend('3')">3</button><button class="calc-btn op" onclick="calcAppend('+')">+</button><button class="calc-btn" onclick="calcAppend('0')" style="grid-column: span 2;">0</button><button class="calc-btn" onclick="calcAppend('.')">.</button><button class="calc-btn equals" onclick="calcEval()">=</button></div></div>`; createWindow("Calculator", content, 320, 420, 'sys_calc'); window.calcExpr = ""; } function calcAppend(val) { const display = document.getElementById('calc-display'); if (!display) return; if(window.calcExpr === "" && val !== '.' && val !== '(') display.innerText = ""; window.calcExpr += val; display.innerText = window.calcExpr.replace(/\*/g, '×').replace(/\//g, '÷'); } function calcClear() { window.calcExpr = ""; const display = document.getElementById('calc-display'); if (display) display.innerText = "0"; } function calcEval() { const display = document.getElementById('calc-display'); if (!display) return; try { let result = new Function('return ' + window.calcExpr)(); if (!Number.isInteger(result)) result = Math.round(result * 100000) / 100000; window.calcExpr = result.toString(); display.innerText = window.calcExpr; } catch(e) { display.innerText = "Error"; window.calcExpr = ""; } }
+    const homepageHTML = `<div style="font-family: 'Segoe UI', sans-serif; text-align: center; padding-top: 80px;"><h1 style="color: #0078d7; font-size: 45px; margin-bottom: 5px;">GemiSearch</h1><p style="color: #555; font-size: 14px;">The native web environment for GemiOS</p><div style="margin-top: 30px; font-size: 12px; color: #888; max-width: 400px; margin-left: auto; margin-right: auto; padding: 15px; border: 1px solid #eee; border-radius: 8px; background: #fafafa;"><b>Security Note:</b> Many major websites block being loaded inside virtual windows. <br><br>Check the <b>Proxy Mode</b> box in the toolbar to attempt to force-load a blocked site!</div></div>`; function openBrowser() { const winId = `browser_${Date.now()}`; const content = `<div class="browser-toolbar"><button onclick="document.getElementById('frame_${winId}').src = document.getElementById('frame_${winId}').src" title="Refresh">↻</button><input type="text" id="url_${winId}" placeholder="Enter web address..."><button onclick="navigateBrowser('${winId}')">Go</button><label class="proxy-toggle" title="Attempts to bypass security blocks. May break site layouts."><input type="checkbox" id="proxy_${winId}"> Proxy Mode</label></div><iframe id="frame_${winId}" class="browser-iframe" srcdoc="${homepageHTML.replace(/"/g, '&quot;')}"></iframe>`; createWindow("Web Browser", content, 750, 500); } function navigateBrowser(id) { let url = document.getElementById(`url_${id}`).value; if (!url) return; if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url; const useProxy = document.getElementById(`proxy_${id}`).checked; const frame = document.getElementById(`frame_${id}`); frame.removeAttribute('srcdoc'); if (useProxy) { frame.src = 'https://corsproxy.io/?' + encodeURIComponent(url); } else { frame.src = url; } }
+    function openSettings() { if(focusIfExists('sys_settings')) return; const content = `<div class="settings-section"><h4>Color Themes</h4><button class="bg-btn" onclick="setBg('gradient', 'linear-gradient(135deg, #004e92, #000428)')">Default Blue</button><button class="bg-btn" onclick="setBg('gradient', 'linear-gradient(135deg, #11998e, #38ef7d)')">Neon Green</button><button class="bg-btn" onclick="setBg('gradient', 'linear-gradient(135deg, #8A2387, #F27121)')">Sunset</button><button class="bg-btn" onclick="setBg('gradient', '#222')">Dark Mode</button></div><div class="settings-section"><h4>Custom Wallpaper (URL)</h4><div class="url-input-group"><input type="text" id="wallpaper-url" placeholder="Paste image link..."><button class="bg-btn" style="margin:0;" onclick="setBg('image', document.getElementById('wallpaper-url').value)">Set</button></div></div><div class="settings-section"><h4>System Behaviors</h4><label style="font-size: 13px; display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="toggle-assist" onchange="toggleGemiAssist(this.checked)" checked> Enable GemiAssist</label></div>`; createWindow("System Settings", content, 400, 380, 'sys_settings'); if(localStorage.getItem('gemi_assist') === 'off') { document.getElementById('toggle-assist').checked = false; } } function setBg(type, value) { const desk = document.getElementById('desktop'); if (type === 'gradient') { desk.style.background = value; } else if (type === 'image') { desk.style.background = `url(${value}) no-repeat center center fixed`; desk.style.backgroundSize = 'cover'; } } function toggleGemiAssist(isEnabled) { const assist = document.getElementById('gemi-assist'); if(isEnabled) { assist.style.display = 'block'; localStorage.setItem('gemi_assist', 'on'); } else { assist.style.display = 'none'; localStorage.setItem('gemi_assist', 'off'); } }
+    function openTaskManager() { if(focusIfExists('task_mgr')) return; const winId = 'task_mgr'; const content = `<div class="toolbar" style="justify-content: space-between;"><span style="font-size: 13px; font-weight: bold;">Active System Processes</span><button onclick="refreshTaskManager('${winId}')" style="font-size: 12px; padding: 3px 8px;">↻ Refresh</button></div><div id="process-list-${winId}" style="padding: 10px; flex-grow: 1; overflow-y: auto;"></div>`; createWindow("Task Manager", content, 400, 450, winId); refreshTaskManager(winId); const monitorInterval = setInterval(() => { if (!document.getElementById(winId)) { clearInterval(monitorInterval); } else { refreshTaskManager(winId); } }, 2000); } function refreshTaskManager(mgrId) { const listDiv = document.getElementById(`process-list-${mgrId}`); if (!listDiv) return; let html = ''; document.querySelectorAll('.window').forEach(win => { const titleBar = win.querySelector('.title-bar span'); if (titleBar) { html += `<div class="task-row"><span class="task-title">🖥️ ${titleBar.innerText}</span><button class="kill-btn" onclick="closeWindow('${win.id}')">End Task</button></div>`; } }); if (html === '') { html = `<div style="text-align: center; color: #888; margin-top: 20px;">No active tasks found.</div>`; } listDiv.innerHTML = html; }
+
+    function openMinesweeper() { if(focusIfExists('sys_sweeper')) return; const content = `<div class="ms-header"><div id="ms-mines">010</div><button class="ms-btn" onclick="initMinesweeper()">🙂</button><div id="ms-timer">000</div></div><div id="ms-board" class="minesweeper-board" style="grid-template-columns: repeat(9, 30px);"></div>`; createWindow("GemiSweeper", content, 320, 420, 'sys_sweeper'); setTimeout(initMinesweeper, 50); } let msGrid = []; let msRows = 9; let msCols = 9; let msMines = 10; let msGameOver = false; let msTimer = null; let msTime = 0; function initMinesweeper() { const board = document.getElementById('ms-board'); if(!board) return; clearInterval(msTimer); msTime = 0; msGameOver = false; document.getElementById('ms-timer').innerText = "000"; document.getElementById('ms-mines').innerText = "010"; document.querySelector('.ms-btn').innerText = "🙂"; board.innerHTML = ''; msGrid = Array(msRows).fill().map(() => Array(msCols).fill({ mine: false, revealed: false, flagged: false, neighborMines: 0 })); let minesPlaced = 0; while(minesPlaced < msMines) { let r = Math.floor(Math.random() * msRows); let c = Math.floor(Math.random() * msCols); if(!msGrid[r][c].mine) { msGrid[r][c] = { ...msGrid[r][c], mine: true }; minesPlaced++; } } for(let r = 0; r < msRows; r++) { for(let c = 0; c < msCols; c++) { if(!msGrid[r][c].mine) { let count = 0; for(let i = -1; i <= 1; i++) { for(let j = -1; j <= 1; j++) { if(r+i >= 0 && r+i < msRows && c+j >= 0 && c+j < msCols && msGrid[r+i][c+j].mine) count++; } } msGrid[r][c] = { ...msGrid[r][c], neighborMines: count }; } } } for(let r = 0; r < msRows; r++) { for(let c = 0; c < msCols; c++) { const cell = document.createElement('div'); cell.className = 'ms-cell'; cell.id = `ms-${r}-${c}`; cell.addEventListener('mousedown', (e) => { if(e.button !== 0 || msGameOver || msGrid[r][c].flagged) return; if(msTime === 0) msTimer = setInterval(() => { msTime++; document.getElementById('ms-timer').innerText = msTime.toString().padStart(3, '0'); }, 1000); revealMsCell(r, c); }); cell.addEventListener('contextmenu', (e) => { e.preventDefault(); if(msGameOver || msGrid[r][c].revealed) return; msGrid[r][c].flagged = !msGrid[r][c].flagged; cell.innerText = msGrid[r][c].flagged ? '🚩' : ''; let currentFlags = 0; msGrid.forEach(row => row.forEach(col => { if(col.flagged) currentFlags++ })); let remaining = msMines - currentFlags; document.getElementById('ms-mines').innerText = (remaining < 0 ? 0 : remaining).toString().padStart(3, '0'); }); board.appendChild(cell); } } } function revealMsCell(r, c) { if(r < 0 || r >= msRows || c < 0 || c >= msCols || msGrid[r][c].revealed || msGrid[r][c].flagged) return; msGrid[r][c].revealed = true; const cell = document.getElementById(`ms-${r}-${c}`); cell.classList.add('revealed'); if(msGrid[r][c].mine) { msGameOver = true; clearInterval(msTimer); cell.classList.add('mine'); cell.innerText = '💣'; document.querySelector('.ms-btn').innerText = "😵"; for(let i=0; i<msRows; i++) { for(let j=0; j<msCols; j++) { if(msGrid[i][j].mine) { const mCell = document.getElementById(`ms-${i}-${j}`); mCell.classList.add('revealed'); mCell.innerText = '💣'; } } } } else { const colors = ['#000', 'blue', 'green', 'red', 'purple', 'maroon', 'turquoise', 'black', 'gray']; if(msGrid[r][c].neighborMines > 0) { cell.innerText = msGrid[r][c].neighborMines; cell.style.color = colors[msGrid[r][c].neighborMines]; } else { for(let i = -1; i <= 1; i++) { for(let j = -1; j <= 1; j++) { revealMsCell(r+i, c+j); } } } } checkMsWin(); } function checkMsWin() { let revealedCount = 0; for(let r=0; r<msRows; r++) { for(let c=0; c<msCols; c++) { if(msGrid[r][c].revealed && !msGrid[r][c].mine) revealedCount++; } } if(revealedCount === (msRows * msCols) - msMines) { msGameOver = true; clearInterval(msTimer); document.querySelector('.ms-btn').innerText = "😎"; } }
+    let tttBoard = [], tttPlayer = 'X', tttActive = true; function openTicTacToe() { if(focusIfExists('sys_ttt')) return; const content = `<div style="text-align:center; margin-bottom:10px; font-weight:bold; font-size:16px; color:#005a9e;" id="ttt-status">Player X's Turn</div><div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:5px; background:#aaa; padding:5px; width:200px; margin:0 auto; border-radius:4px;" id="ttt-board"></div><div style="text-align:center; margin-top:15px;"><button onclick="initTTT()" style="padding:5px 15px; cursor:pointer;">Restart Game</button></div>`; createWindow("Tic-Tac-Toe", content, 260, 360, 'sys_ttt'); setTimeout(initTTT, 50); } function initTTT() { tttBoard = ['', '', '', '', '', '', '', '', '']; tttPlayer = 'X'; tttActive = true; const status = document.getElementById('ttt-status'); if(status) status.innerText = "Player X's Turn"; const b = document.getElementById('ttt-board'); if(!b) return; b.innerHTML = ''; for(let i=0; i<9; i++) { b.innerHTML += `<button style="height:60px; font-size:28px; font-weight:bold; cursor:pointer; background:#fff; border:none; border-radius:2px;" onclick="playTTT(${i}, this)"></button>`; } } function playTTT(i, btn) { if(!tttActive || tttBoard[i] !== '') return; tttBoard[i] = tttPlayer; btn.innerText = tttPlayer; btn.style.color = tttPlayer === 'X' ? '#ff4d4d' : '#0078d7'; if(checkTTTWin()) { document.getElementById('ttt-status').innerText = `Player ${tttPlayer} Wins! 🎉`; tttActive = false; } else if(!tttBoard.includes('')) { document.getElementById('ttt-status').innerText = `It's a Draw!`; tttActive = false; } else { tttPlayer = tttPlayer === 'X' ? 'O' : 'X'; document.getElementById('ttt-status').innerText = `Player ${tttPlayer}'s Turn`; } } function checkTTTWin() { const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; for(let l of lines) { if(tttBoard[l[0]] && tttBoard[l[0]] === tttBoard[l[1]] && tttBoard[l[0]] === tttBoard[l[2]]) return true; } return false; }
+    let snakeInterval; function openSnake() { if(focusIfExists('sys_snake')) return; const content = `<div style="text-align:center; font-weight:bold; margin-bottom:5px; font-size:14px;">Score: <span id="snake-score" style="color:#0078d7;">0</span></div><div style="display:flex; justify-content:center; background:#000; border-radius:4px; overflow:hidden; border:2px solid #555;"><canvas id="snake-canvas" width="300" height="300"></canvas></div><div style="text-align:center; margin-top:10px; font-size:12px; color:#666;">Use <b>Arrow Keys</b> to move.</div>`; createWindow("Snake Game", content, 360, 460, 'sys_snake'); setTimeout(initSnake, 50); } function initSnake() { const canvas = document.getElementById('snake-canvas'); if(!canvas) return; const ctx = canvas.getContext('2d'); let snake = [{x: 150, y: 150}]; let dx = 10; let dy = 0; let score = 0; let food = {x: Math.floor(Math.random()*30)*10, y: Math.floor(Math.random()*30)*10}; document.getElementById('snake-score').innerText = score; clearInterval(snakeInterval); const handleKey = (e) => { if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault(); if(e.key === 'ArrowUp' && dy === 0) { dx=0; dy=-10; } if(e.key === 'ArrowDown' && dy === 0) { dx=0; dy=10; } if(e.key === 'ArrowLeft' && dx === 0) { dx=-10; dy=0; } if(e.key === 'ArrowRight' && dx === 0) { dx=10; dy=0; } }; document.addEventListener('keydown', handleKey); snakeInterval = setInterval(() => { if(!document.getElementById('snake-canvas')) { clearInterval(snakeInterval); document.removeEventListener('keydown', handleKey); return; } const head = {x: snake[0].x + dx, y: snake[0].y + dy}; if(head.x<0 || head.x>=300 || head.y<0 || head.y>=300 || snake.some(s => s.x===head.x && s.y===head.y)) { clearInterval(snakeInterval); document.removeEventListener('keydown', handleKey); alert("Game Over! Final Score: " + score); return; } snake.unshift(head); if(head.x === food.x && head.y === food.y) { score += 10; document.getElementById('snake-score').innerText = score; food = {x: Math.floor(Math.random()*30)*10, y: Math.floor(Math.random()*30)*10}; } else { snake.pop(); } ctx.fillStyle = '#111'; ctx.fillRect(0,0,300,300); ctx.fillStyle = 'lime'; snake.forEach(s => { ctx.fillRect(s.x, s.y, 9, 9); }); ctx.fillStyle = 'red'; ctx.fillRect(food.x, food.y, 9, 9); }, 100); }
+
+    function openUpdateLog() {
+        if(focusIfExists('sys_patchnotes')) return;
+        const content = `
+            <div class="log-content">
+                <h3>GemiOS Master Update History</h3>
+                
+                <b>v16.0 (The Release Candidate) 🏆</b>
+                <ul>
+                    <li>Added OS Lock/Login Screen security simulation.</li>
+                    <li>Added Native Right-Click Context Menus.</li>
+                    <li>Enabled CSS dynamic window resizing.</li>
+                </ul>
+
+                <b>v15.0 (Hardware & Nostalgia)</b>
+                <ul><li>Added GemiAssist, Live WiFi/Battery tray, WordPad, and Text-to-Speech API.</li></ul>
+
+                <b>v14.0 (The Ultimate GIANT Update)</b>
+                <ul><li>Added GemiTerm, Sticky Notes, Media Player, Camera API, Snake, and Tic-Tac-Toe.</li></ul>
+
+                <b>v13.0 (The Gaming Update)</b>
+                <ul><li>Restored full history and added native GemiSweeper.</li></ul>
+
+                <b>v12.0 (The Utility Update)</b>
+                <ul><li>Integrated Taskbar Calendar widget and GemiCalc.</li></ul>
+
+                <b>v11.0 (The Creative Update)</b>
+                <ul><li>Added GemiPaint HTML5 Canvas drawing integration.</li></ul>
+
+                <b>v10.1 & v10.0 (Stability & Memory)</b>
+                <ul><li>Added Task Manager and major boundary/Z-index bug fixes.</li></ul>
+                
+                <b>v9.0 to v1.0 (Architecture & UI)</b>
+                <ul><li>Web Browser, Proxy Mode, Settings, Animations, File System, and UI basics.</li></ul>
+            </div>
+        `;
+        createWindow("Master Patch Notes", content, 550, 600, 'sys_patchnotes');
+    }
+</script>
+</body>
+</html>
