@@ -1,4 +1,4 @@
 {
-  "version": "25.1.1-HOTFIX",
-  "notes": "Emergency Hotfix. Resolved syntax error in Boot Sequence causing black screen halt. Secured OTA update function mapping."
+  "version": "25.1.2-HOTFIX",
+  "notes": "Emergency Parser Hotfix. Resolved syntax error in V1 Archive causing black screen halt."
 }
