@@ -1,4 +1,4 @@
 {
-  "version": "25.0.2-TEST",
-  "notes": "Testing the Emulated Live OTA Progress Bar."
+  "version": "25.1.0-AUTH",
+  "notes": "The Authentication Update. Added Boot Sequence, User Login Screen, and Right-Click Context Menus."
 }
