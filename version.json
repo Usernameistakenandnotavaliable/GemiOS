@@ -1,4 +1,4 @@
 {
-  "version": "25.0.1-HOTFIX",
-  "notes": "Emergency Hotfix. Resolved the 'Black Screen' artifact caused by the Hot-Swap engine appending the UI under the memory flush screen. Fixed silent Notepad save errors in TreeFS."
+  "version": "25.0.2-TEST",
+  "notes": "Testing the Emulated Live OTA Progress Bar."
 }
