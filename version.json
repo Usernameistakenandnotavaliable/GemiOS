@@ -1,4 +1,4 @@
 {
-  "version": "25.1.0-AUTH",
-  "notes": "The Authentication Update. Added Boot Sequence, User Login Screen, and Right-Click Context Menus."
+  "version": "25.1.1-HOTFIX",
+  "notes": "Emergency Hotfix. Resolved syntax error in Boot Sequence causing black screen halt. Secured OTA update function mapping."
 }
