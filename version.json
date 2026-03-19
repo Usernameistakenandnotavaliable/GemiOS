@@ -1,4 +1,4 @@
 {
-  "version": "23.3.0-POWER",
-  "notes": "The Power User Update. Added Task Manager, GemiCode Live IDE, and Window Maximization."
+  "version": "24.0.0-TITANIUM",
+  "notes": "The Titanium Kernel. Complete Object-Oriented Rewrite. Added Window Minimization."
 }
