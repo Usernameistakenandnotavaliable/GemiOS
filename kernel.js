@@ -1,5 +1,5 @@
 // =========================================================================
-// GemiOS CLOUD HYPERVISOR - v23.0 (THE ECOSYSTEM & WIDGETS)
+// GemiOS CLOUD HYPERVISOR - v23.1 (THE CHRONICLER)
 // =========================================================================
 
 const bootVersion = localStorage.getItem('GemiOS_TargetVersion') || 'v23';
@@ -13,7 +13,7 @@ if (bootVersion === 'v1') {
     document.open(); document.write(originalV1Code); document.close();
 } else {
     // =====================================================================
-    // KERNEL 2: MODERN UI (GemiOS v23 Ecosystem)
+    // KERNEL 2: MODERN UI (GemiOS v23.1 Ecosystem)
     // =====================================================================
     const style = document.createElement('style');
     style.textContent = `
@@ -119,7 +119,7 @@ if (bootVersion === 'v1') {
             <div class="start" onclick="document.getElementById('start-menu').style.display=document.getElementById('start-menu').style.display==='flex'?'none':'flex'">G</div>
             <div style="margin-left:auto; display:flex; align-items:center; gap:20px; margin-right:10px;">
                 <div onclick="toggleTheme()" style="cursor:pointer; font-size:20px;" title="Toggle Theme">🌓</div>
-                <div style="font-weight:600; font-size:12px; background:rgba(56, 239, 125, 0.2); color:#38ef7d; padding:4px 10px; border-radius:20px; border:1px solid rgba(56,239,125,0.3);">v23.0 ECOSYSTEM</div>
+                <div style="font-weight:600; font-size:12px; background:rgba(56, 239, 125, 0.2); color:#38ef7d; padding:4px 10px; border-radius:20px; border:1px solid rgba(56,239,125,0.3);">v23.1 CLOUD</div>
                 <div id="clock" style="font-weight:600; font-size:14px; letter-spacing:1px;">12:00</div>
             </div>
         </div>
@@ -132,7 +132,7 @@ if (bootVersion === 'v1') {
 
     // Widget Dragging
     window.dragWidget = function(e, id) {
-        if(e.target.tagName === 'TEXTAREA') return; // Don't drag if clicking text
+        if(e.target.tagName === 'TEXTAREA') return; 
         let w = document.getElementById(id); let ox = e.clientX - w.offsetLeft; let oy = e.clientY - w.offsetTop;
         document.onmousemove = (ev) => { w.style.left = (ev.clientX - ox) + 'px'; w.style.top = Math.max(0, ev.clientY - oy) + 'px'; };
         document.onmouseup = () => document.onmousemove = null;
@@ -168,26 +168,37 @@ if (bootVersion === 'v1') {
             if(filesHTML === '') filesHTML = '<i>Drive is empty. Save a note or play a game!</i>';
             c = `<div class="sys-card" style="background:rgba(0,120,215,0.2); border-color:#0078d7;"><b>C:\\ Virtual NVRAM Drive</b><br><span style="font-size:11px;">Scans localStorage for system files.</span></div><div style="max-height:300px; overflow-y:auto;">${filesHTML}</div>`;
         } else if(id === 'sys_log') {
-            t = "Update History"; w = 450;
+            t = "GemiOS Master Chronicles"; w = 550;
             c = `
-                <div class="sys-card"><b>v23.0 (The Ecosystem)</b> - Added GemiDrive, Desktop Widgets, Restored all 14 Apps.</div>
-                <div class="sys-card"><b>v22.1 (Archive Edition)</b> - Built True Hypervisor, Restored authentic v1.0 payload.</div>
-                <div class="sys-card"><b>v22.0 (Glassmorphism)</b> - Total UI/UX graphics engine rewrite.</div>
-                <div class="sys-card"><b>v21.2 (Network Boot)</b> - Shifted to GitHub cloud architecture to fix HTML escaping bugs.</div>
-                <div class="sys-card"><b>v21.0 (The Omniverse)</b> - Introduced multi-theme Chameleon Engine.</div>
-                <div class="sys-card"><b>v20.0 (The Pure System)</b> - Bare metal refactor, Games banned.</div>
-                <div class="sys-card"><b>v14.0 (The Giant Update)</b> - Introduction of Games and App ecosystem.</div>
-                <div class="sys-card"><b>v1.0 (Legacy Web Sim)</b> - Windows 7 Clone, Hardware sliders, Terminal.</div>
+                <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                    <div class="sys-card" style="border-left: 4px solid #38ef7d; background:rgba(56,239,125,0.1);"><b>v23.1 (The Chronicler)</b> - Master Update Log expanded to include full system lore.</div>
+                    <div class="sys-card"><b>v23.0 (The Ecosystem)</b> - Added GemiDrive Virtual File System, Sticky Widgets, Restored 14 Apps.</div>
+                    <div class="sys-card"><b>v22.1 (Archive Edition)</b> - Built True Hypervisor, Restored authentic v1.0 payload.</div>
+                    <div class="sys-card"><b>v22.0 (Glassmorphism)</b> - Total UI/UX graphics engine rewrite.</div>
+                    <div class="sys-card"><b>v21.3 (Cloud Ecosystem)</b> - App Ecosystem restored to the cloud kernel.</div>
+                    <div class="sys-card"><b>v21.2 (Network Boot)</b> - Shifted to GitHub cloud architecture to fix HTML escaping bugs.</div>
+                    <div class="sys-card"><b>v21.1 (Omniverse Expansion)</b> - Light/Dark mode, Custom Wallpapers, Pong added.</div>
+                    <div class="sys-card"><b>v21.0 (The Omniverse)</b> - Introduced multi-theme Chameleon Engine.</div>
+                    <div class="sys-card"><b>v20.5 (Modular Edition)</b> - Module Manager added to toggle system packages.</div>
+                    <div class="sys-card"><b>v20.4 (NVRAM Edition)</b> - Virtual Hard Drive (LocalStorage) and Offline Updates introduced.</div>
+                    <div class="sys-card"><b>v20.3 (Ultimate Master)</b> - Unified all standalone apps into one environment.</div>
+                    <div class="sys-card"><b>v20.0 (The Pure System)</b> - Bare-metal Kernel refactor. Games temporarily banned.</div>
+                    <div class="sys-card"><b>v19.0 (Kiosk Edition)</b> - Terminal-heavy dark mode build for ISO prep.</div>
+                    <div class="sys-card"><b>v15.0 - v18.0 (Tooling Era)</b> - WordPad, TTS APIs, and System Tools integrated.</div>
+                    <div class="sys-card"><b>v14.0 (The Giant Update)</b> - Introduction of Games and App ecosystem.</div>
+                    <div class="sys-card"><b>v10.0 (Core Architecture)</b> - Start Menu introduced. Mid-development UI established.</div>
+                    <div class="sys-card" style="border-left: 4px solid #008080;"><b>v1.0 (Legacy Web Sim)</b> - Windows 7 Clone, Hardware sliders, Terminal. The True Original.</div>
+                </div>
             `;
         } else if(id === 'sys_time') {
             t = "Time Machine"; w = 360;
-            c = `<div style="text-align:center; font-size:45px; margin-bottom:15px; filter:drop-shadow(0 5px 10px rgba(0,0,0,0.3));">⏳</div><button onclick="jumpVer('v1')" style="width:100%; padding:10px; margin-bottom:8px; background:#008080; color:white; border:2px outset #fff; cursor:pointer; font-family:monospace; box-shadow:2px 2px 0 #000;">Boot TRUE v1.0 (Web Sim)</button><button onclick="jumpVer('v23')" style="width:100%; padding:10px; background:linear-gradient(135deg, #0078d7, #00ccff); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Stay on v23.0</button>`;
+            c = `<div style="text-align:center; font-size:45px; margin-bottom:15px; filter:drop-shadow(0 5px 10px rgba(0,0,0,0.3));">⏳</div><button onclick="jumpVer('v1')" style="width:100%; padding:10px; margin-bottom:8px; background:#008080; color:white; border:2px outset #fff; cursor:pointer; font-family:monospace; box-shadow:2px 2px 0 #000;">Boot TRUE v1.0 (Web Sim)</button><button onclick="jumpVer('v23')" style="width:100%; padding:10px; background:linear-gradient(135deg, #0078d7, #00ccff); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Stay on v23.1</button>`;
         } else if(id === 'sys_set') {
-            t = "OmniSettings v23";
+            t = "OmniSettings v23.1";
             c = `<div class="sys-card"><b style="font-size:14px;">Wallpaper Engine</b><br><input type="text" id="wp-in" style="width:100%; margin:8px 0; padding:8px; border-radius:4px; border:none; outline:none; background:rgba(255,255,255,0.9); color:black;" placeholder="Paste Image URL..."><button onclick="let u=document.getElementById('wp-in').value; localStorage.setItem('GemiOS_Wallpaper', u); location.reload();" style="width:100%; background:#0078d7; color:white; padding:10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Apply Wallpaper</button></div><button onclick="localStorage.removeItem('GemiOS_Wallpaper'); location.reload();" style="width:100%; background:rgba(255,255,255,0.1); color:inherit; padding:10px; border:1px solid rgba(255,255,255,0.2); border-radius:6px; margin-bottom:10px; cursor:pointer;">Reset Default Wallpaper</button><button onclick="localStorage.clear(); location.reload();" style="width:100%; background:rgba(255,77,77,0.8); color:white; padding:10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Format NVRAM Drive</button>`;
         } else if(id === 'sys_term') {
             t = "Terminal"; w = 480;
-            c = `<div style="background:#0a0a0a; color:#38ef7d; padding:10px; font-family:monospace; height:250px; overflow-y:auto; border-radius:6px; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);" id="t-out">GemiOS Cloud Terminal v23<br>Type 'help'<br></div><div style="display:flex; background:#111; padding:8px; border-radius:6px; margin-top:5px;"><span style="color:#38ef7d; margin-right:8px; font-weight:bold;">></span><input type="text" style="flex-grow:1; background:transparent; color:#38ef7d; border:none; outline:none; font-family:monospace; font-size:14px;" onkeydown="if(event.key==='Enter'){ let o=document.getElementById('t-out'); o.innerHTML+='<br>> '+this.value; if(this.value==='help') o.innerHTML+='<br>cmds: clear, reboot, v1, nuke, drive'; if(this.value==='clear') o.innerHTML=''; if(this.value==='reboot') location.reload(); if(this.value==='v1') jumpVer('v1'); if(this.value==='nuke'){ localStorage.clear(); location.reload(); } if(this.value==='drive') openApp('sys_drive'); this.value=''; o.scrollTop=o.scrollHeight; }"></div>`;
+            c = `<div style="background:#0a0a0a; color:#38ef7d; padding:10px; font-family:monospace; height:250px; overflow-y:auto; border-radius:6px; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);" id="t-out">GemiOS Cloud Terminal v23.1<br>Type 'help'<br></div><div style="display:flex; background:#111; padding:8px; border-radius:6px; margin-top:5px;"><span style="color:#38ef7d; margin-right:8px; font-weight:bold;">></span><input type="text" style="flex-grow:1; background:transparent; color:#38ef7d; border:none; outline:none; font-family:monospace; font-size:14px;" onkeydown="if(event.key==='Enter'){ let o=document.getElementById('t-out'); o.innerHTML+='<br>> '+this.value; if(this.value==='help') o.innerHTML+='<br>cmds: clear, reboot, v1, nuke, drive'; if(this.value==='clear') o.innerHTML=''; if(this.value==='reboot') location.reload(); if(this.value==='v1') jumpVer('v1'); if(this.value==='nuke'){ localStorage.clear(); location.reload(); } if(this.value==='drive') openApp('sys_drive'); this.value=''; o.scrollTop=o.scrollHeight; }"></div>`;
         } else if(id === 'sys_browser') {
             t = "Web Browser"; w = 800;
             c = `<div style="display:flex; gap:8px; margin-bottom:10px;"><input type="text" id="b-url" value="https://wikipedia.org" style="flex-grow:1; padding:8px 12px; border-radius:20px; border:none; outline:none; background:rgba(255,255,255,0.9); color:black;"><button onclick="document.getElementById('b-frame').src=document.getElementById('b-url').value" style="padding:8px 16px; border-radius:20px; border:none; background:#0078d7; color:white; font-weight:bold; cursor:pointer;">Go</button></div><iframe id="b-frame" src="https://wikipedia.org" style="width:100%; height:450px; border:none; border-radius:8px; background:white;"></iframe>`;
