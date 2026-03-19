@@ -267,7 +267,6 @@ if (bootVersion === 'v1') {
         init() {
             this.injectStyles(); this.buildUI(); this.applyTheme(); this.loadWallpaper(); this.startClock();
             
-            // Re-bind Sticky Note widget dragging to the window object securely
             window.dragWidget = function(e, id) {
                 if(e.target.tagName === 'TEXTAREA') return; 
                 let w = document.getElementById(id); let ox = e.clientX - w.offsetLeft; let oy = e.clientY - w.offsetTop;
@@ -276,7 +275,49 @@ if (bootVersion === 'v1') {
             };
         }
 
-        // Mini game logic bound to core
+        // --- LIVE OTA EMULATOR LOGIC (MOVED INSIDE CORE) ---
+        async triggerOTA(btn) {
+            btn.innerText = 'Pinging GitHub Servers...'; btn.style.background = '#444';
+            let st = document.getElementById('upd-stat'); st.innerText = 'Fetching version.json...';
+            try {
+                let cb = "?t=" + new Date().getTime();
+                let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/version.json" + cb);
+                if (!r.ok) throw new Error("Server unreachable.");
+                let d = await r.json();
+                
+                if (d.version !== "25.0.1-HOTFIX") {
+                    st.innerHTML = `<span style="color:#ffeb3b">New Version Found: ${d.version}</span><br><i>${d.notes}</i>`;
+                    btn.innerText = 'Emulate Live Install'; btn.style.background = '#ff00cc'; 
+                    
+                    btn.onclick = async () => {
+                        document.getElementById('ota-overlay').style.display = 'flex';
+                        let fill = document.getElementById('ota-fill');
+                        let text = document.getElementById('ota-text');
+                        let p = 0;
+                        
+                        let simItv = setInterval(() => {
+                            p += Math.random() * 8;
+                            if(p >= 100) {
+                                p = 100;
+                                clearInterval(simItv);
+                                text.innerText = "100% - Writing to Virtual NVRAM...";
+                                setTimeout(() => {
+                                    document.getElementById('ota-title').innerText = "System Patched";
+                                    document.getElementById('ota-restart-prompt').style.display = 'flex';
+                                }, 800);
+                            }
+                            fill.style.width = p + "%";
+                            if(p < 100) text.innerText = `Downloading & Patching... ${Math.floor(p)}%`;
+                        }, 250);
+                    };
+                } else {
+                    st.innerHTML = `<span style="color:#38ef7d">System is up to date!</span>`;
+                    btn.innerText = 'Latest Kernel Installed'; btn.style.background = '#38ef7d'; btn.style.color = 'black'; btn.onclick = null;
+                }
+            } catch (err) { st.innerHTML = `<span style="color:#ff4d4d">Error: ${err.message}</span>`; btn.innerText = 'Retry'; btn.style.background = '#0078d7'; }
+        }
+
+        // Mini games
         initSweeper(pid) {
             let grid = document.getElementById(`ms-grid-${pid}`); if(!grid) return; grid.innerHTML = '';
             for(let i=0; i<81; i++) {
@@ -549,51 +590,6 @@ if (bootVersion === 'v1') {
         loadWallpaper() { let wp = localStorage.getItem('GemiOS_Wall'); if(wp) document.getElementById('desktop-bg').style.background = `url(${wp}) center/cover`; }
         startClock() { setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); }, 1000); }
     }
-
-    // --- LIVE OTA EMULATOR LOGIC ---
-    window.checkUpdate = async function(btn) {
-        btn.innerText = 'Pinging GitHub Servers...'; btn.style.background = '#444';
-        let st = document.getElementById('upd-stat'); st.innerText = 'Fetching version.json...';
-        try {
-            let cb = "?t=" + new Date().getTime();
-            let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/version.json" + cb);
-            if (!r.ok) throw new Error("Server unreachable.");
-            let d = await r.json();
-            
-            // Note: Hardcoded to v25.0.1, so if version.json says v25.0.2, it will trigger!
-            if (d.version !== "25.0.1-HOTFIX") {
-                st.innerHTML = `<span style="color:#ffeb3b">New Version Found: ${d.version}</span><br><i>${d.notes}</i>`;
-                btn.innerText = 'Emulate Live Install'; btn.style.background = '#ff00cc'; 
-                
-                btn.onclick = async () => {
-                    // Trigger the un-closeable OTA progress bar
-                    document.getElementById('ota-overlay').style.display = 'flex';
-                    let fill = document.getElementById('ota-fill');
-                    let text = document.getElementById('ota-text');
-                    let p = 0;
-                    
-                    // Emulate download & patch time
-                    let simItv = setInterval(() => {
-                        p += Math.random() * 8;
-                        if(p >= 100) {
-                            p = 100;
-                            clearInterval(simItv);
-                            text.innerText = "100% - Writing to Virtual NVRAM...";
-                            setTimeout(() => {
-                                document.getElementById('ota-title').innerText = "System Patched";
-                                document.getElementById('ota-restart-prompt').style.display = 'flex';
-                            }, 800);
-                        }
-                        fill.style.width = p + "%";
-                        if(p < 100) text.innerText = `Downloading & Patching... ${Math.floor(p)}%`;
-                    }, 250);
-                };
-            } else {
-                st.innerHTML = `<span style="color:#38ef7d">System is up to date!</span>`;
-                btn.innerText = 'Latest Kernel Installed'; btn.style.background = '#38ef7d'; btn.style.color = 'black'; btn.onclick = null;
-            }
-        } catch (err) { st.innerHTML = `<span style="color:#ff4d4d">Error: ${err.message}</span>`; btn.innerText = 'Retry'; btn.style.background = '#0078d7'; }
-    };
 
     window.GemiOS = new CoreOS();
     window.GemiOS.init();
