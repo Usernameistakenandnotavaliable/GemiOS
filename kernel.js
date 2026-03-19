@@ -1,5 +1,5 @@
 // =========================================================================
-// GemiOS CLOUD HYPERVISOR - v25.0.1 (THE COMPLETE ECOSYSTEM & OTA FIX)
+// GemiOS CLOUD HYPERVISOR - v25.1.0 (THE AUTHENTICATION & BOOT UPDATE)
 // =========================================================================
 
 const bootVersion = localStorage.getItem('GemiOS_TargetVersion') || 'v25';
@@ -11,7 +11,7 @@ if (bootVersion === 'v1') {
     document.open(); document.write(originalV1Code); document.close();
 } else {
     // =====================================================================
-    // KERNEL 2: GEMIOS v25.0.1 TITANIUM TREE-FS
+    // KERNEL 2: GEMIOS v25.1.0 TITANIUM (REAL OS FEATURES)
     // =====================================================================
     
     // --- VIRTUAL FILE SYSTEM ---
@@ -21,7 +21,7 @@ if (bootVersion === 'v1') {
             if(!drive) {
                 this.root = {
                     "C:": {
-                        "System": { "boot.log": "GemiOS v25 Kernel Initialized." },
+                        "System": { "boot.log": "GemiOS Kernel Initialized.\nSystem OK.", "users.json": '{"Admin":""}' },
                         "Users": { "Admin": { "Documents": {}, "Pictures": {}, "Desktop": {} } }
                     }
                 };
@@ -40,7 +40,7 @@ if (bootVersion === 'v1') {
         read(path, file) { let dir = this.getDir(path); return (dir && dir[file] !== undefined) ? dir[file] : null; }
         write(path, file, data) { let dir = this.getDir(path, true); if(dir) { dir[file] = data; this.save(); return true; } return false; }
         mkdir(path, folderName) { let dir = this.getDir(path); if(dir && dir[folderName] === undefined) { dir[folderName] = {}; this.save(); return true; } return false; }
-        format() { localStorage.removeItem('GemiOS_TreeFS'); location.reload(); }
+        format() { localStorage.removeItem('GemiOS_TreeFS'); sessionStorage.removeItem('GemiOS_Session'); location.reload(); }
     }
 
     // --- WINDOW & PROCESS MANAGERS ---
@@ -118,15 +118,15 @@ if (bootVersion === 'v1') {
         },
         'sys_set': {
             title: 'System Settings', width: 420,
-            html: () => `<div class="sys-card"><b style="font-size:14px;">Wallpaper Engine</b><br><input type="text" id="wp-in" style="width:100%; margin:8px 0; padding:8px; border-radius:4px; border:none; outline:none; background:rgba(255,255,255,0.9); color:black;" placeholder="Image URL..."><button onclick="localStorage.setItem('GemiOS_Wall', document.getElementById('wp-in').value); location.reload();" class="btn-primary">Apply Wallpaper</button></div><button onclick="localStorage.removeItem('GemiOS_Wall'); location.reload();" class="btn-sec">Reset Default</button><button onclick="GemiOS.VFS.format();" class="btn-danger">Format TreeFS</button>`
+            html: () => `<div class="sys-card"><b style="font-size:14px;">Wallpaper Engine</b><br><input type="text" id="wp-in" style="width:100%; margin:8px 0; padding:8px; border-radius:4px; border:none; outline:none; background:rgba(255,255,255,0.9); color:black;" placeholder="Image URL..."><button onclick="localStorage.setItem('GemiOS_Wall', document.getElementById('wp-in').value); location.reload();" class="btn-primary">Apply Wallpaper</button></div><button onclick="localStorage.removeItem('GemiOS_Wall'); location.reload();" class="btn-sec">Reset Default</button><button onclick="GemiOS.VFS.format();" class="btn-danger">Format System (Erase All Data)</button>`
         },
         'sys_update': {
             title: 'Cloud Updater', width: 380,
-            html: () => `<div class="sys-card" style="text-align:center;"><div style="font-size:40px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">☁️</div><h3 style="margin:5px 0;">Update Center</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v25.0.1</b></p><div id="upd-stat" style="font-size:12px; min-height:15px;"></div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary" style="margin-top:10px;">Check for Updates</button></div>`
+            html: () => `<div class="sys-card" style="text-align:center;"><div style="font-size:40px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">☁️</div><h3 style="margin:5px 0;">Update Center</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v25.1.0</b></p><div id="upd-stat" style="font-size:12px; min-height:15px;"></div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary" style="margin-top:10px;">Check for Updates</button></div>`
         },
         'sys_time': {
             title: 'Time Machine', width: 360,
-            html: () => `<div style="text-align:center; font-size:45px; margin-bottom:15px; filter:drop-shadow(0 5px 10px rgba(0,0,0,0.3));">⏳</div><p style="text-align:center; font-size:12px; margin-top:0;">Boot into historical code.</p><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v1'); location.reload();" style="width:100%; padding:10px; margin-bottom:8px; background:#008080; color:white; border:2px outset #fff; cursor:pointer; font-family:monospace;">Boot TRUE v1.0</button><button onclick="location.reload();" class="btn-primary">Stay on v25.0.1</button>`
+            html: () => `<div style="text-align:center; font-size:45px; margin-bottom:15px; filter:drop-shadow(0 5px 10px rgba(0,0,0,0.3));">⏳</div><p style="text-align:center; font-size:12px; margin-top:0;">Boot into historical code.</p><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v1'); location.reload();" style="width:100%; padding:10px; margin-bottom:8px; background:#008080; color:white; border:2px outset #fff; cursor:pointer; font-family:monospace;">Boot TRUE v1.0</button><button onclick="location.reload();" class="btn-primary">Stay on v25.1.0</button>`
         },
         'sys_task': {
             title: 'Task Manager', width: 400,
@@ -144,11 +144,11 @@ if (bootVersion === 'v1') {
         'sys_log': {
             title: 'Chronicles', width: 500,
             html: () => `<div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
-                <div class="sys-card" style="border-left:4px solid #38ef7d;"><b>v25.0.1 (Hotfix)</b> - Invisible Shield Bug fixed. Added Live OTA Emulation bar. All 17 apps restored.</div>
+                <div class="sys-card" style="border-left:4px solid #38ef7d;"><b>v25.1.0 (Auth Update)</b> - Added Real Boot Sequence, Login Screen, and Right-Click Context Menus.</div>
+                <div class="sys-card"><b>v25.0.1 (Hotfix)</b> - Invisible Shield Bug fixed. Added Live OTA Emulation bar. All 17 apps restored.</div>
                 <div class="sys-card"><b>v25.0.0 (TreeFS)</b> - Architectural rewrite to hierarchical file system.</div>
                 <div class="sys-card"><b>v24.1.0 (Hot-Swap)</b> - Over-the-air kernel patching introduced.</div>
                 <div class="sys-card"><b>v24.0.0 (Titanium)</b> - Full OOP rewrite. Added TaskMgr, IDE, Minimize functionality.</div>
-                <div class="sys-card"><b>v23.2.0 (Polish)</b> - Pong 2.0, GemiSynth added.</div>
                 <div class="sys-card"><b>v1.0 (Legacy Web Sim)</b> - The True Original.</div>
             </div>`
         },
@@ -265,7 +265,59 @@ if (bootVersion === 'v1') {
         }
 
         init() {
-            this.injectStyles(); this.buildUI(); this.applyTheme(); this.loadWallpaper(); this.startClock();
+            this.injectStyles();
+            
+            // Check if we are doing a seamless Hot-Swap bypass or full boot
+            if(sessionStorage.getItem('GemiOS_Session') === 'active') {
+                this.launchDesktop();
+            } else {
+                this.runBootSequence();
+            }
+        }
+        
+        // --- THE BOOT & LOGIN SEQUENCE ---
+        runBootSequence() {
+            document.body.innerHTML = `
+                <div style="background:black; color:#ddd; font-family:monospace; height:100vh; width:100vw; padding:20px; box-sizing:border-box;" id="boot-screen">
+                    <div id="boot-logs"></div>
+                </div>
+            `;
+            let logs = [
+                "GemiOS BIOS v4.0", "Initializing Hardware... OK", "Mounting TreeFS Drive [C:\\]... OK", 
+                "Verifying Kernel Modules... OK", "Loading Object-Oriented Framework... OK",
+                "Starting GemiOS Display Manager..."
+            ];
+            let target = document.getElementById('boot-logs');
+            let i = 0;
+            let logItv = setInterval(() => {
+                if(i < logs.length) { target.innerHTML += \`> \${logs[i]}<br>\`; i++; } 
+                else { clearInterval(logItv); setTimeout(() => this.showLoginScreen(), 800); }
+            }, 300);
+        }
+        
+        showLoginScreen() {
+            this.loadWallpaper(); // Pre-load bg
+            document.body.innerHTML = `
+                <div id="desktop-bg" style="filter:blur(10px) brightness(0.7);"></div>
+                <div style="position:absolute; top:0; left:0; width:100vw; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; z-index:999;">
+                    <div style="font-size:70px; background:rgba(255,255,255,0.2); border-radius:50%; width:120px; height:120px; display:flex; justify-content:center; align-items:center; margin-bottom:20px; border:2px solid rgba(255,255,255,0.4); box-shadow:0 10px 25px rgba(0,0,0,0.5);">👤</div>
+                    <h2 style="margin:0 0 20px 0; font-size:28px;">Admin</h2>
+                    <button onclick="GemiOS.authenticate()" style="padding:12px 30px; background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.5); border-radius:20px; font-size:16px; cursor:pointer; font-weight:bold; transition:0.3s; backdrop-filter:blur(5px);" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">Sign In</button>
+                </div>
+            `;
+        }
+        
+        authenticate() {
+            sessionStorage.setItem('GemiOS_Session', 'active');
+            this.launchDesktop();
+        }
+
+        launchDesktop() {
+            this.buildUI(); 
+            this.applyTheme(); 
+            this.loadWallpaper(); 
+            this.startClock();
+            this.initContextMenu();
             
             window.dragWidget = function(e, id) {
                 if(e.target.tagName === 'TEXTAREA') return; 
@@ -273,6 +325,21 @@ if (bootVersion === 'v1') {
                 document.onmousemove = (ev) => { w.style.left = (ev.clientX - ox) + 'px'; w.style.top = Math.max(0, ev.clientY - oy) + 'px'; };
                 document.onmouseup = () => document.onmousemove = null;
             };
+        }
+        
+        // --- REAL OS CONTEXT MENU ---
+        initContextMenu() {
+            document.body.addEventListener('contextmenu', (e) => {
+                // Only show on desktop bg
+                if(e.target.id === 'os-root' || e.target.id === 'desktop-bg' || e.target.id === 'desktop-icons') {
+                    e.preventDefault();
+                    let menu = document.getElementById('context-menu');
+                    menu.style.display = 'block';
+                    menu.style.left = e.pageX + 'px';
+                    menu.style.top = e.pageY + 'px';
+                }
+            });
+            document.body.addEventListener('click', () => { document.getElementById('context-menu').style.display = 'none'; });
         }
 
         // --- LIVE OTA EMULATOR LOGIC (MOVED INSIDE CORE) ---
@@ -285,7 +352,7 @@ if (bootVersion === 'v1') {
                 if (!r.ok) throw new Error("Server unreachable.");
                 let d = await r.json();
                 
-                if (d.version !== "25.0.1-HOTFIX") {
+                if (d.version !== "25.1.0-AUTH") {
                     st.innerHTML = `<span style="color:#ffeb3b">New Version Found: ${d.version}</span><br><i>${d.notes}</i>`;
                     btn.innerText = 'Emulate Live Install'; btn.style.background = '#ff00cc'; 
                     
@@ -484,13 +551,20 @@ if (bootVersion === 'v1') {
                 .synth-key:active { background: #eee; height: 115px; transform: translateY(5px); }
                 .synth-black { background: #222; color: white; height: 80px; width: 30px; position: absolute; margin-left: -15px; z-index: 2; border-radius: 0 0 4px 4px; }
                 .synth-black:active { background: #000; }
+                
+                /* Context Menu Styles */
+                #context-menu { position:absolute; background:rgba(30, 40, 50, 0.9); backdrop-filter:blur(15px); border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding:5px; box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:999999; display:none; min-width:150px; }
+                body.light-mode #context-menu { background:rgba(255,255,255,0.9); color:black; border:1px solid rgba(0,0,0,0.2); }
+                .cm-item { padding:8px 12px; cursor:pointer; font-size:13px; border-radius:4px; display:flex; align-items:center; gap:8px; }
+                .cm-item:hover { background:rgba(255,255,255,0.1); }
+                body.light-mode .cm-item:hover { background:rgba(0,0,0,0.05); }
             `;
             document.head.appendChild(s);
         }
 
         buildUI() {
             const html = `
-                <div id="os-root">
+                <div id="os-root" style="width:100vw; height:100vh; position:absolute; top:0; left:0;">
                     <div id="desktop-bg"></div>
                     
                     <div id="widget-notes" onmousedown="dragWidget(event, 'widget-notes')">
@@ -524,7 +598,7 @@ if (bootVersion === 'v1') {
                     <div id="start-menu">
                         <div class="start-header">
                             <div style="font-size:30px; background:rgba(255,255,255,0.2); border-radius:50%; width:50px; height:50px; display:flex; align-items:center; justify-content:center;">👤</div>
-                            <div><div style="font-size:16px;">Sys Admin</div><div style="font-size:11px; opacity:0.8;">GemiOS 25.0.1 HOTFIX</div></div>
+                            <div><div style="font-size:16px;">Admin</div><div style="font-size:11px; opacity:0.8;">GemiOS 25.1 Auth</div></div>
                         </div>
                         <div style="overflow-y:auto; padding-bottom:10px;">
                             <div class="start-cat">System & Core</div>
@@ -549,6 +623,8 @@ if (bootVersion === 'v1') {
                             <div class="start-item" onclick="GemiOS.PM.launch('app_snake')"><span style="font-size:18px;">🐍</span> Snake</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('app_sweeper')"><span style="font-size:18px;">💣</span> Sweeper</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('app_ttt')"><span style="font-size:18px;">❌</span> Tic-Tac-Toe</div>
+                            <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:10px;">
+                            <div class="start-item" onclick="sessionStorage.removeItem('GemiOS_Session'); location.reload();" style="color:#ff4d4d;"><span style="font-size:18px;">🔒</span> Lock System</div>
                         </div>
                     </div>
 
@@ -557,9 +633,17 @@ if (bootVersion === 'v1') {
                         <div id="taskbar-apps" style="display:flex; flex-grow:1; overflow:hidden;"></div>
                         <div style="display:flex; align-items:center; gap:20px; margin-right:10px;">
                             <div onclick="GemiOS.toggleTheme()" style="cursor:pointer; font-size:20px;" title="Toggle Theme">🌓</div>
-                            <div style="font-weight:600; font-size:12px; background:rgba(56, 239, 125, 0.2); color:#38ef7d; padding:4px 10px; border-radius:20px; border:1px solid rgba(56,239,125,0.3);">v25.0.1 HOTFIX</div>
+                            <div style="font-weight:600; font-size:12px; background:rgba(56, 239, 125, 0.2); color:#38ef7d; padding:4px 10px; border-radius:20px; border:1px solid rgba(56,239,125,0.3);">v25.1 AUTH</div>
                             <div id="clock" style="font-weight:600; font-size:14px; letter-spacing:1px;">12:00</div>
                         </div>
+                    </div>
+                    
+                    <div id="context-menu">
+                        <div class="cm-item" onclick="location.reload()">🔄 Refresh</div>
+                        <div class="cm-item" onclick="GemiOS.PM.launch('sys_set')">🖼️ Change Wallpaper</div>
+                        <div class="cm-item" onclick="GemiOS.PM.launch('sys_term')">⌨️ Open Terminal</div>
+                        <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:5px 0;">
+                        <div class="cm-item" onclick="sessionStorage.removeItem('GemiOS_Session'); location.reload();" style="color:#ff4d4d;">🔒 Lock Desktop</div>
                     </div>
                     
                     <div id="ota-overlay" style="display:none; position:absolute; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); z-index:9999999; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Segoe UI', sans-serif;">
@@ -577,7 +661,6 @@ if (bootVersion === 'v1') {
                 </div>
             `;
             
-            // The critical fix: wipe document.body safely and inject ROOT wrapper so clicks work
             document.body.innerHTML = ''; 
             document.body.insertAdjacentHTML('afterbegin', html);
             
