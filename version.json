@@ -1,4 +1,4 @@
 {
-  "version": "25.1.2-HOTFIX",
-  "notes": "Emergency Parser Hotfix. Resolved syntax error in V1 Archive causing black screen halt."
+  "version": "25.1.3-STABLE",
+  "notes": "Stable Release. Patched CoreOS function mapping. Verified Boot Sequence, Lock Screen, and Update functionality."
 }
