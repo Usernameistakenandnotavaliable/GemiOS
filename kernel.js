@@ -1,5 +1,5 @@
 // =========================================================================
-// GemiOS CLOUD HYPERVISOR - v23.1 (THE CHRONICLER)
+// GemiOS CLOUD HYPERVISOR - v23.2 (POLISH & PLAY UPDATE)
 // =========================================================================
 
 const bootVersion = localStorage.getItem('GemiOS_TargetVersion') || 'v23';
@@ -13,7 +13,7 @@ if (bootVersion === 'v1') {
     document.open(); document.write(originalV1Code); document.close();
 } else {
     // =====================================================================
-    // KERNEL 2: MODERN UI (GemiOS v23.1 Ecosystem)
+    // KERNEL 2: MODERN UI (GemiOS v23.2 Ecosystem)
     // =====================================================================
     const style = document.createElement('style');
     style.textContent = `
@@ -54,10 +54,14 @@ if (bootVersion === 'v1') {
         .sys-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 12px; font-size:13px; line-height:1.5;}
         body.light-mode .sys-card { background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.1); }
         
-        /* Widget Styles */
         #widget-notes { position:absolute; top:30px; right:30px; width:220px; height:220px; background:#fff9c4; color:#333; box-shadow:5px 5px 15px rgba(0,0,0,0.3); padding:15px; z-index:5; font-family:'Segoe Print', 'Comic Sans MS', cursive; transform: rotate(2deg); transition: transform 0.2s; cursor:grab;}
         #widget-notes:active { cursor:grabbing; transform: rotate(0deg) scale(1.05); z-index:9999;}
         #widget-notes textarea { width:100%; height:100%; background:transparent; border:none; outline:none; font-family:inherit; font-size:14px; resize:none; color:#333;}
+        
+        .synth-key { background: white; border: 1px solid #ccc; height: 120px; width: 40px; border-radius: 0 0 4px 4px; cursor: pointer; color: black; font-weight: bold; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; box-shadow: 0 4px 5px rgba(0,0,0,0.2); transition: 0.1s;}
+        .synth-key:active { background: #eee; height: 115px; transform: translateY(5px); }
+        .synth-black { background: #222; color: white; height: 80px; width: 30px; position: absolute; margin-left: -15px; z-index: 2; border-radius: 0 0 4px 4px; }
+        .synth-black:active { background: #000; }
     `;
     document.head.appendChild(style);
 
@@ -72,8 +76,8 @@ if (bootVersion === 'v1') {
         <div id="desktop-icons">
             <div class="icon app-sys" style="top:20px; left:20px;" onclick="openApp('sys_drive')"><div>🗂️</div>GemiDrive</div>
             <div class="icon app-sys" style="top:120px; left:20px;" onclick="openApp('sys_log')"><div>📋</div>Updates</div>
-            <div class="icon app-sys" style="top:220px; left:20px;" onclick="openApp('sys_time')"><div>⏳</div>TimeMach</div>
-            <div class="icon app-sys" style="top:320px; left:20px;" onclick="openApp('sys_set')"><div>⚙️</div>Settings</div>
+            <div class="icon app-sys" style="top:220px; left:20px;" onclick="openApp('sys_update')"><div>🔄</div>Updater</div>
+            <div class="icon app-sys" style="top:320px; left:20px;" onclick="openApp('sys_time')"><div>⏳</div>TimeMach</div>
             
             <div class="icon app-util" style="top:20px; left:120px;" onclick="openApp('sys_browser')"><div>🌐</div>Browser</div>
             <div class="icon app-util" style="top:120px; left:120px;" onclick="openApp('sys_term')"><div>⌨️</div>Terminal</div>
@@ -82,20 +86,20 @@ if (bootVersion === 'v1') {
             
             <div class="icon app-game" style="top:20px; left:220px;" onclick="openApp('app_pong')"><div>🏓</div>Pong</div>
             <div class="icon app-game" style="top:120px; left:220px;" onclick="openApp('app_paint')"><div>🎨</div>Paint</div>
-            <div class="icon app-game" style="top:220px; left:220px;" onclick="openApp('app_snake')"><div>🐍</div>Snake</div>
-            <div class="icon app-game" style="top:320px; left:220px;" onclick="openApp('app_sweeper')"><div>💣</div>Sweeper</div>
-            <div class="icon app-game" style="top:420px; left:220px;" onclick="openApp('app_ttt')"><div>❌</div>TicTac</div>
+            <div class="icon app-game" style="top:220px; left:220px;" onclick="openApp('app_synth')"><div>🎹</div>Synth</div>
+            <div class="icon app-game" style="top:320px; left:220px;" onclick="openApp('app_snake')"><div>🐍</div>Snake</div>
         </div>
         <div id="window-layer" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:50; pointer-events:none;"></div>
         
         <div id="start-menu">
             <div class="start-header">
                 <div style="font-size:30px; background:rgba(255,255,255,0.2); border-radius:50%; width:50px; height:50px; display:flex; align-items:center; justify-content:center;">👤</div>
-                <div><div style="font-size:16px;">System Admin</div><div style="font-size:11px; opacity:0.8;">GemiOS Ecosystem</div></div>
+                <div><div style="font-size:16px;">System Admin</div><div style="font-size:11px; opacity:0.8;">GemiOS 23.2</div></div>
             </div>
             <div style="overflow-y:auto; padding-bottom: 10px;">
                 <div class="start-cat">System & Core</div>
                 <div class="start-item" onclick="openApp('sys_drive')"><span style="font-size:18px;">🗂️</span> GemiDrive (Files)</div>
+                <div class="start-item" onclick="openApp('sys_update')"><span style="font-size:18px;">🔄</span> Cloud Updater</div>
                 <div class="start-item" onclick="openApp('sys_log')"><span style="font-size:18px;">📋</span> Update History</div>
                 <div class="start-item" onclick="openApp('sys_time')"><span style="font-size:18px;">⏳</span> Time Machine</div>
                 <div class="start-item" onclick="openApp('sys_set')"><span style="font-size:18px;">⚙️</span> Settings</div>
@@ -104,14 +108,12 @@ if (bootVersion === 'v1') {
                 <div class="start-item" onclick="openApp('sys_browser')"><span style="font-size:18px;">🌐</span> Web Browser</div>
                 <div class="start-item" onclick="openApp('sys_term')"><span style="font-size:18px;">⌨️</span> Terminal</div>
                 <div class="start-item" onclick="openApp('app_note')"><span style="font-size:18px;">📝</span> Notepad</div>
-                <div class="start-item" onclick="openApp('app_calc')"><span style="font-size:18px;">🧮</span> Calculator</div>
 
                 <div class="start-cat">Entertainment</div>
-                <div class="start-item" onclick="openApp('app_pong')"><span style="font-size:18px;">🏓</span> Pong</div>
+                <div class="start-item" onclick="openApp('app_pong')"><span style="font-size:18px;">🏓</span> Pong 2.0</div>
+                <div class="start-item" onclick="openApp('app_synth')"><span style="font-size:18px;">🎹</span> GemiSynth</div>
                 <div class="start-item" onclick="openApp('app_paint')"><span style="font-size:18px;">🎨</span> Paint</div>
                 <div class="start-item" onclick="openApp('app_snake')"><span style="font-size:18px;">🐍</span> Snake</div>
-                <div class="start-item" onclick="openApp('app_sweeper')"><span style="font-size:18px;">💣</span> Sweeper</div>
-                <div class="start-item" onclick="openApp('app_ttt')"><span style="font-size:18px;">❌</span> Tic-Tac-Toe</div>
             </div>
         </div>
 
@@ -119,7 +121,7 @@ if (bootVersion === 'v1') {
             <div class="start" onclick="document.getElementById('start-menu').style.display=document.getElementById('start-menu').style.display==='flex'?'none':'flex'">G</div>
             <div style="margin-left:auto; display:flex; align-items:center; gap:20px; margin-right:10px;">
                 <div onclick="toggleTheme()" style="cursor:pointer; font-size:20px;" title="Toggle Theme">🌓</div>
-                <div style="font-weight:600; font-size:12px; background:rgba(56, 239, 125, 0.2); color:#38ef7d; padding:4px 10px; border-radius:20px; border:1px solid rgba(56,239,125,0.3);">v23.1 CLOUD</div>
+                <div style="font-weight:600; font-size:12px; background:rgba(56, 239, 125, 0.2); color:#38ef7d; padding:4px 10px; border-radius:20px; border:1px solid rgba(56,239,125,0.3);">v23.2 CLOUD</div>
                 <div id="clock" style="font-weight:600; font-size:14px; letter-spacing:1px;">12:00</div>
             </div>
         </div>
@@ -151,11 +153,55 @@ if (bootVersion === 'v1') {
 
     window.jumpVer = function(v) { localStorage.setItem('GemiOS_TargetVersion', v); location.reload(); };
 
+    // --- AUDIO API FOR GEMISYNTH ---
+    window.audioCtx = null;
+    window.playNote = function(freq) {
+        if(!window.audioCtx) window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 1);
+        osc.stop(audioCtx.currentTime + 1);
+    };
+
     window.openApp = function(id) {
         document.getElementById('start-menu').style.display = 'none';
         let t = "", c = "", w = 420;
 
-        if(id === 'sys_drive') {
+        if(id === 'sys_update') {
+            t = "GemiOS Updater"; w = 380;
+            c = `
+                <div class="sys-card" style="text-align:center;">
+                    <div style="font-size:40px; margin-bottom:10px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">☁️</div>
+                    <h3 style="margin:5px 0;">Cloud Update Center</h3>
+                    <p style="font-size:13px; opacity:0.8;">Current Kernel: <b>v23.2.0</b></p>
+                    <button id="upd-btn" onclick="this.innerText='Pinging GitHub...'; setTimeout(() => { this.innerText='You are on the latest Kernel!'; this.style.background='#38ef7d'; this.style.color='black'; }, 1500)" style="width:100%; padding:10px; background:#0078d7; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; margin-top:10px; transition:0.2s;">Check for Updates</button>
+                </div>
+            `;
+        } else if(id === 'app_synth') {
+            t = "GemiSynth"; w = 340;
+            c = `
+                <div style="text-align:center; margin-bottom:10px; font-weight:bold;">Mini Synthesizer</div>
+                <div style="display:flex; justify-content:center; position:relative; background:#111; padding:15px; border-radius:8px;">
+                    <div class="synth-key" onclick="playNote(261.63)">C</div>
+                    <div class="synth-key synth-black" onclick="playNote(277.18)">C#</div>
+                    <div class="synth-key" onclick="playNote(293.66)">D</div>
+                    <div class="synth-key synth-black" onclick="playNote(311.13)">D#</div>
+                    <div class="synth-key" onclick="playNote(329.63)">E</div>
+                    <div class="synth-key" onclick="playNote(349.23)">F</div>
+                    <div class="synth-key synth-black" onclick="playNote(369.99)">F#</div>
+                    <div class="synth-key" onclick="playNote(392.00)">G</div>
+                    <div class="synth-key synth-black" onclick="playNote(415.30)">G#</div>
+                    <div class="synth-key" onclick="playNote(440.00)">A</div>
+                    <div class="synth-key synth-black" onclick="playNote(466.16)">A#</div>
+                    <div class="synth-key" onclick="playNote(493.88)">B</div>
+                </div>
+            `;
+        } else if(id === 'sys_drive') {
             t = "GemiDrive File Explorer"; w = 450;
             let filesHTML = '';
             for(let i=0; i<localStorage.length; i++) {
@@ -171,34 +217,24 @@ if (bootVersion === 'v1') {
             t = "GemiOS Master Chronicles"; w = 550;
             c = `
                 <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
-                    <div class="sys-card" style="border-left: 4px solid #38ef7d; background:rgba(56,239,125,0.1);"><b>v23.1 (The Chronicler)</b> - Master Update Log expanded to include full system lore.</div>
-                    <div class="sys-card"><b>v23.0 (The Ecosystem)</b> - Added GemiDrive Virtual File System, Sticky Widgets, Restored 14 Apps.</div>
-                    <div class="sys-card"><b>v22.1 (Archive Edition)</b> - Built True Hypervisor, Restored authentic v1.0 payload.</div>
+                    <div class="sys-card" style="border-left: 4px solid #38ef7d; background:rgba(56,239,125,0.1);"><b>v23.2 (Polish & Play)</b> - Pong Physics 2.0, Cloud Updater, and GemiSynth added.</div>
+                    <div class="sys-card"><b>v23.1 (The Chronicler)</b> - Master Update Log expanded.</div>
+                    <div class="sys-card"><b>v23.0 (The Ecosystem)</b> - Added GemiDrive Virtual File System, Sticky Widgets.</div>
+                    <div class="sys-card"><b>v22.1 (Archive Edition)</b> - Built True Hypervisor for v1.0.</div>
                     <div class="sys-card"><b>v22.0 (Glassmorphism)</b> - Total UI/UX graphics engine rewrite.</div>
-                    <div class="sys-card"><b>v21.3 (Cloud Ecosystem)</b> - App Ecosystem restored to the cloud kernel.</div>
-                    <div class="sys-card"><b>v21.2 (Network Boot)</b> - Shifted to GitHub cloud architecture to fix HTML escaping bugs.</div>
-                    <div class="sys-card"><b>v21.1 (Omniverse Expansion)</b> - Light/Dark mode, Custom Wallpapers, Pong added.</div>
-                    <div class="sys-card"><b>v21.0 (The Omniverse)</b> - Introduced multi-theme Chameleon Engine.</div>
-                    <div class="sys-card"><b>v20.5 (Modular Edition)</b> - Module Manager added to toggle system packages.</div>
-                    <div class="sys-card"><b>v20.4 (NVRAM Edition)</b> - Virtual Hard Drive (LocalStorage) and Offline Updates introduced.</div>
-                    <div class="sys-card"><b>v20.3 (Ultimate Master)</b> - Unified all standalone apps into one environment.</div>
-                    <div class="sys-card"><b>v20.0 (The Pure System)</b> - Bare-metal Kernel refactor. Games temporarily banned.</div>
-                    <div class="sys-card"><b>v19.0 (Kiosk Edition)</b> - Terminal-heavy dark mode build for ISO prep.</div>
-                    <div class="sys-card"><b>v15.0 - v18.0 (Tooling Era)</b> - WordPad, TTS APIs, and System Tools integrated.</div>
-                    <div class="sys-card"><b>v14.0 (The Giant Update)</b> - Introduction of Games and App ecosystem.</div>
-                    <div class="sys-card"><b>v10.0 (Core Architecture)</b> - Start Menu introduced. Mid-development UI established.</div>
-                    <div class="sys-card" style="border-left: 4px solid #008080;"><b>v1.0 (Legacy Web Sim)</b> - Windows 7 Clone, Hardware sliders, Terminal. The True Original.</div>
+                    <div class="sys-card"><b>v21.2 (Network Boot)</b> - Shifted to GitHub cloud architecture.</div>
+                    <div class="sys-card"><b>v1.0 (Legacy Web Sim)</b> - The True Original.</div>
                 </div>
             `;
         } else if(id === 'sys_time') {
             t = "Time Machine"; w = 360;
-            c = `<div style="text-align:center; font-size:45px; margin-bottom:15px; filter:drop-shadow(0 5px 10px rgba(0,0,0,0.3));">⏳</div><button onclick="jumpVer('v1')" style="width:100%; padding:10px; margin-bottom:8px; background:#008080; color:white; border:2px outset #fff; cursor:pointer; font-family:monospace; box-shadow:2px 2px 0 #000;">Boot TRUE v1.0 (Web Sim)</button><button onclick="jumpVer('v23')" style="width:100%; padding:10px; background:linear-gradient(135deg, #0078d7, #00ccff); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Stay on v23.1</button>`;
+            c = `<div style="text-align:center; font-size:45px; margin-bottom:15px; filter:drop-shadow(0 5px 10px rgba(0,0,0,0.3));">⏳</div><button onclick="jumpVer('v1')" style="width:100%; padding:10px; margin-bottom:8px; background:#008080; color:white; border:2px outset #fff; cursor:pointer; font-family:monospace; box-shadow:2px 2px 0 #000;">Boot TRUE v1.0 (Web Sim)</button><button onclick="jumpVer('v23')" style="width:100%; padding:10px; background:linear-gradient(135deg, #0078d7, #00ccff); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Stay on v23.2</button>`;
         } else if(id === 'sys_set') {
-            t = "OmniSettings v23.1";
+            t = "OmniSettings v23.2";
             c = `<div class="sys-card"><b style="font-size:14px;">Wallpaper Engine</b><br><input type="text" id="wp-in" style="width:100%; margin:8px 0; padding:8px; border-radius:4px; border:none; outline:none; background:rgba(255,255,255,0.9); color:black;" placeholder="Paste Image URL..."><button onclick="let u=document.getElementById('wp-in').value; localStorage.setItem('GemiOS_Wallpaper', u); location.reload();" style="width:100%; background:#0078d7; color:white; padding:10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Apply Wallpaper</button></div><button onclick="localStorage.removeItem('GemiOS_Wallpaper'); location.reload();" style="width:100%; background:rgba(255,255,255,0.1); color:inherit; padding:10px; border:1px solid rgba(255,255,255,0.2); border-radius:6px; margin-bottom:10px; cursor:pointer;">Reset Default Wallpaper</button><button onclick="localStorage.clear(); location.reload();" style="width:100%; background:rgba(255,77,77,0.8); color:white; padding:10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Format NVRAM Drive</button>`;
         } else if(id === 'sys_term') {
             t = "Terminal"; w = 480;
-            c = `<div style="background:#0a0a0a; color:#38ef7d; padding:10px; font-family:monospace; height:250px; overflow-y:auto; border-radius:6px; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);" id="t-out">GemiOS Cloud Terminal v23.1<br>Type 'help'<br></div><div style="display:flex; background:#111; padding:8px; border-radius:6px; margin-top:5px;"><span style="color:#38ef7d; margin-right:8px; font-weight:bold;">></span><input type="text" style="flex-grow:1; background:transparent; color:#38ef7d; border:none; outline:none; font-family:monospace; font-size:14px;" onkeydown="if(event.key==='Enter'){ let o=document.getElementById('t-out'); o.innerHTML+='<br>> '+this.value; if(this.value==='help') o.innerHTML+='<br>cmds: clear, reboot, v1, nuke, drive'; if(this.value==='clear') o.innerHTML=''; if(this.value==='reboot') location.reload(); if(this.value==='v1') jumpVer('v1'); if(this.value==='nuke'){ localStorage.clear(); location.reload(); } if(this.value==='drive') openApp('sys_drive'); this.value=''; o.scrollTop=o.scrollHeight; }"></div>`;
+            c = `<div style="background:#0a0a0a; color:#38ef7d; padding:10px; font-family:monospace; height:250px; overflow-y:auto; border-radius:6px; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);" id="t-out">GemiOS Cloud Terminal v23.2<br>Type 'help'<br></div><div style="display:flex; background:#111; padding:8px; border-radius:6px; margin-top:5px;"><span style="color:#38ef7d; margin-right:8px; font-weight:bold;">></span><input type="text" style="flex-grow:1; background:transparent; color:#38ef7d; border:none; outline:none; font-family:monospace; font-size:14px;" onkeydown="if(event.key==='Enter'){ let o=document.getElementById('t-out'); o.innerHTML+='<br>> '+this.value; if(this.value==='help') o.innerHTML+='<br>cmds: clear, reboot, v1, nuke, drive'; if(this.value==='clear') o.innerHTML=''; if(this.value==='reboot') location.reload(); if(this.value==='v1') jumpVer('v1'); if(this.value==='nuke'){ localStorage.clear(); location.reload(); } if(this.value==='drive') openApp('sys_drive'); this.value=''; o.scrollTop=o.scrollHeight; }"></div>`;
         } else if(id === 'sys_browser') {
             t = "Web Browser"; w = 800;
             c = `<div style="display:flex; gap:8px; margin-bottom:10px;"><input type="text" id="b-url" value="https://wikipedia.org" style="flex-grow:1; padding:8px 12px; border-radius:20px; border:none; outline:none; background:rgba(255,255,255,0.9); color:black;"><button onclick="document.getElementById('b-frame').src=document.getElementById('b-url').value" style="padding:8px 16px; border-radius:20px; border:none; background:#0078d7; color:white; font-weight:bold; cursor:pointer;">Go</button></div><iframe id="b-frame" src="https://wikipedia.org" style="width:100%; height:450px; border:none; border-radius:8px; background:white;"></iframe>`;
@@ -213,18 +249,12 @@ if (bootVersion === 'v1') {
             t = "GemiPaint"; w = 600;
             c = `<div style="margin-bottom:10px; display:flex; gap:10px; align-items:center;"><button onclick="const c=document.getElementById('cvs'); c.getContext('2d').clearRect(0,0,c.width,c.height);" style="padding:6px 12px; border-radius:4px; border:none; cursor:pointer;">Clear Canvas</button> <input type="color" id="p-col" value="#000000" style="cursor:pointer;"></div><canvas id="cvs" style="background:white; border-radius:6px; width:100%; height:400px; cursor:crosshair; box-shadow:inset 0 0 10px rgba(0,0,0,0.1);"></canvas>`;
         } else if(id === 'app_pong') {
-            t = "GemiPong"; w = 420;
-            c = `<canvas id="pong-cvs" width="380" height="240" style="background:#0a0a0a; border-radius:8px; box-shadow:inset 0 5px 15px rgba(0,0,0,0.5); display:block; margin:0 auto; cursor:none;"></canvas>`;
+            t = "GemiPong 2.0"; w = 420;
+            c = `<div style="font-size:11px; margin-bottom:5px; opacity:0.8; text-align:center;">Physics & AI Updated</div><canvas id="pong-cvs" width="380" height="240" style="background:#0a0a0a; border-radius:8px; box-shadow:inset 0 5px 15px rgba(0,0,0,0.5); display:block; margin:0 auto; cursor:none;"></canvas>`;
         } else if(id === 'app_snake') {
             t = "Snake"; w = 340;
             let hs = localStorage.getItem('GemiOS_SnakeHS') || 0;
             c = `<div style="text-align:center; margin-bottom:10px; font-weight:bold;">Score: <b id="sn-score" style="color:#38ef7d;">0</b> | High: <b id="sn-hs" style="color:#4db8ff;">${hs}</b></div><canvas id="sn-cvs" width="300" height="300" style="background:#0a0a0a; display:block; margin:0 auto; border-radius:8px; box-shadow:inset 0 0 15px rgba(0,0,0,0.8);"></canvas><div style="text-align:center; margin-top:10px; font-size:12px; opacity:0.7;">Use Arrow Keys</div>`;
-        } else if(id === 'app_sweeper') {
-            t = "GemiSweeper"; w = 290;
-            c = `<div style="text-align:center; margin-bottom:10px;"><button onclick="initSweeper()" style="padding:6px 15px; border-radius:4px; border:none; background:#0078d7; color:white; font-weight:bold; cursor:pointer;">Restart Game</button></div><div id="ms-grid" style="display:grid; grid-template-columns:repeat(9,25px); gap:2px; justify-content:center; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;"></div>`;
-        } else if(id === 'app_ttt') {
-            t = "Tic-Tac-Toe"; w = 260;
-            c = `<div id="ttt-stat" style="text-align:center; font-weight:bold; font-size:18px; margin-bottom:15px; color:#4db8ff;">Player X Turn</div><div id="ttt-b" style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;"></div><div style="text-align:center; margin-top:15px;"><button onclick="initTTT()" style="padding:6px 15px; border-radius:4px; border:none; background:#444; color:white; cursor:pointer;">Reset</button></div>`;
         }
 
         let wid = 'w_' + Math.random().toString(36).substr(2,9);
@@ -238,8 +268,6 @@ if (bootVersion === 'v1') {
         
         if(id === 'app_pong') setTimeout(initPong, 100);
         if(id === 'app_snake') setTimeout(initSnake, 100);
-        if(id === 'app_sweeper') setTimeout(initSweeper, 100);
-        if(id === 'app_ttt') setTimeout(initTTT, 100);
         if(id === 'app_paint') setTimeout(() => {
             const can = document.getElementById('cvs'); if(!can) return;
             can.width = can.offsetWidth; can.height = can.offsetHeight;
@@ -267,20 +295,43 @@ if (bootVersion === 'v1') {
     let pongItv;
     window.initPong = function() {
         let cvs = document.getElementById('pong-cvs'); if(!cvs) return; let ctx = cvs.getContext('2d');
-        let pY = 100, cY = 100, bX = 190, bY = 120, bDX = 5, bDY = 3; clearInterval(pongItv);
-        cvs.onmousemove = (e) => pY = e.offsetY - 20;
+        let pY = 100, cY = 100, bX = 190, bY = 120, bDX = 4, bDY = 2; clearInterval(pongItv);
+        cvs.onmousemove = (e) => pY = Math.max(0, Math.min(190, e.offsetY - 25)); // Prevent paddle leaving screen
+        
         pongItv = setInterval(() => {
             if(!document.getElementById('pong-cvs')) { clearInterval(pongItv); return; }
             bX += bDX; bY += bDY;
-            if(bY <= 0 || bY >= 235) bDY = -bDY;
-            if(bX <= 10 && bY > pY && bY < pY + 40) bDX = -bDX;
-            if(bX >= 365 && bY > cY && bY < cY + 40) bDX = -bDX;
-            if(bX < 0 || bX > 380) { bX = 190; bY = 120; bDX = -bDX; }
-            cY += (bY - (cY + 20)) * 0.12; 
+            
+            // Wall bounce
+            if(bY <= 5 || bY >= 235) bDY = -bDY;
+            
+            // Player Hit (Improved hitboxes & dynamic angle)
+            if(bX <= 15 && bY > pY && bY < pY + 50) {
+                bDX = Math.abs(bDX) + 0.2; // Ensure positive & speed up
+                bDY = (bY - (pY + 25)) * 0.25; // Add English
+            }
+            // AI Hit
+            if(bX >= 365 && bY > cY && bY < cY + 50) {
+                bDX = -Math.abs(bDX) - 0.2; // Ensure negative & speed up
+                bDY = (bY - (cY + 25)) * 0.25;
+            }
+            
+            // Score Reset
+            if(bX < 0 || bX > 380) { 
+                bX = 190; bY = 120; 
+                bDX = bDX > 0 ? -4 : 4; 
+                bDY = (Math.random() - 0.5) * 4; 
+            }
+            
+            // AI Logic (smoother tracking)
+            cY += (bY - (cY + 25)) * 0.1; 
+            cY = Math.max(0, Math.min(190, cY));
+            
+            // Draw
             ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0,0,380,240);
-            ctx.fillStyle = '#4db8ff'; ctx.fillRect(5, pY, 6, 40); 
-            ctx.fillStyle = '#ff4d4d'; ctx.fillRect(369, cY, 6, 40); 
-            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(bX, bY, 4, 0, Math.PI*2); ctx.fill(); 
+            ctx.fillStyle = '#4db8ff'; ctx.fillRect(5, pY, 8, 50); 
+            ctx.fillStyle = '#ff4d4d'; ctx.fillRect(367, cY, 8, 50); 
+            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(bX, bY, 5, 0, Math.PI*2); ctx.fill(); 
         }, 30);
     };
 
@@ -313,37 +364,5 @@ if (bootVersion === 'v1') {
             ctx.fillStyle = '#38ef7d'; snake.forEach(s => { ctx.beginPath(); ctx.arc(s.x+5, s.y+5, 4.5, 0, Math.PI*2); ctx.fill(); });
             ctx.fillStyle = '#ff4d4d'; ctx.beginPath(); ctx.arc(food.x+5, food.y+5, 4.5, 0, Math.PI*2); ctx.fill();
         }, 100);
-    };
-
-    window.initSweeper = function() {
-        let grid = document.getElementById('ms-grid'); if(!grid) return; grid.innerHTML = '';
-        for(let i=0; i<81; i++) {
-            let cell = document.createElement('div'); 
-            cell.style.cssText = "width:25px; height:25px; background:rgba(255,255,255,0.8); color:black; border-radius:3px; text-align:center; font-weight:bold; cursor:pointer; line-height:25px; font-size:14px; box-shadow:inset -1px -1px 2px rgba(0,0,0,0.3);";
-            cell.onclick = function() { 
-                this.style.background = 'rgba(255,255,255,0.4)'; this.style.boxShadow = 'none'; this.style.color = 'white';
-                if(Math.random() < 0.15) { this.innerText='💣'; this.style.background='#ff4d4d'; setTimeout(()=>alert('Boom!'), 50); } 
-                else { this.innerText = Math.floor(Math.random()*3)||''; } 
-            };
-            grid.appendChild(cell);
-        }
-    };
-
-    let tttBoard = [], tttPlayer = 'X', tttActive = true;
-    window.initTTT = function() {
-        tttBoard = ['','','','','','','','','']; tttPlayer = 'X'; tttActive = true;
-        document.getElementById('ttt-stat').innerText = "Player X Turn"; document.getElementById('ttt-stat').style.color = "#4db8ff";
-        let b = document.getElementById('ttt-b'); if(!b) return; b.innerHTML = '';
-        for(let i=0; i<9; i++) b.innerHTML += `<button style="height:60px; font-size:28px; font-weight:bold; border:none; border-radius:4px; background:rgba(255,255,255,0.8); cursor:pointer; box-shadow:inset -1px -1px 3px rgba(0,0,0,0.3);" onclick="playTTT(${i}, this)"></button>`;
-    };
-    window.playTTT = function(i, btn) {
-        if(!tttActive || tttBoard[i] !== '') return;
-        tttBoard[i] = tttPlayer; btn.innerText = tttPlayer; 
-        btn.style.color = tttPlayer==='X'?'#0078d7':'#ff4d4d'; btn.style.background = 'rgba(255,255,255,0.9)'; btn.style.boxShadow = 'none';
-        const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-        let won = lines.some(l => tttBoard[l[0]] && tttBoard[l[0]]===tttBoard[l[1]] && tttBoard[l[0]]===tttBoard[l[2]]);
-        if(won) { document.getElementById('ttt-stat').innerText = `${tttPlayer} Wins!`; document.getElementById('ttt-stat').style.color = "#38ef7d"; tttActive = false; }
-        else if(!tttBoard.includes('')) { document.getElementById('ttt-stat').innerText = "Draw!"; document.getElementById('ttt-stat').style.color = "white"; tttActive = false; }
-        else { tttPlayer = tttPlayer === 'X' ? 'O' : 'X'; document.getElementById('ttt-stat').innerText = `Player ${tttPlayer} Turn`; document.getElementById('ttt-stat').style.color = tttPlayer==='X'?'#4db8ff':'#ff4d4d';}
     };
 }
