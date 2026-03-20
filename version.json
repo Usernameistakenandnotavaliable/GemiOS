@@ -1,4 +1,4 @@
 {
-  "version": "27.0.1-CLOUD",
-  "notes": "The Cloud Boot Hotfix. Completely eradicated parser bugs using Base64 encryption. Re-enforced strict GitHub Cloud OTA architecture. Added Multi-User Login, GemiCraft Terraria Mode, GemiVoice 2.0, and Draggable Icons."
+  "version": "27.0.2-STABLE",
+  "notes": "Eradicated template literal syntax bug causing the Blob parser to crash. System is now fully stabilized on the Cloud Architecture."
 }
