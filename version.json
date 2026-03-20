@@ -1,4 +1,4 @@
 {
-  "version": "26.2.0-WORKFLOW",
-  "notes": "The Workflow Update. Added Aero Snap Window Splitting, GemiWord Rich Text Editor, and GemiVoice TTS Engine."
+  "version": "26.3.0-ENGINE",
+  "notes": "The Game Engine Update. Embedded a custom 2D Physics API into the kernel. Released GemiCraft 2D Sandbox."
 }
