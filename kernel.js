@@ -1,5 +1,5 @@
 // =========================================================================
-// GemiOS CLOUD HYPERVISOR - v26.3.0 (THE GAME ENGINE UPDATE)
+// GemiOS CLOUD HYPERVISOR - v26.4.0 (THE REALITY BRIDGE)
 // =========================================================================
 
 const bootVersion = localStorage.getItem('GemiOS_TargetVersion') || 'v26';
@@ -16,7 +16,7 @@ if (bootVersion === 'v1') {
     document.open(); document.write(v20Code); document.close();
 } else {
     // =====================================================================
-    // KERNEL 4: GEMIOS v26.3 TITANIUM (THE ENGINE UPDATE)
+    // KERNEL 4: GEMIOS v26.4 TITANIUM (THE REALITY BRIDGE)
     // =====================================================================
     
     class VirtualFileSystem {
@@ -26,11 +26,18 @@ if (bootVersion === 'v1') {
                 this.root = {
                     "C:": {
                         "System": { "boot.log": "GemiOS Kernel Initialized.\nSystem OK.", "users.json": '{"Admin":""}' },
-                        "Users": { "Admin": { "Documents": {}, "Pictures": {}, "Desktop": {} } }
+                        "Users": { "Admin": { "Documents": {}, "Pictures": {}, "Desktop": {}, "Downloads": {} } }
                     }
                 };
                 this.save();
-            } else { this.root = JSON.parse(drive); }
+            } else { 
+                this.root = JSON.parse(drive); 
+                // Auto-patch Downloads folder for existing users
+                if(!this.root["C:"]["Users"]["Admin"]["Downloads"]) {
+                    this.root["C:"]["Users"]["Admin"]["Downloads"] = {};
+                    this.save();
+                }
+            }
         }
         save() { localStorage.setItem('GemiOS_TreeFS', JSON.stringify(this.root)); }
         getDir(path, create = false) {
@@ -108,13 +115,14 @@ if (bootVersion === 'v1') {
 
     class ProcessManager {
         constructor() { this.processes = {}; this.pidCounter = 1000; }
-        launch(appId) {
+        // Launch now accepts optional fileData for File Associations
+        launch(appId, fileData = null) {
             document.getElementById('start-menu').style.display = 'none';
             if(!GemiOS.Registry[appId]) return;
             let pid = ++this.pidCounter; let app = GemiOS.Registry[appId];
             this.processes[pid] = { id: appId, title: app.title };
-            GemiOS.WM.createWindow(pid, app.title, app.html(pid), app.width);
-            if(app.onLaunch) app.onLaunch(pid);
+            GemiOS.WM.createWindow(pid, app.title, app.html(pid, fileData), app.width);
+            if(app.onLaunch) app.onLaunch(pid, fileData);
         }
         kill(pid) {
             if(!this.processes[pid]) return;
@@ -131,7 +139,7 @@ if (bootVersion === 'v1') {
             onLaunch: (pid) => { GemiOS.termStates[pid] = 'C:/Users/Admin'; setTimeout(()=>document.getElementById(`t-in-${pid}`).focus(),100); }
         },
         'sys_drive': {
-            icon: '🗂️', title: 'Explorer 2.0', width: 480,
+            icon: '🗂️', title: 'Explorer 2.0', width: 520,
             html: (pid) => `<div class="sys-card" style="display:flex; gap:10px; align-items:center; background:rgba(0,120,215,0.2);"><button onclick="GemiOS.navDrive(${pid}, 'UP')" class="btn-sec" style="width:auto; margin:0; padding:5px 10px; border-color:#0078d7;">⬆️ Up</button><input type="text" id="d-path-${pid}" value="C:/" disabled style="flex-grow:1; background:transparent; color:inherit; border:none; font-weight:bold; font-size:14px; outline:none;"></div><div id="d-list-${pid}" style="max-height:300px; min-height:200px; overflow-y:auto; display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;"></div>`,
             onLaunch: (pid) => { GemiOS.driveStates[pid] = 'C:'; GemiOS.renderDrive(pid); }
         },
@@ -141,11 +149,11 @@ if (bootVersion === 'v1') {
         },
         'sys_update': {
             icon: '💻', title: 'Local Updater', width: 380,
-            html: () => `<div class="sys-card" style="text-align:center;"><div style="font-size:40px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">💻</div><h3 style="margin:5px 0;">VS Code Update Center</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v26.3.0</b></p><div id="upd-stat" style="font-size:12px; min-height:15px;"></div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary" style="margin-top:10px;">Check for Local Updates</button></div>`
+            html: () => `<div class="sys-card" style="text-align:center;"><div style="font-size:40px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">💻</div><h3 style="margin:5px 0;">VS Code Update Center</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v26.4.0-LOCAL</b></p><div id="upd-stat" style="font-size:12px; min-height:15px;"></div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary" style="margin-top:10px;">Check for Local Updates</button></div>`
         },
         'sys_time': {
             icon: '⏳', title: 'Time Machine', width: 360,
-            html: () => `<div style="text-align:center; font-size:45px; margin-bottom:15px; filter:drop-shadow(0 5px 10px rgba(0,0,0,0.3));">⏳</div><p style="text-align:center; font-size:12px; margin-top:0;">Boot into historical code.</p><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v1'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v1.0 (Web Sim)</button><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v10'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v10.0 (Start Menu)</button><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v20'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v20.0 (Pure System)</button><button onclick="location.reload();" class="btn-primary">Stay on v26.3</button>`
+            html: () => `<div style="text-align:center; font-size:45px; margin-bottom:15px; filter:drop-shadow(0 5px 10px rgba(0,0,0,0.3));">⏳</div><p style="text-align:center; font-size:12px; margin-top:0;">Boot into historical code.</p><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v1'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v1.0 (Web Sim)</button><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v10'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v10.0 (Start Menu)</button><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v20'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v20.0 (Pure System)</button><button onclick="location.reload();" class="btn-primary">Stay on v26.4</button>`
         },
         'sys_task': {
             icon: '📊', title: 'Task Manager', width: 400,
@@ -163,135 +171,15 @@ if (bootVersion === 'v1') {
         'sys_log': {
             icon: '📋', title: 'Chronicles', width: 500,
             html: () => `<div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
-                <div class="sys-card" style="border-left:4px solid #38ef7d;"><b>v26.3.0 (Game Engine)</b> - Introduced Custom 2D Physics Engine. Added GemiCraft Sandbox.</div>
+                <div class="sys-card" style="border-left:4px solid #38ef7d;"><b>v26.4.0 (Reality Bridge)</b> - Native Drag & Drop file imports. File Associations. Added GemiAmp Media Player.</div>
+                <div class="sys-card"><b>v26.3.0 (Game Engine)</b> - Introduced Custom 2D Physics Engine. Added GemiCraft Sandbox.</div>
                 <div class="sys-card"><b>v26.2.0 (Workflow)</b> - Added Aero Snap, GemiWord, and GemiVoice TTS.</div>
                 <div class="sys-card"><b>v26.1.1 (Hotfix)</b> - Fixed premature script termination in legacy code.</div>
-                <div class="sys-card"><b>v26.1.0 (Time Machine)</b> - Expanded Time Machine to legacy v10 and v20.</div>
-                <div class="sys-card"><b>v26.0.0 (Hardware)</b> - Dynamic Desktop Engine. Added GemiCam and Gallery.</div>
+                <div class="sys-card"><b>v26.0.0 (Hardware)</b> - Dynamic Desktop Engine. Added GemiCam and Gallery Viewer.</div>
                 <div class="sys-card"><b>v25.0.0 (TreeFS)</b> - Architectural rewrite to hierarchical file system.</div>
                 <div class="sys-card"><b>v24.0.0 (Titanium)</b> - Full OOP rewrite. Added TaskMgr, IDE, Minimize functionality.</div>
                 <div class="sys-card"><b>v1.0 (Legacy Web Sim)</b> - The True Original.</div>
             </div>`
-        },
-        'app_craft': {
-            icon: '⛏️', title: 'GemiCraft 2D', width: 630,
-            html: (pid) => `<div style="background:#87CEEB; border-radius:6px; overflow:hidden;"><canvas id="craft-cvs-${pid}" width="600" height="400" style="display:block; cursor:crosshair;"></canvas><div style="text-align:center; padding:8px; background:#222; color:#38ef7d; font-family:monospace; font-size:12px;">[A/D] Move | [W] Jump | [Click] Break Block | [Shift+Click] Place Block</div></div>`,
-            onLaunch: (pid) => {
-                setTimeout(() => {
-                    let cvs = document.getElementById(`craft-cvs-${pid}`); if(!cvs) return;
-                    let ctx = cvs.getContext('2d');
-                    
-                    // Game Engine Variables
-                    let cols = 30, rows = 20, ts = 20; // 30x20 grid, 20px tiles
-                    let world = [];
-                    
-                    // Generate Terrain
-                    for(let x=0; x<cols; x++) {
-                        world[x] = [];
-                        let h = 10 + Math.floor(Math.sin(x)*2); // Basic hill generation
-                        for(let y=0; y<rows; y++) {
-                            if(y < h) world[x][y] = 0; // Sky
-                            else if(y === h) world[x][y] = 1; // Grass
-                            else world[x][y] = 2; // Dirt
-                        }
-                    }
-                    
-                    // Player Physics Object
-                    let p = {x: 300, y: 50, vx: 0, vy: 0, w: 14, h: 28, speed: 3, jump: -7, ground: false};
-                    let keys = {};
-                    
-                    let keydown = (e) => keys[e.key.toLowerCase()] = true;
-                    let keyup = (e) => keys[e.key.toLowerCase()] = false;
-                    document.addEventListener('keydown', keydown);
-                    document.addEventListener('keyup', keyup);
-
-                    // Block Interaction (Clicking)
-                    cvs.onmousedown = (e) => {
-                        let bx = Math.floor(e.offsetX / ts);
-                        let by = Math.floor(e.offsetY / ts);
-                        if(bx>=0 && bx<cols && by>=0 && by<rows) {
-                            if(e.shiftKey) { 
-                                if(world[bx][by] === 0) world[bx][by] = 2; // Place Dirt
-                            } else { 
-                                world[bx][by] = 0; // Break Block
-                            }
-                        }
-                    };
-
-                    // Simple AABB Collision Check
-                    let checkCol = (nx, ny) => {
-                        let left = Math.floor(nx/ts), right = Math.floor((nx+p.w-0.1)/ts);
-                        let top = Math.floor(ny/ts), bottom = Math.floor((ny+p.h-0.1)/ts);
-                        if(left<0 || right>=cols || bottom>=rows || top<0) return true; // World bounds
-                        for(let i=left; i<=right; i++) {
-                            for(let j=top; j<=bottom; j++) {
-                                if(world[i][j] !== 0) return true; // Hit a block
-                            }
-                        }
-                        return false;
-                    };
-
-                    GemiOS.craftItvs = GemiOS.craftItvs || {};
-                    GemiOS.craftItvs[pid] = setInterval(() => {
-                        if(!document.getElementById(`craft-cvs-${pid}`)) {
-                            clearInterval(GemiOS.craftItvs[pid]);
-                            document.removeEventListener('keydown', keydown);
-                            document.removeEventListener('keyup', keyup);
-                            return;
-                        }
-
-                        // Input Processing
-                        if(keys['a']) p.vx = -p.speed; 
-                        else if(keys['d']) p.vx = p.speed; 
-                        else p.vx = 0;
-                        
-                        if(keys['w'] && p.ground) { p.vy = p.jump; p.ground = false; }
-                        
-                        // Apply Gravity
-                        p.vy += 0.4; 
-
-                        // X-Axis Collision
-                        if(!checkCol(p.x + p.vx, p.y)) {
-                            p.x += p.vx;
-                        } else {
-                            p.vx = 0; // Hit wall
-                        }
-
-                        // Y-Axis Collision
-                        if(!checkCol(p.x, p.y + p.vy)) {
-                            p.y += p.vy; 
-                            p.ground = false;
-                        } else {
-                            if(p.vy > 0) p.ground = true; // Landed on floor
-                            p.vy = 0;
-                            p.y = Math.round(p.y); // Snap to grid to prevent sinking
-                        }
-
-                        // Render Engine
-                        ctx.fillStyle = '#87CEEB'; ctx.fillRect(0,0,600,400); // Clear sky
-                        
-                        // Render Blocks
-                        for(let x=0; x<cols; x++) {
-                            for(let y=0; y<rows; y++) {
-                                if(world[x][y] === 1) { 
-                                    ctx.fillStyle = '#4CAF50'; ctx.fillRect(x*ts, y*ts, ts, ts); // Grass
-                                    ctx.fillStyle = '#8B4513'; ctx.fillRect(x*ts, y*ts+6, ts, ts-6); // Dirt under grass
-                                }
-                                else if(world[x][y] === 2) { 
-                                    ctx.fillStyle = '#8B4513'; ctx.fillRect(x*ts, y*ts, ts, ts); // Pure Dirt
-                                    ctx.strokeStyle = '#6b3410'; ctx.strokeRect(x*ts, y*ts, ts, ts); // Dirt texture
-                                }
-                            }
-                        }
-                        
-                        // Render Player
-                        ctx.fillStyle = '#FF4500'; ctx.fillRect(p.x, p.y, p.w, p.h); 
-                        ctx.fillStyle = '#FFE4C4'; ctx.fillRect(p.x+2, p.y+2, p.w-4, 8); // Face
-                        
-                    }, 1000/60); // 60 FPS target
-                }, 100);
-            },
-            onKill: (pid) => { if(GemiOS.craftItvs && GemiOS.craftItvs[pid]) clearInterval(GemiOS.craftItvs[pid]); }
         },
         'app_cam': {
             icon: '📸', title: 'GemiCam', width: 500,
@@ -305,12 +193,32 @@ if (bootVersion === 'v1') {
             onKill: (pid) => { if(GemiOS.camStreams && GemiOS.camStreams[pid]) GemiOS.camStreams[pid].getTracks().forEach(t=>t.stop()); }
         },
         'app_view': {
-            icon: '🖼️', title: 'Gallery', width: 550,
-            html: (pid) => {
+            icon: '🖼️', title: 'Gallery Viewer', width: 550,
+            html: (pid, fileData) => {
+                // If launched via file association, show just that image
+                if(fileData) return `<div style="text-align:center;"><img src="${fileData}" style="max-width:100%; max-height:400px; border-radius:6px; box-shadow:0 5px 15px rgba(0,0,0,0.5);"></div>`;
+                
+                // Otherwise scan pictures folder
                 let pics = GemiOS.VFS.getDir('C:/Users/Admin/Pictures') || {}; let h = '';
                 for(let p in pics) { h += `<img src="${pics[p]}" style="width:100%; border-radius:6px; margin-bottom:15px; border:1px solid rgba(255,255,255,0.2);">`; }
                 if(h === '') h = '<div style="text-align:center; padding:40px; opacity:0.5; font-size:18px;">No photos found in C:/Users/Admin/Pictures.<br>Use GemiCam to take one!</div>';
                 return `<div style="max-height:450px; overflow-y:auto; padding-right:5px;">${h}</div>`;
+            }
+        },
+        'app_amp': {
+            icon: '🎵', title: 'GemiAmp Media Player', width: 400,
+            html: (pid, fileData) => {
+                if(!fileData) return `<div class="sys-card" style="text-align:center; padding:30px;"><h2>🎵 GemiAmp</h2><p>Drag an .mp3 from your real PC onto the desktop, then double click it in Explorer to play!</p></div>`;
+                return `
+                    <div style="background:#111; padding:20px; border-radius:8px; text-align:center; border:1px solid #333;">
+                        <div style="font-size:50px; margin-bottom:15px; animation: pulse 2s infinite;">🎵</div>
+                        <h3 style="margin-top:0; color:#38ef7d;">Now Playing</h3>
+                        <audio controls autoplay style="width:100%; outline:none;">
+                            <source src="${fileData}">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                `;
             }
         },
         'app_code': {
@@ -322,8 +230,8 @@ if (bootVersion === 'v1') {
         },
         'app_word': {
             icon: '📄', title: 'GemiWord', width: 500,
-            html: (pid) => {
-                let saved = GemiOS.VFS.read('C:/Users/Admin/Documents', 'document.rtf') || 'Start typing a rich text document...';
+            html: (pid, fileData) => {
+                let saved = fileData || GemiOS.VFS.read('C:/Users/Admin/Documents', 'document.rtf') || 'Start typing a rich text document...';
                 return `
                 <div style="display:flex; gap:5px; margin-bottom:10px; background:rgba(0,0,0,0.2); padding:8px; border-radius:6px;">
                     <button onclick="document.execCommand('bold')" class="btn-sec" style="width:auto; margin:0; padding:4px 10px; font-weight:bold;">B</button>
@@ -341,7 +249,7 @@ if (bootVersion === 'v1') {
             icon: '🗣️', title: 'GemiVoice TTS', width: 400,
             html: (pid) => `
                 <div class="sys-card" style="margin-bottom:15px;">Type text below and the OS will synthesize speech.</div>
-                <textarea id="voice-text-${pid}" style="width:100%; height:150px; box-sizing:border-box; resize:none; border:none; border-radius:6px; padding:15px; font-family:'Inter', sans-serif; font-size:14px; outline:none; background:rgba(255,255,255,0.9); color:black; margin-bottom:10px;">Hello, I am GemiOS version 26.3. Let's play GemiCraft!</textarea>
+                <textarea id="voice-text-${pid}" style="width:100%; height:150px; box-sizing:border-box; resize:none; border:none; border-radius:6px; padding:15px; font-family:'Inter', sans-serif; font-size:14px; outline:none; background:rgba(255,255,255,0.9); color:black; margin-bottom:10px;">Drag and drop a file from your real computer to import it!</textarea>
                 <button onclick="let u = new SpeechSynthesisUtterance(document.getElementById('voice-text-${pid}').value); speechSynthesis.speak(u);" class="btn-primary" style="background:#ff00cc;">🗣️ Speak Text</button>
             `
         },
@@ -351,11 +259,71 @@ if (bootVersion === 'v1') {
         },
         'app_note': {
             icon: '📝', title: 'Notepad', width: 400,
-            html: () => `<textarea oninput="GemiOS.VFS.write('C:/Users/Admin/Documents', 'note.txt', this.value)" style="width:100%; height:300px; box-sizing:border-box; resize:none; border:none; border-radius:6px; padding:15px; font-family:'Inter', sans-serif; font-size:14px; outline:none; background:rgba(255,255,255,0.9); color:black;">${GemiOS.VFS.read('C:/Users/Admin/Documents', 'note.txt') || ''}</textarea>`
+            html: (pid, fileData) => `<textarea oninput="GemiOS.VFS.write('C:/Users/Admin/Documents', 'note.txt', this.value)" style="width:100%; height:300px; box-sizing:border-box; resize:none; border:none; border-radius:6px; padding:15px; font-family:'Inter', sans-serif; font-size:14px; outline:none; background:rgba(255,255,255,0.9); color:black;">${fileData || GemiOS.VFS.read('C:/Users/Admin/Documents', 'note.txt') || ''}</textarea>`
         },
         'app_calc': {
             icon: '🧮', title: 'Calculator', width: 260,
             html: (pid) => `<div style="background:rgba(255,255,255,0.9); color:black; padding:15px; font-size:28px; text-align:right; margin-bottom:10px; border-radius:6px; font-family:monospace;" id="cd-${pid}">0</div><div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px;">${['7','8','9','/','4','5','6','*','1','2','3','-','C','0','=','+'].map(b=>`<button style="padding:15px; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.1); cursor:pointer; font-weight:bold; border-radius:6px; color:inherit; font-size:16px;" onclick="let d=document.getElementById('cd-${pid}'); if('${b}'==='C') d.innerText='0'; else if('${b}'==='=') { try { d.innerText=eval(d.innerText); } catch(e){ d.innerText='Err'; } } else { if(d.innerText==='0') d.innerText='${b}'; else d.innerText+='${b}'; }">${b}</button>`).join('')}</div>`
+        },
+        'app_craft': {
+            icon: '⛏️', title: 'GemiCraft 2D', width: 630,
+            html: (pid) => `<div style="background:#87CEEB; border-radius:6px; overflow:hidden;"><canvas id="craft-cvs-${pid}" width="600" height="400" style="display:block; cursor:crosshair;"></canvas><div style="text-align:center; padding:8px; background:#222; color:#38ef7d; font-family:monospace; font-size:12px;">[A/D] Move | [W] Jump | [Click] Break Block | [Shift+Click] Place Block</div></div>`,
+            onLaunch: (pid) => {
+                setTimeout(() => {
+                    let cvs = document.getElementById(`craft-cvs-${pid}`); if(!cvs) return;
+                    let ctx = cvs.getContext('2d');
+                    let cols = 30, rows = 20, ts = 20; 
+                    let world = [];
+                    for(let x=0; x<cols; x++) {
+                        world[x] = [];
+                        let h = 10 + Math.floor(Math.sin(x)*2); 
+                        for(let y=0; y<rows; y++) {
+                            if(y < h) world[x][y] = 0; else if(y === h) world[x][y] = 1; else world[x][y] = 2; 
+                        }
+                    }
+                    let p = {x: 300, y: 50, vx: 0, vy: 0, w: 14, h: 28, speed: 3, jump: -7, ground: false};
+                    let keys = {};
+                    let keydown = (e) => keys[e.key.toLowerCase()] = true;
+                    let keyup = (e) => keys[e.key.toLowerCase()] = false;
+                    document.addEventListener('keydown', keydown); document.addEventListener('keyup', keyup);
+
+                    cvs.onmousedown = (e) => {
+                        let bx = Math.floor(e.offsetX / ts); let by = Math.floor(e.offsetY / ts);
+                        if(bx>=0 && bx<cols && by>=0 && by<rows) {
+                            if(e.shiftKey) { if(world[bx][by] === 0) world[bx][by] = 2; } 
+                            else { world[bx][by] = 0; }
+                        }
+                    };
+
+                    let checkCol = (nx, ny) => {
+                        let left = Math.floor(nx/ts), right = Math.floor((nx+p.w-0.1)/ts);
+                        let top = Math.floor(ny/ts), bottom = Math.floor((ny+p.h-0.1)/ts);
+                        if(left<0 || right>=cols || bottom>=rows || top<0) return true;
+                        for(let i=left; i<=right; i++) { for(let j=top; j<=bottom; j++) { if(world[i][j] !== 0) return true; } }
+                        return false;
+                    };
+
+                    GemiOS.craftItvs = GemiOS.craftItvs || {};
+                    GemiOS.craftItvs[pid] = setInterval(() => {
+                        if(!document.getElementById(`craft-cvs-${pid}`)) { clearInterval(GemiOS.craftItvs[pid]); document.removeEventListener('keydown', keydown); document.removeEventListener('keyup', keyup); return; }
+                        if(keys['a']) p.vx = -p.speed; else if(keys['d']) p.vx = p.speed; else p.vx = 0;
+                        if(keys['w'] && p.ground) { p.vy = p.jump; p.ground = false; }
+                        p.vy += 0.4; 
+                        if(!checkCol(p.x + p.vx, p.y)) { p.x += p.vx; } else { p.vx = 0; }
+                        if(!checkCol(p.x, p.y + p.vy)) { p.y += p.vy; p.ground = false; } else { if(p.vy > 0) p.ground = true; p.vy = 0; p.y = Math.round(p.y); }
+
+                        ctx.fillStyle = '#87CEEB'; ctx.fillRect(0,0,600,400); 
+                        for(let x=0; x<cols; x++) {
+                            for(let y=0; y<rows; y++) {
+                                if(world[x][y] === 1) { ctx.fillStyle = '#4CAF50'; ctx.fillRect(x*ts, y*ts, ts, ts); ctx.fillStyle = '#8B4513'; ctx.fillRect(x*ts, y*ts+6, ts, ts-6); }
+                                else if(world[x][y] === 2) { ctx.fillStyle = '#8B4513'; ctx.fillRect(x*ts, y*ts, ts, ts); ctx.strokeStyle = '#6b3410'; ctx.strokeRect(x*ts, y*ts, ts, ts); }
+                            }
+                        }
+                        ctx.fillStyle = '#FF4500'; ctx.fillRect(p.x, p.y, p.w, p.h); ctx.fillStyle = '#FFE4C4'; ctx.fillRect(p.x+2, p.y+2, p.w-4, 8); 
+                    }, 1000/60); 
+                }, 100);
+            },
+            onKill: (pid) => { if(GemiOS.craftItvs && GemiOS.craftItvs[pid]) clearInterval(GemiOS.craftItvs[pid]); }
         },
         'app_paint': {
             icon: '🎨', title: 'GemiPaint', width: 600,
@@ -466,10 +434,10 @@ if (bootVersion === 'v1') {
                 'Chronicles.app': 'sys_log', 'TimeMach.app': 'sys_time', 'Settings.app': 'sys_set',
                 'Browser.app': 'sys_browser', 'GemiCode.app': 'app_code', 'Terminal.app': 'sys_term',
                 'Notepad.app': 'app_note', 'GemiWord.app': 'app_word', 'GemiVoice.app': 'app_voice', 
-                'Calc.app': 'app_calc', 'Camera.app': 'app_cam', 'Gallery.app': 'app_view', 
-                'Pong.app': 'app_pong', 'Paint.app': 'app_paint', 'Synth.app': 'app_synth', 
-                'Snake.app': 'app_snake', 'Sweeper.app': 'app_sweeper', 'TicTac.app': 'app_ttt',
-                'GemiCraft.app': 'app_craft'
+                'GemiAmp.app': 'app_amp', 'Calc.app': 'app_calc', 'Camera.app': 'app_cam', 
+                'Gallery.app': 'app_view', 'Pong.app': 'app_pong', 'Paint.app': 'app_paint', 
+                'Synth.app': 'app_synth', 'Snake.app': 'app_snake', 'Sweeper.app': 'app_sweeper', 
+                'TicTac.app': 'app_ttt', 'GemiCraft.app': 'app_craft'
             };
             for(let a in appsToLoad) {
                 if(!desk[a]) this.VFS.write('C:/Users/Admin/Desktop', a, appsToLoad[a]);
@@ -483,9 +451,9 @@ if (bootVersion === 'v1') {
                 </div>
             `;
             let logs = [
-                "GemiOS BIOS v5.0", "Initializing Hardware API...", "Mounting WebRTC Camera Drivers... OK", 
-                "Loading Workflow Modules (Snap UI)... OK", "Initializing Physics Engine (2D)... OK",
-                "Restoring Full Ecosystem (22 Apps)... OK", "Starting GemiOS Display Manager..."
+                "GemiOS BIOS v5.1", "Initializing Hardware API...", "Mounting Drag & Drop Interceptors... OK", 
+                "Loading File Association Registry... OK", "Initializing Audio Subsystem (GemiAmp)... OK",
+                "Restoring Full Ecosystem (23 Apps)... OK", "Starting GemiOS Display Manager..."
             ];
             let target = document.getElementById('boot-logs'); let i = 0;
             let logItv = setInterval(() => {
@@ -510,6 +478,8 @@ if (bootVersion === 'v1') {
 
         launchDesktop() {
             this.buildUI(); this.renderDesktopIcons(); this.applyTheme(); this.loadWallpaper(); this.startClock(); this.initContextMenu();
+            this.initRealityBridge(); // Starts Drag & Drop listeners
+            
             window.dragWidget = function(e, id) {
                 if(e.target.tagName === 'TEXTAREA') return; 
                 let w = document.getElementById(id); let ox = e.clientX - w.offsetLeft; let oy = e.clientY - w.offsetTop;
@@ -518,17 +488,54 @@ if (bootVersion === 'v1') {
             };
         }
         
+        // --- THE REALITY BRIDGE (DRAG AND DROP) ---
+        initRealityBridge() {
+            document.body.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); });
+            document.body.addEventListener('drop', e => {
+                e.preventDefault(); e.stopPropagation();
+                let file = e.dataTransfer.files[0];
+                if (!file) return;
+                
+                let reader = new FileReader();
+                reader.onload = (event) => {
+                    this.VFS.write('C:/Users/Admin/Downloads', file.name, event.target.result);
+                    alert(`Reality Bridge Success!\nImported ${file.name} to C:/Users/Admin/Downloads.`);
+                    // Refresh Explorer windows if they are open
+                    for(let pid in this.driveStates) { this.renderDrive(pid); }
+                };
+                
+                if(file.name.endsWith('.txt') || file.name.endsWith('.rtf')) {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsDataURL(file); // Images and Audio
+                }
+            });
+        }
+        
+        // --- SMART EXPLORER (FILE ASSOCIATIONS) ---
+        openFile(path, filename) {
+            let data = this.VFS.read(path, filename);
+            let ext = filename.split('.').pop().toLowerCase();
+            
+            if(ext === 'app') {
+                this.PM.launch(data);
+            } else if (['png', 'jpg', 'jpeg', 'gif'].includes(ext)) {
+                this.PM.launch('app_view', data);
+            } else if (['mp3', 'wav', 'ogg'].includes(ext)) {
+                this.PM.launch('app_amp', data);
+            } else {
+                this.PM.launch('app_note', data); // Default to text editor
+            }
+        }
+
         renderDesktopIcons() {
             let desk = this.VFS.getDir('C:/Users/Admin/Desktop');
-            let html = '';
-            let i = 0;
+            let html = ''; let i = 0;
             for(let file in desk) {
                 if(file.endsWith('.app')) {
-                    let appId = desk[file];
-                    let app = this.Registry[appId];
+                    let appId = desk[file]; let app = this.Registry[appId];
                     if(app) {
-                        let top = 20 + (i % 6) * 100;
-                        let left = 20 + Math.floor(i / 6) * 90;
+                        let top = 20 + (i % 6) * 100; let left = 20 + Math.floor(i / 6) * 90;
                         html += `<div class="icon" style="top:${top}px; left:${left}px;" onclick="GemiOS.PM.launch('${appId}')"><div>${app.icon}</div>${file.replace('.app','')}</div>`;
                         i++;
                     }
@@ -569,7 +576,7 @@ if (bootVersion === 'v1') {
                 if (!r.ok) throw new Error("Server unreachable.");
                 let d = await r.json();
                 
-                if (d.version !== "26.3.0-ENGINE") {
+                if (d.version !== "26.4.0-REALITY") {
                     st.innerHTML = `<span style="color:#ffeb3b">New Version Found: ${d.version}</span><br><i>${d.notes}</i>`;
                     btn.innerText = 'Emulate Live Install'; btn.style.background = '#ff00cc'; 
                     btn.onclick = async () => {
@@ -592,10 +599,45 @@ if (bootVersion === 'v1') {
         }
 
         // Mini games
-        initSweeper(pid) { /*...omitted for brevity...*/ }
-        initTTT(pid) { /*...omitted for brevity...*/ }
-        playTTT(pid, i, btn) { /*...omitted for brevity...*/ }
-        playNote(freq) { /*...omitted for brevity...*/ }
+        initSweeper(pid) {
+            let grid = document.getElementById(`ms-grid-${pid}`); if(!grid) return; grid.innerHTML = '';
+            for(let i=0; i<81; i++) {
+                let cell = document.createElement('div'); 
+                cell.style.cssText = "width:25px; height:25px; background:rgba(255,255,255,0.8); color:black; border-radius:3px; text-align:center; font-weight:bold; cursor:pointer; line-height:25px; font-size:14px; box-shadow:inset -1px -1px 2px rgba(0,0,0,0.3);";
+                cell.onclick = function() { 
+                    this.style.background = 'rgba(255,255,255,0.4)'; this.style.boxShadow = 'none'; this.style.color = 'white';
+                    if(Math.random() < 0.15) { this.innerText='💣'; this.style.background='#ff4d4d'; setTimeout(()=>alert('Boom!'), 50); GemiOS.initSweeper(pid); } 
+                    else { this.innerText = Math.floor(Math.random()*3)||''; } 
+                };
+                grid.appendChild(cell);
+            }
+        }
+
+        initTTT(pid) {
+            this.tttStates = this.tttStates || {}; this.tttStates[pid] = { b: ['','','','','','','','',''], p: 'X', a: true };
+            let st = document.getElementById(`ttt-stat-${pid}`); st.innerText = "Player X Turn"; st.style.color = "#4db8ff";
+            let grid = document.getElementById(`ttt-b-${pid}`); if(!grid) return; grid.innerHTML = '';
+            for(let i=0; i<9; i++) grid.innerHTML += `<button style="height:60px; font-size:28px; font-weight:bold; border:none; border-radius:4px; background:rgba(255,255,255,0.8); cursor:pointer; box-shadow:inset -1px -1px 3px rgba(0,0,0,0.3);" onclick="GemiOS.playTTT(${pid}, ${i}, this)"></button>`;
+        }
+
+        playTTT(pid, i, btn) {
+            let s = this.tttStates[pid]; if(!s.a || s.b[i] !== '') return;
+            s.b[i] = s.p; btn.innerText = s.p; btn.style.color = s.p==='X'?'#0078d7':'#ff4d4d'; btn.style.background = 'rgba(255,255,255,0.9)'; btn.style.boxShadow = 'none';
+            const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            let won = lines.some(l => s.b[l[0]] && s.b[l[0]]===s.b[l[1]] && s.b[l[0]]===s.b[l[2]]);
+            let stat = document.getElementById(`ttt-stat-${pid}`);
+            if(won) { stat.innerText = `${s.p} Wins!`; stat.style.color = "#38ef7d"; s.a = false; }
+            else if(!s.b.includes('')) { stat.innerText = "Draw!"; stat.style.color = "white"; s.a = false; }
+            else { s.p = s.p === 'X' ? 'O' : 'X'; stat.innerText = `Player ${s.p} Turn`; stat.style.color = s.p==='X'?'#4db8ff':'#ff4d4d';}
+        }
+
+        playNote(freq) {
+            if(!this.actx) this.actx = new (window.AudioContext || window.webkitAudioContext)();
+            let osc = this.actx.createOscillator(); let gain = this.actx.createGain();
+            osc.type = 'sine'; osc.frequency.value = freq;
+            osc.connect(gain); gain.connect(this.actx.destination);
+            osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, this.actx.currentTime + 1); osc.stop(this.actx.currentTime + 1);
+        }
 
         handleTerm(e, pid, inputEl) {
             if(e.key !== 'Enter') return;
@@ -669,7 +711,7 @@ if (bootVersion === 'v1') {
                 if(typeof dir[k] === 'object') {
                     html += `<div style="text-align:center; cursor:pointer; padding:10px; background:rgba(0,0,0,0.2); border-radius:6px; transition:0.2s;" onmouseover="this.style.background='rgba(0,120,215,0.4)'" onmouseout="this.style.background='rgba(0,0,0,0.2)'" onclick="GemiOS.navDrive(${pid}, '${k}')"><div style="font-size:30px;">📁</div><div style="font-size:12px; overflow:hidden; text-overflow:ellipsis;">${k}</div></div>`;
                 } else {
-                    html += `<div style="text-align:center; cursor:pointer; padding:10px; background:rgba(255,255,255,0.1); border-radius:6px;" onclick="alert('File Contents:\\n\\n${dir[k]}')"><div style="font-size:30px;">📄</div><div style="font-size:12px; overflow:hidden; text-overflow:ellipsis;">${k}</div></div>`;
+                    html += `<div style="text-align:center; cursor:pointer; padding:10px; background:rgba(255,255,255,0.1); border-radius:6px; transition:0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="GemiOS.openFile('${path}', '${k}')"><div style="font-size:30px;">📄</div><div style="font-size:12px; overflow:hidden; text-overflow:ellipsis;">${k}</div></div>`;
                 }
             }
             if(html === '') html = '<div style="grid-column: span 4; text-align:center; opacity:0.5; padding:20px;">Folder is empty</div>';
@@ -729,6 +771,10 @@ if (bootVersion === 'v1') {
                 #widget-notes { position:absolute; top:30px; right:30px; width:220px; height:220px; background:#fff9c4; color:#333; box-shadow:5px 5px 15px rgba(0,0,0,0.3); padding:15px; z-index:5; font-family:'Segoe Print', 'Comic Sans MS', cursive; transform: rotate(2deg); transition: transform 0.2s; cursor:grab; pointer-events:auto;}
                 #widget-notes:active { cursor:grabbing; transform: rotate(0deg) scale(1.05); z-index:9999;}
                 #widget-notes textarea { width:100%; height:100%; background:transparent; border:none; outline:none; font-family:inherit; font-size:14px; resize:none; color:#333;}
+                .synth-key { background: white; border: 1px solid #ccc; height: 120px; width: 40px; border-radius: 0 0 4px 4px; cursor: pointer; color: black; font-weight: bold; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; box-shadow: 0 4px 5px rgba(0,0,0,0.2); transition: 0.1s;}
+                .synth-key:active { background: #eee; height: 115px; transform: translateY(5px); }
+                .synth-black { background: #222; color: white; height: 80px; width: 30px; position: absolute; margin-left: -15px; z-index: 2; border-radius: 0 0 4px 4px; }
+                .synth-black:active { background: #000; }
                 
                 #context-menu { position:absolute; background:rgba(30, 40, 50, 0.9); backdrop-filter:blur(15px); border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding:5px; box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:999999; display:none; min-width:150px; pointer-events:auto; }
                 body.light-mode #context-menu { background:rgba(255,255,255,0.9); color:black; border:1px solid rgba(0,0,0,0.2); }
@@ -756,7 +802,7 @@ if (bootVersion === 'v1') {
                     <div id="start-menu">
                         <div class="start-header">
                             <div style="font-size:30px; background:rgba(255,255,255,0.2); border-radius:50%; width:50px; height:50px; display:flex; align-items:center; justify-content:center;">👤</div>
-                            <div><div style="font-size:16px;">Admin</div><div style="font-size:11px; opacity:0.8;">GemiOS 26.3 Engine</div></div>
+                            <div><div style="font-size:16px;">Admin</div><div style="font-size:11px; opacity:0.8;">GemiOS 26.4 Reality Bridge</div></div>
                         </div>
                         <div style="overflow-y:auto; padding-bottom:10px;">
                             <div class="start-cat">System & Core</div>
@@ -778,7 +824,8 @@ if (bootVersion === 'v1') {
                             <div class="start-item" onclick="GemiOS.PM.launch('app_calc')"><span style="font-size:18px;">🧮</span> Calculator</div>
 
                             <div class="start-cat">Entertainment</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_craft')" style="background:rgba(56,239,125,0.2); border:1px solid #38ef7d;"><span style="font-size:18px;">⛏️</span> GemiCraft 2D</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_amp')" style="background:rgba(56,239,125,0.2); border:1px solid #38ef7d;"><span style="font-size:18px;">🎵</span> GemiAmp Media Player</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_craft')"><span style="font-size:18px;">⛏️</span> GemiCraft 2D</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('app_pong')"><span style="font-size:18px;">🏓</span> Pong 3.0</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('app_synth')"><span style="font-size:18px;">🎹</span> GemiSynth</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('app_paint')"><span style="font-size:18px;">🎨</span> Paint</div>
@@ -795,7 +842,7 @@ if (bootVersion === 'v1') {
                         <div id="taskbar-apps" style="display:flex; flex-grow:1; overflow:hidden;"></div>
                         <div style="display:flex; align-items:center; gap:20px; margin-right:10px;">
                             <div onclick="GemiOS.toggleTheme()" style="cursor:pointer; font-size:20px;" title="Toggle Theme">🌓</div>
-                            <div style="font-weight:600; font-size:12px; background:rgba(56, 239, 125, 0.2); color:#38ef7d; padding:4px 10px; border-radius:20px; border:1px solid rgba(56,239,125,0.3);">v26.3 LOCAL</div>
+                            <div style="font-weight:600; font-size:12px; background:rgba(56, 239, 125, 0.2); color:#38ef7d; padding:4px 10px; border-radius:20px; border:1px solid rgba(56,239,125,0.3);">v26.4 LOCAL</div>
                             <div id="clock" style="font-weight:600; font-size:14px; letter-spacing:1px;">12:00</div>
                         </div>
                     </div>
