@@ -1,4 +1,4 @@
 {
-  "version": "27.4.1-CALCULUS",
-  "notes": "Replaced particle lab with native GemiCalc Graphing Engine. Features real-time numerical derivatives and integrals."
+  "version": "27.4.2-FINAL",
+  "notes": "The Final Polish Update. GemiVM windows are now independently draggable. GemiStore buttons dynamically update. Matrix resizing issues fixed."
 }
