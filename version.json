@@ -1,4 +1,4 @@
 {
-  "version": "27.2.0-INCEPTION",
-  "notes": "The Inception Update. Added Native Window Resizing, the GemiStore App Repository, and GemiVM (a retro Virtual Machine sandbox)."
+  "version": "27.3.0-PERFORMANCE",
+  "notes": "The Performance & NVRAM Update. Added Hyper-Boot for zero-latency startups. Implemented a strict 50KB Virtual Disk quota with live Explorer monitoring. Added the GemiDisk Storage Utility."
 }
