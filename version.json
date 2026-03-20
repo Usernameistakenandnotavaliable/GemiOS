@@ -1,4 +1,4 @@
 {
-  "version": "27.4.2-FINAL",
-  "notes": "The Final Polish Update. GemiVM windows are now independently draggable. GemiStore buttons dynamically update. Matrix resizing issues fixed."
+  "version": "27.5.0-MULTIMEDIA",
+  "notes": "The Multimedia Update. Added GemiMaze 3D (Custom JavaScript Raycaster), GemiSheets (Functional Spreadsheet), GemiVideo (Drag & Drop MP4 Player), and an Idle Screensaver Engine."
 }
