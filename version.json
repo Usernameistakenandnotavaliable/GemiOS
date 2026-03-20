@@ -1,4 +1,4 @@
 {
-  "version": "30.0.0-RELEASE",
-  "notes": "THE OFFICIAL RELEASE. Added GemiPhone Mobile Emulator. Added GPM Package Manager to the Terminal. Added GemiMail Client. Overhauled GemiStore layout to support all 28 applications."
+  "version": "30.0.1-PATCH",
+  "notes": "The Complete Ecosystem Patch. Fully restored all 30+ applications to the App Registry. Added Auto-Arrange Context Menu. Added GemiWeather."
 }
