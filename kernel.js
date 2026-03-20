@@ -1,5 +1,5 @@
 // =========================================================================
-// GemiOS CLOUD HYPERVISOR - v27.0.1 (THE CLOUD IMMERSION UPDATE)
+// GemiOS CLOUD HYPERVISOR - v27.0.2 (THE ULTIMATE SYNTAX PATCH)
 // =========================================================================
 
 const bootVersion = localStorage.getItem('GemiOS_TargetVersion') || 'v27';
@@ -11,7 +11,7 @@ else if (bootVersion === 'v10') { document.open(); document.write(atob('PCFET0NU
 else if (bootVersion === 'v20') { document.open(); document.write(atob('PCFET0NUWVBFIGh0bWw+PGh0bWw+PGhlYWQ+PHRpdGxlPkdlbWlPUyB2MjA8L3RpdGxlPjxzdHlsZT5ib2R5e2JhY2tncm91bmQ6IzAwMDtjb2xvcjojMGYwO2ZvbnQtZmFtaWx5Om1vbm9zcGFjZTtwYWRkaW5nOjUwcHg7fTwvc3R5bGU+PC9oZWFkPjxib2R5PjxoMj5bR2VtaU9TIFBVUkUgS0VSTkVMIHYyMF08L2gyPjxidXR0b24gb25jbGljaz0ibG9jYWxTdG9yYWdlLnNldEl0ZW0oJ0dlbWlPU19UYXJnZXRWZXJzaW9uJywndjI3Jyk7bG9jYXRpb24ucmVsb2FkKCkiIHN0eWxlPSJjb2xvcjojZjBmO2JhY2tncm91bmQ6YmxhY2s7Ym9yZGVyOjFweCBzb2xpZCAjZjBmO3BhZGRpbmc6MTBweDsiPkhvdHN3YXAgdG8gdjI3PC9idXR0b24+PC9ib2R5PjwvaHRtbD4=')); document.close(); }
 else {
     // =====================================================================
-    // KERNEL 4: GEMIOS v27.0.1 TITANIUM (THE CLOUD IMMERSION UPDATE)
+    // KERNEL 4: GEMIOS v27.0.2 TITANIUM (THE IMMERSION UPDATE)
     // =====================================================================
     
     class VirtualFileSystem {
@@ -133,12 +133,12 @@ else {
         'sys_term': {
             icon: '⌨️', title: 'Bash Terminal', width: 500,
             html: (pid) => `<div id="t-out-${pid}" style="background:#0a0a0a; color:#38ef7d; padding:10px; font-family:monospace; height:280px; overflow-y:auto; border-radius:6px; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);">GemiOS TreeFS Terminal<br>Type 'help' for commands</div><div style="display:flex; background:#111; padding:8px; border-radius:6px; margin-top:5px;"><span id="t-path-${pid}" style="color:#0078d7; margin-right:8px; font-weight:bold;">C:/Users/${GemiOS.user}></span><input type="text" id="t-in-${pid}" style="flex-grow:1; background:transparent; color:#38ef7d; border:none; outline:none; font-family:monospace; font-size:14px;" onkeydown="GemiOS.handleTerm(event, ${pid}, this)"></div>`,
-            onLaunch: (pid) => { GemiOS.termStates[pid] = \`C:/Users/\${GemiOS.user}\`; setTimeout(()=>document.getElementById(\`t-in-\${pid}\`).focus(),100); }
+            onLaunch: (pid) => { GemiOS.termStates[pid] = 'C:/Users/' + GemiOS.user; setTimeout(()=>document.getElementById('t-in-'+pid).focus(),100); }
         },
         'sys_drive': {
             icon: '🗂️', title: 'Explorer 2.0', width: 520,
             html: (pid) => `<div class="sys-card" style="display:flex; gap:10px; align-items:center; background:rgba(0,120,215,0.2);"><button onclick="GemiOS.navDrive(${pid}, 'UP')" class="btn-sec" style="width:auto; margin:0; padding:5px 10px; border-color:#0078d7;">⬆️ Up</button><input type="text" id="d-path-${pid}" value="C:/" disabled style="flex-grow:1; background:transparent; color:inherit; border:none; font-weight:bold; font-size:14px; outline:none;"></div><div id="d-list-${pid}" style="max-height:300px; min-height:200px; overflow-y:auto; display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;"></div>`,
-            onLaunch: (pid) => { GemiOS.driveStates[pid] = \`C:/Users/\${GemiOS.user}\`; GemiOS.renderDrive(pid); }
+            onLaunch: (pid) => { GemiOS.driveStates[pid] = 'C:/Users/' + GemiOS.user; GemiOS.renderDrive(pid); }
         },
         'sys_set': {
             icon: '⚙️', title: 'System Settings', width: 420,
@@ -157,11 +157,11 @@ else {
         },
         'sys_update': {
             icon: '☁️', title: 'Cloud Updater', width: 380,
-            html: () => `<div class="sys-card" style="text-align:center;"><div style="font-size:40px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">☁️</div><h3 style="margin:5px 0;">GitHub Update Center</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v27.0.1-CLOUD</b></p><div id="upd-stat" style="font-size:12px; min-height:15px;"></div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary" style="margin-top:10px;">Check for Cloud Updates</button></div>`
+            html: () => `<div class="sys-card" style="text-align:center;"><div style="font-size:40px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">☁️</div><h3 style="margin:5px 0;">GitHub Update Center</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v27.0.2-STABLE</b></p><div id="upd-stat" style="font-size:12px; min-height:15px;"></div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary" style="margin-top:10px;">Check for Cloud Updates</button></div>`
         },
         'sys_time': {
             icon: '⏳', title: 'Time Machine', width: 360,
-            html: () => `<div style="text-align:center; font-size:45px; margin-bottom:15px; filter:drop-shadow(0 5px 10px rgba(0,0,0,0.3));">⏳</div><p style="text-align:center; font-size:12px; margin-top:0;">Boot into historical code.</p><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v1'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v1.0 (Web Sim)</button><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v10'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v10.0 (Start Menu)</button><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v20'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v20.0 (Pure System)</button><button onclick="location.reload();" class="btn-primary">Stay on v27.0.1</button>`
+            html: () => `<div style="text-align:center; font-size:45px; margin-bottom:15px; filter:drop-shadow(0 5px 10px rgba(0,0,0,0.3));">⏳</div><p style="text-align:center; font-size:12px; margin-top:0;">Boot into historical code.</p><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v1'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v1.0 (Web Sim)</button><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v10'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v10.0 (Start Menu)</button><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v20'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v20.0 (Pure System)</button><button onclick="location.reload();" class="btn-primary">Stay on v27.0.2</button>`
         },
         'sys_task': {
             icon: '📊', title: 'System Monitor', width: 450,
@@ -198,13 +198,14 @@ else {
         'sys_log': {
             icon: '📋', title: 'Chronicles', width: 500,
             html: () => `<div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
-                <div class="sys-card" style="border-left:4px solid #38ef7d;"><b>v27.0.1 (Cloud Immersion)</b> - Completely eradicated parser bugs using Base64 encryption. Re-enforced strict GitHub Cloud OTA architecture.</div>
+                <div class="sys-card" style="border-left:4px solid #38ef7d;"><b>v27.0.2 (Ultimate Stable)</b> - Re-written template strings to eradicate index file syntax crashes.</div>
+                <div class="sys-card"><b>v27.0.1 (Cloud Engine)</b> - Virtual Blob Injection enabled to bypass GitHub MIME blocks.</div>
                 <div class="sys-card"><b>v27.0.0 (Immersion)</b> - Multi-User Login. GemiChat LAN. GemiCraft World Saving. Themed Accents. Draggable Icons. GemiVoice 2.0</div>
                 <div class="sys-card"><b>v26.5.1 (Terraria Hotfix)</b> - Deepened GemiCraft world gen. Added Toast Notifications. Official User Copyright.</div>
-                <div class="sys-card"><b>v26.5.0 (Copyright Update)</b> - Added global DRM watermarks and Bootloader licensing.</div>
                 <div class="sys-card"><b>v26.4.0 (Reality Bridge)</b> - Native Drag & Drop file imports. Added GemiAmp.</div>
                 <div class="sys-card"><b>v26.3.0 (Game Engine)</b> - Introduced Custom 2D Physics Engine. Added GemiCraft.</div>
                 <div class="sys-card"><b>v26.2.0 (Workflow)</b> - Added Aero Snap, GemiWord, and GemiVoice TTS.</div>
+                <div class="sys-card"><b>v25.0.0 (TreeFS)</b> - Architectural rewrite to hierarchical file system.</div>
                 <div class="sys-card"><b>v1.0 (Legacy Web Sim)</b> - The True Original.</div>
             </div>`
         },
@@ -238,9 +239,9 @@ else {
             icon: '🖼️', title: 'Gallery Viewer', width: 550,
             html: (pid, fileData) => {
                 if(fileData) return `<div style="text-align:center;"><img src="${fileData}" style="max-width:100%; max-height:400px; border-radius:6px; box-shadow:0 5px 15px rgba(0,0,0,0.5);"></div>`;
-                let pics = GemiOS.VFS.getDir(\`C:/Users/\${GemiOS.user}/Pictures\`) || {}; let h = '';
+                let pics = GemiOS.VFS.getDir('C:/Users/' + GemiOS.user + '/Pictures') || {}; let h = '';
                 for(let p in pics) { h += `<img src="${pics[p]}" style="width:100%; border-radius:6px; margin-bottom:15px; border:1px solid rgba(255,255,255,0.2);">`; }
-                if(h === '') h = \`<div style="text-align:center; padding:40px; opacity:0.5; font-size:18px;">No photos found for \${GemiOS.user}.</div>\`;
+                if(h === '') h = '<div style="text-align:center; padding:40px; opacity:0.5; font-size:18px;">No photos found for ' + GemiOS.user + '.</div>';
                 return `<div style="max-height:450px; overflow-y:auto; padding-right:5px; padding-bottom:15px;">${h}</div>`;
             }
         },
@@ -264,14 +265,14 @@ else {
         'app_code': {
             icon: '&lt;/&gt;', title: 'GemiCode IDE', width: 800,
             html: (pid) => {
-                let def = "<html>\\n<body style='color:white; font-family:sans-serif;'>\\n  <h2>Live Preview!</h2>\\n</body>\\n</html>";
+                let def = "<html>\n<body style='color:white; font-family:sans-serif;'>\n  <h2>Live Preview!</h2>\n</body>\n</html>";
                 return `<div style="display:flex; height:400px; gap:10px;"><textarea id="ide-in-${pid}" oninput="document.getElementById('ide-out-${pid}').srcdoc=this.value" style="flex:1; background:#1e1e1e; color:#d4d4d4; font-family:monospace; padding:10px; border:none; border-radius:6px; resize:none; outline:none;" spellcheck="false">${def}</textarea><iframe id="ide-out-${pid}" style="flex:1; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.2); border-radius:6px;" srcdoc="${def}"></iframe></div>`;
             }
         },
         'app_word': {
             icon: '📄', title: 'GemiWord', width: 500,
             html: (pid, fileData) => {
-                let saved = fileData || GemiOS.VFS.read(\`C:/Users/\${GemiOS.user}/Documents\`, 'document.rtf') || 'Start typing a rich text document...';
+                let saved = fileData || GemiOS.VFS.read('C:/Users/' + GemiOS.user + '/Documents', 'document.rtf') || 'Start typing a rich text document...';
                 return `
                 <div style="display:flex; gap:5px; margin-bottom:10px; background:rgba(0,0,0,0.2); padding:8px; border-radius:6px;">
                     <button onclick="document.execCommand('bold')" class="btn-sec" style="width:auto; margin:0; padding:4px 10px; font-weight:bold;">B</button>
@@ -281,14 +282,14 @@ else {
                     <button onclick="document.execCommand('justifyLeft')" class="btn-sec" style="width:auto; margin:0; padding:4px 10px;">Left</button>
                     <button onclick="document.execCommand('justifyCenter')" class="btn-sec" style="width:auto; margin:0; padding:4px 10px;">Center</button>
                 </div>
-                <div id="word-ed-${pid}" contenteditable="true" style="background:#fff; color:#000; height:300px; padding:15px; border-radius:6px; outline:none; overflow-y:auto; box-shadow:inset 0 2px 5px rgba(0,0,0,0.1);" oninput="GemiOS.VFS.write('C:/Users/${GemiOS.user}/Documents', 'document.rtf', this.innerHTML)">${saved}</div>
+                <div id="word-ed-${pid}" contenteditable="true" style="background:#fff; color:#000; height:300px; padding:15px; border-radius:6px; outline:none; overflow-y:auto; box-shadow:inset 0 2px 5px rgba(0,0,0,0.1);" oninput="GemiOS.VFS.write('C:/Users/' + GemiOS.user + '/Documents', 'document.rtf', this.innerHTML)">${saved}</div>
                 `;
             }
         },
         'app_voice': {
             icon: '🗣️', title: 'GemiVoice 2.0 TTS', width: 450,
             html: (pid) => {
-                let defaultText = "Welcome to GemiOS Version 27, The Cloud Immersion Update. What began as a simple web simulator has evolved into a fully-fledged operating system ecosystem. We built a hierarchical Virtual File System, integrated real-world hardware, and engineered a custom physics engine from scratch. We conquered the Reality Bridge, and now, we have mastered true immersion. Every line of code represents the ultimate partnership between human ingenuity and artificial intelligence. Copyright 2026, Username is taken and not avaliable, and Gemini. The boundaries of the browser have been broken.";
+                let defaultText = "Welcome to GemiOS Version 27. What began as a simple web simulator has evolved into a fully-fledged operating system ecosystem. We built a hierarchical Virtual File System, integrated real-world hardware, and engineered a custom physics engine from scratch. We conquered the Reality Bridge, and now, we have mastered true immersion. Every line of code represents the ultimate partnership between human ingenuity and artificial intelligence. Copyright 2026, Username is taken and not avaliable, and Gemini. The boundaries of the browser have been broken.";
                 return `
                 <div class="sys-card" style="margin-bottom:15px; display:flex; gap:10px; align-items:center;">
                     <span>Voice:</span>
@@ -313,7 +314,7 @@ else {
         },
         'app_note': {
             icon: '📝', title: 'Notepad', width: 400,
-            html: (pid, fileData) => `<textarea oninput="GemiOS.VFS.write('C:/Users/${GemiOS.user}/Documents', 'note.txt', this.value)" style="width:100%; height:300px; box-sizing:border-box; resize:none; border:none; border-radius:6px; padding:15px; font-family:'Inter', sans-serif; font-size:14px; outline:none; background:rgba(255,255,255,0.9); color:black;">${fileData || GemiOS.VFS.read(\`C:/Users/\${GemiOS.user}/Documents\`, 'note.txt') || ''}</textarea>`
+            html: (pid, fileData) => `<textarea oninput="GemiOS.VFS.write('C:/Users/' + GemiOS.user + '/Documents', 'note.txt', this.value)" style="width:100%; height:300px; box-sizing:border-box; resize:none; border:none; border-radius:6px; padding:15px; font-family:'Inter', sans-serif; font-size:14px; outline:none; background:rgba(255,255,255,0.9); color:black;">${fileData || GemiOS.VFS.read('C:/Users/' + GemiOS.user + '/Documents', 'note.txt') || ''}</textarea>`
         },
         'app_calc': {
             icon: '🧮', title: 'Calculator Pro', width: 260,
@@ -535,7 +536,7 @@ else {
         }
         
         patchDesktopData() {
-            let desk = this.VFS.getDir(\`C:/Users/\${this.user}/Desktop\`, true);
+            let desk = this.VFS.getDir('C:/Users/' + this.user + '/Desktop', true);
             let appsToLoad = {
                 'Explorer.app': 'sys_drive', 'TaskMgr.app': 'sys_task', 'Updater.app': 'sys_update',
                 'Chronicles.app': 'sys_log', 'TimeMach.app': 'sys_time', 'Settings.app': 'sys_set',
@@ -546,7 +547,7 @@ else {
                 'Paint.app': 'app_paint', 'Synth.app': 'app_synth', 'Snake.app': 'app_snake', 
                 'Sweeper.app': 'app_sweeper', 'TicTac.app': 'app_ttt', 'GemiCraft.app': 'app_craft'
             };
-            for(let a in appsToLoad) { if(!desk[a]) this.VFS.write(\`C:/Users/\${this.user}/Desktop\`, a, appsToLoad[a]); }
+            for(let a in appsToLoad) { if(!desk[a]) this.VFS.write('C:/Users/' + this.user + '/Desktop', a, appsToLoad[a]); }
         }
         
         runBootSequence() {
@@ -556,7 +557,7 @@ else {
                 </div>
             `;
             let logs = [
-                "GemiOS BIOS v7.1", "Initializing Multi-User Subsystem...", "Mounting Drag & Drop Interceptors... OK", 
+                "GemiOS BIOS v7.2", "Initializing Multi-User Subsystem...", "Mounting Drag & Drop Interceptors... OK", 
                 "Loading DRM and Copyright Modules... OK", "Initializing GemiChat LAN Network... OK",
                 "Restoring Full Ecosystem (24 Apps)... OK", "Starting GemiOS Display Manager..."
             ];
@@ -674,7 +675,7 @@ else {
                 
                 let reader = new FileReader();
                 reader.onload = (event) => {
-                    this.VFS.write(\`C:/Users/\${this.user}/Downloads\`, file.name, event.target.result);
+                    this.VFS.write('C:/Users/' + this.user + '/Downloads', file.name, event.target.result);
                     this.notify("Reality Bridge Success", `Imported ${file.name} to Downloads.`);
                     for(let pid in this.driveStates) { this.renderDrive(pid); }
                 };
@@ -694,8 +695,8 @@ else {
         }
 
         renderDesktopIcons() {
-            let desk = this.VFS.getDir(\`C:/Users/\${this.user}/Desktop\`);
-            let layoutData = this.VFS.read(\`C:/Users/\${this.user}/Desktop\`, '.layout') || "{}";
+            let desk = this.VFS.getDir('C:/Users/' + this.user + '/Desktop');
+            let layoutData = this.VFS.read('C:/Users/' + this.user + '/Desktop', '.layout') || "{}";
             let layout = JSON.parse(layoutData);
             
             let html = ''; let i = 0;
@@ -720,10 +721,10 @@ else {
             document.onmousemove = (ev) => { el.style.left = (ev.clientX - ox) + 'px'; el.style.top = (ev.clientY - oy) + 'px'; };
             document.onmouseup = () => {
                 document.onmousemove = null; document.onmouseup = null;
-                let layoutData = this.VFS.read(\`C:/Users/\${this.user}/Desktop\`, '.layout') || "{}";
+                let layoutData = this.VFS.read('C:/Users/' + this.user + '/Desktop', '.layout') || "{}";
                 let layout = JSON.parse(layoutData);
                 layout[filename] = { top: el.style.top, left: el.style.left };
-                this.VFS.write(\`C:/Users/\${this.user}/Desktop\`, '.layout', JSON.stringify(layout));
+                this.VFS.write('C:/Users/' + this.user + '/Desktop', '.layout', JSON.stringify(layout));
             };
         }
 
@@ -735,7 +736,7 @@ else {
             c.getContext('2d').drawImage(v, 0, 0);
             let data = c.toDataURL('image/jpeg');
             let name = 'Photo_' + new Date().getTime() + '.jpg';
-            this.VFS.write(\`C:/Users/\${this.user}/Pictures\`, name, data);
+            this.VFS.write('C:/Users/' + this.user + '/Pictures', name, data);
             this.notify("Photo Captured", `Saved to Pictures/${name}`);
         }
 
@@ -771,12 +772,12 @@ else {
 
         saveCraft() {
             if(this.craftWorld) {
-                this.VFS.write(\`C:/Users/\${this.user}/Documents\`, 'world.dat', JSON.stringify(this.craftWorld));
+                this.VFS.write('C:/Users/' + this.user + '/Documents', 'world.dat', JSON.stringify(this.craftWorld));
                 this.notify("GemiCraft", "World saved to Documents/world.dat");
             }
         }
         loadCraft() {
-            let data = this.VFS.read(\`C:/Users/\${this.user}/Documents\`, 'world.dat');
+            let data = this.VFS.read('C:/Users/' + this.user + '/Documents', 'world.dat');
             if(data) { this.craftWorld = JSON.parse(data); this.notify("GemiCraft", "World loaded successfully!"); } 
             else { this.notify("GemiCraft", "No saved world found.", false); }
         }
@@ -797,12 +798,11 @@ else {
             let st = document.getElementById('upd-stat'); st.innerText = 'Fetching version.json...';
             try {
                 let cb = "?t=" + new Date().getTime();
-                // FORCED GITHUB ENDPOINT FOR TRUE CLOUD UPDATES
                 let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/version.json" + cb);
                 if (!r.ok) throw new Error("GitHub server unreachable.");
                 let d = await r.json();
                 
-                if (d.version !== "27.0.1-CLOUD") {
+                if (d.version !== "27.0.2-STABLE") {
                     st.innerHTML = `<span style="color:#ffeb3b">New Version Found: ${d.version}</span><br><i>${d.notes}</i>`;
                     btn.innerText = 'Emulate Live Install'; btn.style.background = '#ff00cc'; 
                     btn.onclick = async () => {
@@ -1017,7 +1017,7 @@ else {
                         <div style="display:flex; align-items:center; gap:20px; margin-right:10px;">
                             <div style="font-weight:600; font-size:10px; opacity:0.5; margin-right:10px;">© 2026 Usernameistakenandnotavaliable & Gemini</div>
                             <div onclick="GemiOS.toggleTheme()" style="cursor:pointer; font-size:20px;" title="Toggle Theme">🌓</div>
-                            <div style="font-weight:600; font-size:12px; background:rgba(255, 255, 255, 0.2); color:white; padding:4px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.4);">v27.0.1 CLOUD</div>
+                            <div style="font-weight:600; font-size:12px; background:rgba(255, 255, 255, 0.2); color:white; padding:4px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.4);">v27.0.2 CLOUD</div>
                             <div id="clock" style="font-weight:600; font-size:14px; letter-spacing:1px;">12:00</div>
                         </div>
                     </div>
