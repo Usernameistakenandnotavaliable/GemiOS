@@ -1,4 +1,4 @@
 {
-  "version": "26.4.1-AUDIO",
-  "notes": "The Audio Ecosystem Hotfix. Replaced abrupt reloads with a procedural WebAudio API Startup Chime and a soft-fade Shutdown sequence."
+  "version": "26.4.2-PATCH",
+  "notes": "Emergency Connectivity & Syntax Patch. Hardened legacy archive scripts. Forced OTA connection to GitHub servers. Restored all missing Core functions."
 }
