@@ -1,4 +1,4 @@
 {
-  "version": "27.0.2-STABLE",
-  "notes": "Eradicated template literal syntax bug causing the Blob parser to crash. System is now fully stabilized on the Cloud Architecture."
+  "version": "27.1.0-AESTHETIC",
+  "notes": "The Aesthetic Update. Replaced text BIOS with a Graphical Boot Screen and Cinematic Shutdown. Replaced Taskbar with a centered Glass Dock. Overhauled CSS animations and UI design language."
 }
