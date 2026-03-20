@@ -1,4 +1,4 @@
 {
-  "version": "27.3.0-PERFORMANCE",
-  "notes": "The Performance & NVRAM Update. Added Hyper-Boot for zero-latency startups. Implemented a strict 50KB Virtual Disk quota with live Explorer monitoring. Added the GemiDisk Storage Utility."
+  "version": "27.4.0-SCIENCE",
+  "notes": "The Science & Telemetry Update. Added the live GemiScience physics and mathematics sandbox. Fixed Explorer 2.0 real-time NVRAM progress bar tracking."
 }
