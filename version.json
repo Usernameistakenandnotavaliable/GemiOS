@@ -1,4 +1,4 @@
 {
-  "version": "26.0.0-HARDWARE",
-  "notes": "The Hardware Update. Added WebRTC GemiCam integration, GemiView Photo Gallery, and a completely dynamic TreeFS Desktop Engine."
+  "version": "26.1.0-TIMEMACHINE",
+  "notes": "Expanded Time Machine to include legacy v10.0 (The Architecture Era) and v20.0 (The Pure System) kernels."
 }
