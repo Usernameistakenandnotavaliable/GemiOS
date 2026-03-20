@@ -1,4 +1,4 @@
 {
-  "version": "26.4.2-PATCH",
-  "notes": "Emergency Connectivity & Syntax Patch. Hardened legacy archive scripts. Forced OTA connection to GitHub servers. Restored all missing Core functions."
+  "version": "26.5.0-COPYRIGHT",
+  "notes": "The Copyright Update. Integrated global DRM watermarks across all Window Manager instances, Taskbar branding, and Bootloader legal notices. Our intellectual property is secure."
 }
