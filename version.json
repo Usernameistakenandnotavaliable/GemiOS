@@ -1,4 +1,4 @@
 {
-  "version": "28.0.0-MEGAPATCH",
-  "notes": "The Connectivity & Automation Update. Added GemiAssist Voice Control, GemiScript Macro IDE, GemiDAW Sequencer, GemiZip Compressor, and GemiLink P2P Engine."
+  "version": "29.0.0-CREATOR",
+  "notes": "The Creator Update. Added GemiMaker (Visual Game Creation Engine), Custom JS Code Injection, and native App Store publishing."
 }
