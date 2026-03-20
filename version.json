@@ -1,4 +1,4 @@
 {
-  "version": "26.1.0-TIMEMACHINE",
-  "notes": "Expanded Time Machine to include legacy v10.0 (The Architecture Era) and v20.0 (The Pure System) kernels."
+  "version": "26.1.1-HOTFIX",
+  "notes": "Fixed premature script termination in legacy code. Reconnected Cloud OTA Updater. All 19 apps restored to Desktop."
 }
