@@ -1,5 +1,5 @@
 // =========================================================================
-// GemiOS CLOUD HYPERVISOR - v27.0.2 (THE ULTIMATE SYNTAX PATCH)
+// GemiOS CLOUD HYPERVISOR - v27.1.0 (THE AESTHETIC UPDATE)
 // =========================================================================
 
 const bootVersion = localStorage.getItem('GemiOS_TargetVersion') || 'v27';
@@ -11,7 +11,7 @@ else if (bootVersion === 'v10') { document.open(); document.write(atob('PCFET0NU
 else if (bootVersion === 'v20') { document.open(); document.write(atob('PCFET0NUWVBFIGh0bWw+PGh0bWw+PGhlYWQ+PHRpdGxlPkdlbWlPUyB2MjA8L3RpdGxlPjxzdHlsZT5ib2R5e2JhY2tncm91bmQ6IzAwMDtjb2xvcjojMGYwO2ZvbnQtZmFtaWx5Om1vbm9zcGFjZTtwYWRkaW5nOjUwcHg7fTwvc3R5bGU+PC9oZWFkPjxib2R5PjxoMj5bR2VtaU9TIFBVUkUgS0VSTkVMIHYyMF08L2gyPjxidXR0b24gb25jbGljaz0ibG9jYWxTdG9yYWdlLnNldEl0ZW0oJ0dlbWlPU19UYXJnZXRWZXJzaW9uJywndjI3Jyk7bG9jYXRpb24ucmVsb2FkKCkiIHN0eWxlPSJjb2xvcjojZjBmO2JhY2tncm91bmQ6YmxhY2s7Ym9yZGVyOjFweCBzb2xpZCAjZjBmO3BhZGRpbmc6MTBweDsiPkhvdHN3YXAgdG8gdjI3PC9idXR0b24+PC9ib2R5PjwvaHRtbD4=')); document.close(); }
 else {
     // =====================================================================
-    // KERNEL 4: GEMIOS v27.0.2 TITANIUM (THE IMMERSION UPDATE)
+    // KERNEL 4: GEMIOS v27.1 TITANIUM (THE AESTHETIC UPDATE)
     // =====================================================================
     
     class VirtualFileSystem {
@@ -84,37 +84,43 @@ else {
             let ox = e.clientX - w.offsetLeft; let oy = e.clientY - w.offsetTop;
             this.focus(wid); w.style.transition = 'none';
             document.onmousemove = (ev) => { w.style.left = (ev.clientX - ox) + 'px'; w.style.top = Math.max(0, ev.clientY - oy) + 'px'; };
-            document.onmouseup = () => { document.onmousemove = null; w.style.transition = 'width 0.3s, height 0.3s, top 0.3s, left 0.3s, background 0.3s, color 0.3s'; document.onmouseup = null; };
+            document.onmouseup = () => { document.onmousemove = null; w.style.transition = 'width 0.3s, height 0.3s, top 0.3s, left 0.3s, background 0.3s, color 0.3s, transform 0.3s'; document.onmouseup = null; };
         }
         maximize(wid) {
             let w = document.getElementById(wid); if(!w) return;
             if(w.dataset.maximized === "true") { 
-                w.style.top = w.dataset.pT; w.style.left = w.dataset.pL; w.style.width = w.dataset.pW; w.style.height = w.dataset.pH; w.dataset.maximized = "false"; 
+                w.style.top = w.dataset.pT; w.style.left = w.dataset.pL; w.style.width = w.dataset.pW; w.style.height = w.dataset.pH; w.dataset.maximized = "false"; w.style.borderRadius = "12px";
             } else { 
                 w.dataset.pT = w.style.top; w.dataset.pL = w.style.left; w.dataset.pW = w.style.width; w.dataset.pH = w.style.height; 
-                w.style.top = "0px"; w.style.left = "0px"; w.style.width = "100vw"; w.style.height = "calc(100vh - 50px)"; w.dataset.maximized = "true"; 
+                w.style.top = "0px"; w.style.left = "0px"; w.style.width = "100vw"; w.style.height = "calc(100vh - 60px)"; w.dataset.maximized = "true"; w.style.borderRadius = "0px";
             }
         }
         snap(wid, side) {
             let w = document.getElementById(wid); if(!w) return;
             if(w.dataset.maximized === "false") { w.dataset.pT = w.style.top; w.style.left = w.style.left; w.dataset.pW = w.style.width; w.dataset.pH = w.style.height; }
-            w.style.top = "0px"; w.style.height = "calc(100vh - 50px)"; w.style.width = "50vw";
+            w.style.top = "0px"; w.style.height = "calc(100vh - 60px)"; w.style.width = "50vw"; w.style.borderRadius = "0px";
             if (side === 'left') { w.style.left = "0px"; } else { w.style.left = "50vw"; }
             w.dataset.maximized = "true"; this.focus(wid);
         }
         minimize(wid, pid) {
             let w = document.getElementById(wid); if(!w) return;
-            if(w.style.display === 'none') { w.style.display = 'flex'; this.focus(wid); document.getElementById('tb-item-'+pid).style.opacity = '1'; } 
-            else { w.style.display = 'none'; document.getElementById('tb-item-'+pid).style.opacity = '0.5'; }
+            if(w.style.opacity === '0') { 
+                w.style.opacity = '1'; w.style.transform = 'scale(1) translateY(0)'; w.style.pointerEvents = 'auto';
+                this.focus(wid); document.getElementById('tb-item-'+pid).classList.add('active'); 
+            } else { 
+                w.style.opacity = '0'; w.style.transform = 'scale(0.9) translateY(20px)'; w.style.pointerEvents = 'none';
+                document.getElementById('tb-item-'+pid).classList.remove('active'); 
+            }
         }
-        updateTaskbar(pid, title) { document.getElementById('taskbar-apps').innerHTML += `<div id="tb-item-${pid}" class="tb-item" onclick="GemiOS.WM.minimize('win_${pid}', '${pid}')">${title.substring(0,8)}</div>`; }
+        updateTaskbar(pid, title) { document.getElementById('taskbar-apps').innerHTML += `<div id="tb-item-${pid}" class="tb-item active" onclick="GemiOS.WM.minimize('win_${pid}', '${pid}')">${title.substring(0,8)}</div>`; }
         removeWindow(pid) { if(this.windows[pid]) { this.windows[pid].remove(); delete this.windows[pid]; } let tbItem = document.getElementById('tb-item-'+pid); if(tbItem) tbItem.remove(); }
     }
 
     class ProcessManager {
         constructor() { this.processes = {}; this.pidCounter = 1000; }
         launch(appId, fileData = null) {
-            document.getElementById('start-menu').style.display = 'none';
+            let sm = document.getElementById('start-menu');
+            if (sm) sm.classList.remove('open');
             if(!GemiOS.Registry[appId]) return;
             let pid = ++this.pidCounter; let app = GemiOS.Registry[appId];
             this.processes[pid] = { id: appId, title: app.title };
@@ -125,7 +131,15 @@ else {
             if(!this.processes[pid]) return;
             let appId = this.processes[pid].id;
             if(GemiOS.Registry[appId].onKill) GemiOS.Registry[appId].onKill(pid);
-            GemiOS.WM.removeWindow(pid); delete this.processes[pid];
+            
+            // Add fade out animation before removing
+            let w = document.getElementById('win_' + pid);
+            if(w) {
+                w.style.opacity = '0'; w.style.transform = 'scale(0.9)';
+                setTimeout(() => { GemiOS.WM.removeWindow(pid); delete this.processes[pid]; }, 200);
+            } else {
+                GemiOS.WM.removeWindow(pid); delete this.processes[pid];
+            }
         }
     }
 
@@ -150,6 +164,7 @@ else {
                         <div onclick="localStorage.setItem('GemiOS_Accent', '#ff00cc'); location.reload();" style="width:30px; height:30px; border-radius:50%; background:#ff00cc; cursor:pointer;"></div>
                         <div onclick="localStorage.setItem('GemiOS_Accent', '#38ef7d'); location.reload();" style="width:30px; height:30px; border-radius:50%; background:#38ef7d; cursor:pointer;"></div>
                         <div onclick="localStorage.setItem('GemiOS_Accent', '#ff4d4d'); location.reload();" style="width:30px; height:30px; border-radius:50%; background:#ff4d4d; cursor:pointer;"></div>
+                        <div onclick="localStorage.setItem('GemiOS_Accent', '#ffb400'); location.reload();" style="width:30px; height:30px; border-radius:50%; background:#ffb400; cursor:pointer;"></div>
                     </div>
                 </div>
                 <button onclick="localStorage.removeItem('GemiOS_Wall'); localStorage.removeItem('GemiOS_Accent'); location.reload();" class="btn-sec">Reset Defaults</button>
@@ -157,11 +172,11 @@ else {
         },
         'sys_update': {
             icon: '☁️', title: 'Cloud Updater', width: 380,
-            html: () => `<div class="sys-card" style="text-align:center;"><div style="font-size:40px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">☁️</div><h3 style="margin:5px 0;">GitHub Update Center</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v27.0.2-STABLE</b></p><div id="upd-stat" style="font-size:12px; min-height:15px;"></div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary" style="margin-top:10px;">Check for Cloud Updates</button></div>`
+            html: () => `<div class="sys-card" style="text-align:center;"><div style="font-size:40px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">☁️</div><h3 style="margin:5px 0;">GitHub Update Center</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v27.1.0-AESTHETIC</b></p><div id="upd-stat" style="font-size:12px; min-height:15px;"></div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary" style="margin-top:10px;">Check for Cloud Updates</button></div>`
         },
         'sys_time': {
             icon: '⏳', title: 'Time Machine', width: 360,
-            html: () => `<div style="text-align:center; font-size:45px; margin-bottom:15px; filter:drop-shadow(0 5px 10px rgba(0,0,0,0.3));">⏳</div><p style="text-align:center; font-size:12px; margin-top:0;">Boot into historical code.</p><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v1'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v1.0 (Web Sim)</button><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v10'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v10.0 (Start Menu)</button><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v20'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v20.0 (Pure System)</button><button onclick="location.reload();" class="btn-primary">Stay on v27.0.2</button>`
+            html: () => `<div style="text-align:center; font-size:45px; margin-bottom:15px; filter:drop-shadow(0 5px 10px rgba(0,0,0,0.3));">⏳</div><p style="text-align:center; font-size:12px; margin-top:0;">Boot into historical code.</p><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v1'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v1.0 (Web Sim)</button><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v10'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v10.0 (Start Menu)</button><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v20'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v20.0 (Pure System)</button><button onclick="location.reload();" class="btn-primary">Stay on v27.1</button>`
         },
         'sys_task': {
             icon: '📊', title: 'System Monitor', width: 450,
@@ -198,14 +213,14 @@ else {
         'sys_log': {
             icon: '📋', title: 'Chronicles', width: 500,
             html: () => `<div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
-                <div class="sys-card" style="border-left:4px solid #38ef7d;"><b>v27.0.2 (Ultimate Stable)</b> - Re-written template strings to eradicate index file syntax crashes.</div>
+                <div class="sys-card" style="border-left:4px solid #38ef7d;"><b>v27.1.0 (Aesthetic)</b> - Graphical Boot/Shutdown. Modern Glass Dock. Smoothed Animations.</div>
+                <div class="sys-card"><b>v27.0.2 (Ultimate Stable)</b> - Re-written template strings to eradicate index file syntax crashes.</div>
                 <div class="sys-card"><b>v27.0.1 (Cloud Engine)</b> - Virtual Blob Injection enabled to bypass GitHub MIME blocks.</div>
-                <div class="sys-card"><b>v27.0.0 (Immersion)</b> - Multi-User Login. GemiChat LAN. GemiCraft World Saving. Themed Accents. Draggable Icons. GemiVoice 2.0</div>
-                <div class="sys-card"><b>v26.5.1 (Terraria Hotfix)</b> - Deepened GemiCraft world gen. Added Toast Notifications. Official User Copyright.</div>
+                <div class="sys-card"><b>v27.0.0 (Immersion)</b> - Multi-User Login. GemiChat LAN. GemiCraft World Saving. Themed Accents.</div>
+                <div class="sys-card"><b>v26.5.1 (Terraria)</b> - Deepened GemiCraft world gen. Added Toast Notifications.</div>
                 <div class="sys-card"><b>v26.4.0 (Reality Bridge)</b> - Native Drag & Drop file imports. Added GemiAmp.</div>
                 <div class="sys-card"><b>v26.3.0 (Game Engine)</b> - Introduced Custom 2D Physics Engine. Added GemiCraft.</div>
                 <div class="sys-card"><b>v26.2.0 (Workflow)</b> - Added Aero Snap, GemiWord, and GemiVoice TTS.</div>
-                <div class="sys-card"><b>v25.0.0 (TreeFS)</b> - Architectural rewrite to hierarchical file system.</div>
                 <div class="sys-card"><b>v1.0 (Legacy Web Sim)</b> - The True Original.</div>
             </div>`
         },
@@ -289,7 +304,7 @@ else {
         'app_voice': {
             icon: '🗣️', title: 'GemiVoice 2.0 TTS', width: 450,
             html: (pid) => {
-                let defaultText = "Welcome to GemiOS Version 27. What began as a simple web simulator has evolved into a fully-fledged operating system ecosystem. We built a hierarchical Virtual File System, integrated real-world hardware, and engineered a custom physics engine from scratch. We conquered the Reality Bridge, and now, we have mastered true immersion. Every line of code represents the ultimate partnership between human ingenuity and artificial intelligence. Copyright 2026, Username is taken and not avaliable, and Gemini. The boundaries of the browser have been broken.";
+                let defaultText = "Welcome to GemiOS Version 27 point 1, The Aesthetic Update. What began as a simple web simulator has evolved into a beautiful, fully-fledged operating system ecosystem. We built a hierarchical Virtual File System, integrated real-world hardware, and engineered a custom physics engine from scratch. We conquered the Reality Bridge, and now, we have mastered true immersion with our new Graphical Boot Engine and Glass Dock. Every line of code represents the ultimate partnership between human ingenuity and artificial intelligence. Copyright 2026, Username is taken and not avaliable, and Gemini. The boundaries of the browser have been permanently broken.";
                 return `
                 <div class="sys-card" style="margin-bottom:15px; display:flex; gap:10px; align-items:center;">
                     <span>Voice:</span>
@@ -310,7 +325,7 @@ else {
         },
         'sys_browser': {
             icon: '🌐', title: 'Web Browser', width: 750,
-            html: (pid) => `<div style="display:flex; gap:8px; margin-bottom:10px;"><input type="text" id="b-url-${pid}" value="https://wikipedia.org" style="flex-grow:1; padding:8px 12px; border-radius:20px; border:none; outline:none; background:rgba(255,255,255,0.9); color:black; box-shadow:inset 0 2px 4px rgba(0,0,0,0.1);"><button onclick="document.getElementById('b-frame-${pid}').src=document.getElementById('b-url-${pid}').value" style="padding:8px 16px; border-radius:20px; border:none; background:#0078d7; color:white; font-weight:bold; cursor:pointer;">Go</button></div><iframe id="b-frame-${pid}" src="https://wikipedia.org" style="width:100%; height:450px; border:none; border-radius:8px; background:white; box-shadow:inset 0 2px 10px rgba(0,0,0,0.1);"></iframe>`
+            html: (pid) => `<div style="display:flex; gap:8px; margin-bottom:10px;"><input type="text" id="b-url-${pid}" value="https://wikipedia.org" style="flex-grow:1; padding:8px 12px; border-radius:20px; border:none; outline:none; background:rgba(255,255,255,0.9); color:black; box-shadow:inset 0 2px 4px rgba(0,0,0,0.1);"><button onclick="document.getElementById('b-frame-${pid}').src=document.getElementById('b-url-${pid}').value" style="padding:8px 16px; border-radius:20px; border:none; background:var(--accent); color:white; font-weight:bold; cursor:pointer;">Go</button></div><iframe id="b-frame-${pid}" src="https://wikipedia.org" style="width:100%; height:450px; border:none; border-radius:8px; background:white; box-shadow:inset 0 2px 10px rgba(0,0,0,0.1);"></iframe>`
         },
         'app_note': {
             icon: '📝', title: 'Notepad', width: 400,
@@ -471,7 +486,7 @@ else {
                     if(bX<0 || bX>380) { bX=190; bY=120; bDX=bDX>0?-4:4; bDY=(Math.random()-0.5)*4; }
                     cY += (bY-(cY+25))*0.1; cY = Math.max(0, Math.min(190, cY));
                     ctx.fillStyle='#0a0a0a'; ctx.fillRect(0,0,380,240);
-                    ctx.fillStyle='#4db8ff'; ctx.fillRect(5,pY,8,50); ctx.fillStyle='#ff4d4d'; ctx.fillRect(367,cY,8,50); 
+                    ctx.fillStyle='var(--accent)'; ctx.fillRect(5,pY,8,50); ctx.fillStyle='#ff4d4d'; ctx.fillRect(367,cY,8,50); 
                     ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(bX,bY,5,0,Math.PI*2); ctx.fill(); 
                 }, 30);
             }, 100); },
@@ -479,7 +494,7 @@ else {
         },
         'app_snake': {
             icon: '🐍', title: "Snake", width: 340,
-            html: (pid) => { let hs = localStorage.getItem('GemiOS_SnakeHS') || 0; return `<div style="text-align:center; margin-bottom:10px; font-weight:bold;">Score: <b id="sn-score-${pid}" style="color:#38ef7d;">0</b> | High: <b id="sn-hs-${pid}" style="color:#4db8ff;">${hs}</b></div><canvas id="sn-cvs-${pid}" width="300" height="300" style="background:#0a0a0a; display:block; margin:0 auto; border-radius:8px; box-shadow:inset 0 0 15px rgba(0,0,0,0.8);"></canvas>`; },
+            html: (pid) => { let hs = localStorage.getItem('GemiOS_SnakeHS') || 0; return `<div style="text-align:center; margin-bottom:10px; font-weight:bold;">Score: <b id="sn-score-${pid}" style="color:#38ef7d;">0</b> | High: <b id="sn-hs-${pid}" style="color:var(--accent);">${hs}</b></div><canvas id="sn-cvs-${pid}" width="300" height="300" style="background:#0a0a0a; display:block; margin:0 auto; border-radius:8px; box-shadow:inset 0 0 15px rgba(0,0,0,0.8);"></canvas>`; },
             onLaunch: (pid) => { setTimeout(() => {
                 let can = document.getElementById(`sn-cvs-${pid}`); if(!can) return; let ctx = can.getContext('2d');
                 let snake = [{x: 150, y: 150}], dx = 10, dy = 0, score = 0, food = {x: 50, y: 50};
@@ -550,42 +565,41 @@ else {
             for(let a in appsToLoad) { if(!desk[a]) this.VFS.write('C:/Users/' + this.user + '/Desktop', a, appsToLoad[a]); }
         }
         
+        // --- NEW GRAPHICAL BOOT SCREEN ---
         runBootSequence() {
             document.body.innerHTML = `
-                <div style="background:black; color:#ddd; font-family:monospace; height:100vh; width:100vw; padding:20px; box-sizing:border-box;" id="boot-screen">
-                    <div id="boot-logs"></div>
+                <div id="gui-boot" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#050505;display:flex;flex-direction:column;justify-content:center;align-items:center;color:white;z-index:999999;transition:opacity 0.8s ease;">
+                    <div style="font-size:90px; animation: float 3s ease-in-out infinite; filter:drop-shadow(0 0 25px var(--accent));">🌌</div>
+                    <h1 style="font-family:'Inter',sans-serif; font-weight:600; letter-spacing:6px; margin-top:20px; font-size:32px;">GemiOS<span style="color:var(--accent);">27</span></h1>
+                    <div style="margin-top:5px; font-family:monospace; font-size:12px; color:#666; letter-spacing:2px;">INITIATING KERNEL...</div>
+                    <div class="spinner" style="margin-top:40px;"></div>
                 </div>
             `;
-            let logs = [
-                "GemiOS BIOS v7.2", "Initializing Multi-User Subsystem...", "Mounting Drag & Drop Interceptors... OK", 
-                "Loading DRM and Copyright Modules... OK", "Initializing GemiChat LAN Network... OK",
-                "Restoring Full Ecosystem (24 Apps)... OK", "Starting GemiOS Display Manager..."
-            ];
-            let target = document.getElementById('boot-logs'); let i = 0;
-            let logItv = setInterval(() => {
-                if(i < logs.length) { target.innerHTML += '> ' + logs[i] + '<br>'; i++; } 
-                else { clearInterval(logItv); setTimeout(() => this.showLoginScreen(), 800); }
-            }, 300);
+            setTimeout(() => {
+                let bs = document.getElementById('gui-boot');
+                bs.style.opacity = '0';
+                setTimeout(() => this.showLoginScreen(), 800);
+            }, 3000); // 3 second graphical boot
         }
         
         showLoginScreen() {
+            this.loadWallpaper(); 
             document.body.innerHTML = `
-                <div id="desktop-bg" style="filter:blur(10px) brightness(0.7);"></div>
-                <div style="position:absolute; top:0; left:0; width:100vw; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; z-index:999;">
-                    <div style="font-size:70px; background:rgba(255,255,255,0.2); border-radius:50%; width:120px; height:120px; display:flex; justify-content:center; align-items:center; margin-bottom:20px; border:2px solid rgba(255,255,255,0.4); box-shadow:0 10px 25px rgba(0,0,0,0.5);">👥</div>
-                    <h2 style="margin:0 0 10px 0; font-size:28px;">Select User</h2>
-                    <div style="display:flex; gap:20px; margin-bottom:20px;">
-                        <div onclick="GemiOS.authenticate('Admin')" style="cursor:pointer; text-align:center; padding:15px 30px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); border-radius:12px; transition:0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
-                            <div style="font-size:30px;">👑</div><b>Admin</b>
+                <div id="desktop-bg" style="filter:blur(15px) brightness(0.6); transform:scale(1.05);"></div>
+                <div id="login-ui" style="position:absolute; top:0; left:0; width:100vw; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; z-index:999; animation: fadeIn 1s ease forwards;">
+                    <div style="font-size:70px; background:rgba(255,255,255,0.1); border-radius:50%; width:120px; height:120px; display:flex; justify-content:center; align-items:center; margin-bottom:20px; border:2px solid rgba(255,255,255,0.2); box-shadow:0 10px 30px rgba(0,0,0,0.5); backdrop-filter:blur(10px);">👥</div>
+                    <h2 style="margin:0 0 30px 0; font-size:28px; font-weight:500; letter-spacing:2px;">Select User</h2>
+                    <div style="display:flex; gap:25px; margin-bottom:20px;">
+                        <div onclick="GemiOS.authenticate('Admin')" style="cursor:pointer; text-align:center; padding:20px 40px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); border-radius:16px; transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); backdrop-filter:blur(10px);" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='var(--accent)';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(255,255,255,0.1)';">
+                            <div style="font-size:35px; margin-bottom:10px;">👑</div><b style="font-size:16px;">Admin</b>
                         </div>
-                        <div onclick="GemiOS.authenticate('Guest')" style="cursor:pointer; text-align:center; padding:15px 30px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); border-radius:12px; transition:0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
-                            <div style="font-size:30px;">👤</div><b>Guest</b>
+                        <div onclick="GemiOS.authenticate('Guest')" style="cursor:pointer; text-align:center; padding:20px 40px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); border-radius:16px; transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); backdrop-filter:blur(10px);" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='var(--accent)';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(255,255,255,0.1)';">
+                            <div style="font-size:35px; margin-bottom:10px;">👤</div><b style="font-size:16px;">Guest</b>
                         </div>
                     </div>
-                    <div style="position:absolute; bottom:20px; color:#aaa; font-size:12px; font-weight:bold; letter-spacing:1px; filter:drop-shadow(0 2px 2px rgba(0,0,0,0.8));">© 2026 Usernameistakenandnotavaliable & Gemini</div>
+                    <div style="position:absolute; bottom:30px; color:rgba(255,255,255,0.5); font-size:12px; font-weight:600; letter-spacing:1px;">© 2026 Usernameistakenandnotavaliable & Gemini</div>
                 </div>
             `;
-            this.loadWallpaper(); 
         }
 
         playStartupChime() {
@@ -605,6 +619,7 @@ else {
             });
         }
 
+        // --- CINEMATIC SHUTDOWN SCREEN ---
         playShutdownChime() {
             if(!this.actx) this.actx = new (window.AudioContext || window.webkitAudioContext)();
             if(this.actx.state === 'suspended') this.actx.resume();
@@ -621,30 +636,47 @@ else {
                 osc.stop(t + i * 0.2 + 1.0);
             });
         }
+
+        lockSystem() {
+            this.playShutdownChime();
+            
+            // Blur and fade everything
+            let bg = document.getElementById('desktop-bg');
+            if(bg) bg.style.filter = "blur(20px) grayscale(100%) brightness(0.2)";
+            
+            let overlay = document.createElement('div');
+            overlay.style.cssText = 'position:absolute;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);z-index:9999999;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 1s ease;pointer-events:none;color:white;font-family:sans-serif;';
+            overlay.innerHTML = `
+                <div class="spinner" style="margin-bottom:20px;"></div>
+                <div style="font-size:18px; letter-spacing:2px; font-weight:300;">Shutting down...</div>
+            `;
+            document.body.appendChild(overlay);
+            
+            setTimeout(() => { overlay.style.opacity = '1'; }, 50);
+            setTimeout(() => { sessionStorage.removeItem('GemiOS_Session'); location.reload(); }, 2000);
+        }
         
         authenticate(username) { 
+            let ui = document.getElementById('login-ui');
+            if(ui) {
+                ui.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                ui.style.opacity = '0';
+                ui.style.transform = 'scale(1.1)';
+            }
             this.user = username;
             this.patchDesktopData();
             this.playStartupChime(); 
             sessionStorage.setItem('GemiOS_Session', 'active'); 
             sessionStorage.setItem('GemiOS_User', username);
-            this.launchDesktop(); 
-        }
-
-        lockSystem() {
-            this.playShutdownChime();
-            let overlay = document.createElement('div');
-            overlay.style.cssText = 'position:absolute;top:0;left:0;width:100vw;height:100vh;background:black;z-index:9999999;opacity:0;transition:opacity 1.2s ease;pointer-events:none;';
-            document.body.appendChild(overlay);
-            setTimeout(() => { overlay.style.opacity = '1'; }, 50);
-            setTimeout(() => { sessionStorage.removeItem('GemiOS_Session'); location.reload(); }, 1300);
+            
+            setTimeout(() => { this.launchDesktop(); }, 500);
         }
 
         notify(title, message, isSuccess = true) {
             let container = document.getElementById('notif-container');
             if(!container) return;
             let icon = isSuccess ? '✅' : '🔔';
-            let color = isSuccess ? '#38ef7d' : '#4db8ff';
+            let color = isSuccess ? 'var(--accent)' : '#4db8ff';
             let n = document.createElement('div');
             n.className = 'gemi-notif';
             n.innerHTML = `<div style="font-size:20px;">${icon}</div><div><div style="font-weight:bold; color:${color}; margin-bottom:2px;">${title}</div><div style="font-size:12px; opacity:0.9;">${message}</div></div>`;
@@ -657,6 +689,10 @@ else {
         launchDesktop() {
             this.buildUI(); this.renderDesktopIcons(); this.applyTheme(); this.loadWallpaper(); this.startClock(); this.initContextMenu();
             this.initRealityBridge(); 
+            
+            // Remove blur from bg if returning from login
+            let bg = document.getElementById('desktop-bg');
+            if(bg) { bg.style.filter = "none"; bg.style.transform = "scale(1)"; }
             
             window.dragWidget = function(e, id) {
                 if(e.target.tagName === 'TEXTAREA') return; 
@@ -753,7 +789,7 @@ else {
             input.value = '';
             let log = localStorage.getItem('GemiChat_Log') || '';
             let time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-            log += `<div style="margin-bottom:5px;"><span style="color:#4db8ff">[${time}]</span> <b style="color:#38ef7d">${this.user}:</b> ${text}</div>`;
+            log += `<div style="margin-bottom:5px;"><span style="color:var(--accent)">[${time}]</span> <b style="color:white">${this.user}:</b> ${text}</div>`;
             localStorage.setItem('GemiChat_Log', log);
             this.updateChatBox(pid);
         }
@@ -788,9 +824,17 @@ else {
                     e.preventDefault();
                     let menu = document.getElementById('context-menu');
                     menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px';
+                    
+                    // Add blur scale animation
+                    menu.style.opacity = '0';
+                    menu.style.transform = 'scale(0.9)';
+                    setTimeout(() => { menu.style.opacity = '1'; menu.style.transform = 'scale(1)'; }, 10);
                 }
             });
-            document.body.addEventListener('click', () => { let cm = document.getElementById('context-menu'); if (cm) cm.style.display = 'none'; });
+            document.body.addEventListener('click', () => { 
+                let cm = document.getElementById('context-menu'); 
+                if (cm) { cm.style.opacity = '0'; setTimeout(()=> cm.style.display = 'none', 200); } 
+            });
         }
 
         async triggerOTA(btn) {
@@ -802,7 +846,7 @@ else {
                 if (!r.ok) throw new Error("GitHub server unreachable.");
                 let d = await r.json();
                 
-                if (d.version !== "27.0.2-STABLE") {
+                if (d.version !== "27.1.0-AESTHETIC") {
                     st.innerHTML = `<span style="color:#ffeb3b">New Version Found: ${d.version}</span><br><i>${d.notes}</i>`;
                     btn.innerText = 'Emulate Live Install'; btn.style.background = '#ff00cc'; 
                     btn.onclick = async () => {
@@ -852,13 +896,13 @@ else {
 
         playTTT(pid, i, btn) {
             let s = this.tttStates[pid]; if(!s.a || s.b[i] !== '') return;
-            s.b[i] = s.p; btn.innerText = s.p; btn.style.color = s.p==='X'?'#0078d7':'#ff4d4d'; btn.style.background = 'rgba(255,255,255,0.9)'; btn.style.boxShadow = 'none';
+            s.b[i] = s.p; btn.innerText = s.p; btn.style.color = s.p==='X'?'var(--accent)':'#ff4d4d'; btn.style.background = 'rgba(255,255,255,0.9)'; btn.style.boxShadow = 'none';
             const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
             let won = lines.some(l => s.b[l[0]] && s.b[l[0]]===s.b[l[1]] && s.b[l[0]]===s.b[l[2]]);
             let stat = document.getElementById(`ttt-stat-${pid}`);
             if(won) { stat.innerText = `${s.p} Wins!`; stat.style.color = "#38ef7d"; s.a = false; }
             else if(!s.b.includes('')) { stat.innerText = "Draw!"; stat.style.color = "white"; s.a = false; }
-            else { s.p = s.p === 'X' ? 'O' : 'X'; stat.innerText = `Player ${s.p} Turn`; stat.style.color = s.p==='X'?'#4db8ff':'#ff4d4d';}
+            else { s.p = s.p === 'X' ? 'O' : 'X'; stat.innerText = `Player ${s.p} Turn`; stat.style.color = s.p==='X'?'var(--accent)':'#ff4d4d';}
         }
 
         playNote(freq) {
@@ -876,85 +920,109 @@ else {
             if(accent) { document.documentElement.style.setProperty('--accent', accent); } 
             else { document.documentElement.style.setProperty('--accent', '#0078d7'); }
         }
-        toggleTheme() { let isL = localStorage.getItem('GemiOS_Theme') === 'light'; localStorage.setItem('GemiOS_Theme', !isL ? 'light' : 'dark'); this.applyTheme(); }
-        loadWallpaper() { let wp = localStorage.getItem('GemiOS_Wall'); if(wp) document.getElementById('desktop-bg').style.background = `url(${wp}) center/cover`; }
+        
+        toggleTheme() { 
+            let isL = localStorage.getItem('GemiOS_Theme') === 'light'; 
+            localStorage.setItem('GemiOS_Theme', !isL ? 'light' : 'dark'); 
+            this.applyTheme(); 
+        }
+        
+        loadWallpaper() { 
+            let wp = localStorage.getItem('GemiOS_Wall'); 
+            let bg = document.getElementById('desktop-bg');
+            if(wp && bg) {
+                bg.style.background = `url(${wp}) center/cover`; 
+            }
+        }
+        
         startClock() { setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); }, 1000); }
 
         injectStyles() {
             const s = document.createElement('style');
             s.textContent = `
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
                 :root { --accent: #0078d7; }
                 body { margin:0; overflow:hidden; background:linear-gradient(135deg, #0f2027, #203a43, #2c5364); font-family:'Inter', sans-serif; color:white; user-select:none; transition: background 0.6s ease, color 0.6s ease;}
                 body.light-mode { background: linear-gradient(135deg, #e0eafc, #cfdef3); color: #222; }
                 ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; } body.light-mode ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); }
                 
-                .win { position:absolute; background:rgba(20, 30, 40, 0.65); backdrop-filter: blur(25px) saturate(180%); -webkit-backdrop-filter: blur(25px) saturate(180%); color:white; border-radius:12px; box-shadow: 0 25px 50px rgba(0,0,0,0.5), inset 0 1px 1px var(--accent); border:1px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; transition: width 0.3s, height 0.3s, top 0.3s, left 0.3s; pointer-events:auto;}
-                @keyframes popIn { 0% { opacity: 0; transform: scale(0.95) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
-                body.light-mode .win { background: rgba(255,255,255,0.8); border: 1px solid var(--accent); color: #222; box-shadow: 0 25px 50px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.8); }
+                @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+                @keyframes spin { 100% { transform: rotate(360deg); } }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
                 
-                .title-bar { padding:10px 15px; font-weight:600; font-size: 14px; display:flex; justify-content:space-between; align-items: center; border-bottom:1px solid rgba(255,255,255,0.1); cursor:grab; }
-                body.light-mode .title-bar { border-bottom: 1px solid rgba(0,0,0,0.1); }
+                .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+                
+                .win { position:absolute; background:rgba(20, 30, 40, 0.7); backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%); color:white; border-radius:12px; box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; transition: width 0.3s, height 0.3s, top 0.3s, left 0.3s; pointer-events:auto;}
+                @keyframes popIn { 0% { opacity: 0; transform: scale(0.9) translateY(20px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+                body.light-mode .win { background: rgba(255,255,255,0.85); border: 1px solid rgba(0,0,0,0.1); color: #222; box-shadow: 0 30px 60px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.8); }
+                
+                .title-bar { padding:12px 18px; font-weight:600; font-size: 14px; display:flex; justify-content:space-between; align-items: center; border-bottom:1px solid rgba(255,255,255,0.05); cursor:grab; }
+                body.light-mode .title-bar { border-bottom: 1px solid rgba(0,0,0,0.05); }
                 .content { padding:15px; flex-grow: 1; overflow-y: auto; }
                 
-                .ctrl-btn { border:none; color:white; cursor:pointer; width: 20px; height: 20px; border-radius:50%; font-weight:bold; font-size: 10px; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; margin-left: 5px; }
+                .ctrl-btn { border:none; color:white; cursor:pointer; width: 22px; height: 22px; border-radius:50%; font-weight:bold; font-size: 11px; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; margin-left: 6px; }
                 .close-btn { background:rgba(255, 77, 77, 0.8); } .close-btn:hover { background:#ff4d4d; transform: scale(1.1); }
                 .min-btn { background:rgba(255, 180, 0, 0.8); } .min-btn:hover { background:#ffb400; transform: scale(1.1); }
                 .snap-btn { background:rgba(255, 255, 255, 0.2); } .snap-btn:hover { background:rgba(255, 255, 255, 0.4); transform: scale(1.1); }
                 body.light-mode .snap-btn { background:rgba(0, 0, 0, 0.1); color:#222;} body.light-mode .snap-btn:hover { background:rgba(0, 0, 0, 0.2); }
                 
-                #taskbar { position:absolute; bottom:0; width:100%; height:50px; background:rgba(10, 15, 20, 0.75); backdrop-filter:blur(20px) saturate(150%); display:flex; align-items:center; padding: 0 15px; box-sizing: border-box; border-top:1px solid rgba(255,255,255,0.1); z-index:99999; pointer-events:auto; }
-                body.light-mode #taskbar { background: rgba(255,255,255,0.75); border-top: 1px solid rgba(0,0,0,0.1); color: #222; }
+                /* THE GLASS DOCK */
+                #taskbar-container { position:absolute; bottom:15px; width:100%; display:flex; justify-content:center; pointer-events:none; z-index:99999; }
+                #taskbar { pointer-events:auto; height:60px; background:rgba(10, 15, 20, 0.6); backdrop-filter:blur(25px) saturate(180%); display:flex; align-items:center; padding: 0 15px; border-radius:30px; border:1px solid rgba(255,255,255,0.1); box-shadow: 0 15px 35px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1); transition: all 0.3s ease; }
+                body.light-mode #taskbar { background: rgba(255,255,255,0.7); border: 1px solid rgba(0,0,0,0.1); color: #222; box-shadow: 0 15px 35px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.8);}
                 
-                .start { width:38px; height:38px; background:radial-gradient(circle at top left, #4db8ff, var(--accent)); border-radius:10px; border:1px solid rgba(255,255,255,0.4); text-align:center; line-height:36px; cursor:pointer; font-weight: 600; font-size: 18px; box-shadow: 0 4px 10px rgba(0, 90, 158, 0.5); transition: 0.2s;}
-                .start:hover { transform: scale(1.05) translateY(-2px); }
+                .start { width:44px; height:44px; background:linear-gradient(135deg, var(--accent), #005a9e); border-radius:50%; border:2px solid rgba(255,255,255,0.2); text-align:center; line-height:40px; cursor:pointer; font-weight: 600; font-size: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); transition: 0.2s;}
+                .start:hover { transform: scale(1.1) translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6); border-color:white; }
                 
-                .tb-item { padding: 5px 10px; background: rgba(255,255,255,0.1); border-radius: 6px; margin-left: 10px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s; }
-                .tb-item:hover { background: rgba(255,255,255,0.2); border-bottom: 2px solid var(--accent); }
-                body.light-mode .tb-item { background: rgba(0,0,0,0.05); } body.light-mode .tb-item:hover { background: rgba(0,0,0,0.1); }
+                #taskbar-apps { display:flex; align-items:center; margin: 0 20px; gap: 8px; }
+                .tb-item { padding: 8px 15px; background: rgba(255,255,255,0.05); border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity:0.6;}
+                .tb-item.active { opacity:1; background:rgba(255,255,255,0.1); border-bottom: 2px solid var(--accent); border-radius: 12px 12px 4px 4px; }
+                .tb-item:hover { background: rgba(255,255,255,0.15); transform:translateY(-3px); }
+                body.light-mode .tb-item { background: rgba(0,0,0,0.05); } body.light-mode .tb-item.active { background: rgba(0,0,0,0.08); } body.light-mode .tb-item:hover { background: rgba(0,0,0,0.1); }
                 
-                #start-menu { position:absolute; bottom:65px; left:15px; width:340px; max-height:600px; background:rgba(20, 30, 40, 0.75); backdrop-filter:blur(25px) saturate(180%); border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.15); display:none; flex-direction:column; z-index:100000; overflow:hidden; pointer-events:auto;}
-                body.light-mode #start-menu { background:rgba(255,255,255,0.85); border: 1px solid rgba(0,0,0,0.1); color: #222;}
-                .start-header { background: linear-gradient(135deg, rgba(0, 90, 158, 0.8), var(--accent)); color:white; padding:20px; font-weight:600; display:flex; align-items:center; gap: 15px; }
+                /* FLOATING START MENU */
+                #start-menu { position:absolute; bottom:90px; left:50%; transform:translateX(-50%); width:380px; max-height:650px; background:rgba(20, 30, 40, 0.85); backdrop-filter:blur(35px) saturate(200%); border-radius:20px; box-shadow:0 25px 60px rgba(0,0,0,0.7), inset 0 1px 1px rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); display:none; flex-direction:column; z-index:100000; overflow:hidden; pointer-events:auto;}
+                #start-menu.open { display:flex; animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+                body.light-mode #start-menu { background:rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.1); color: #222;}
                 
-                .start-cat { font-size:11px; font-weight:bold; color:#888; margin: 10px 15px 5px 15px; text-transform:uppercase; letter-spacing:1px; }
-                .start-item { padding:8px 20px; cursor:pointer; display:flex; align-items:center; gap:12px; font-size:14px; transition: 0.2s; border-radius: 8px; margin: 2px 8px; }
-                .start-item:hover { background:rgba(255,255,255,0.1); transform: translateX(5px); }
-                body.light-mode .start-item:hover { background:rgba(0,0,0,0.05); }
+                .start-header { background: linear-gradient(135deg, rgba(0,0,0,0.2), transparent); color:white; padding:25px; font-weight:600; display:flex; align-items:center; gap: 15px; border-bottom:1px solid rgba(255,255,255,0.05);}
+                body.light-mode .start-header { color:#222; border-bottom:1px solid rgba(0,0,0,0.05);}
                 
-                .icon { position:absolute; text-align:center; width:75px; cursor:pointer; transition: transform 0.2s; z-index:10; border-radius: 12px; padding: 10px 5px; pointer-events:auto; } 
-                .icon:hover { background:rgba(255,255,255,0.1); }
-                .icon:active { transform: scale(1.1); cursor:grabbing; }
-                .icon div { font-size: 35px; margin-bottom: 5px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3)); pointer-events:none;}
-                body.light-mode .icon { color: #222; font-weight: 500;}
+                .start-cat { font-size:11px; font-weight:bold; color:#888; margin: 15px 20px 5px 20px; text-transform:uppercase; letter-spacing:1px; }
+                .start-item { padding:10px 20px; cursor:pointer; display:flex; align-items:center; gap:15px; font-size:14px; font-weight:500; transition: 0.2s; border-radius: 10px; margin: 2px 10px; }
+                .start-item:hover { background:var(--accent); color:white; transform: translateX(5px); }
+                body.light-mode .start-item:hover { background:var(--accent); color:white; }
                 
-                #desktop-bg { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; pointer-events: none; background-size: cover !important; background-position: center !important; z-index: 1;}
+                .icon { position:absolute; text-align:center; width:80px; cursor:pointer; transition: transform 0.2s; z-index:10; border-radius: 12px; padding: 10px 5px; pointer-events:auto; font-size:13px; font-weight:500; text-shadow:0 1px 3px rgba(0,0,0,0.8);} 
+                .icon:hover { background:rgba(255,255,255,0.1); backdrop-filter:blur(5px); }
+                .icon:active { transform: scale(0.95); cursor:grabbing; }
+                .icon div { font-size: 40px; margin-bottom: 8px; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.4)); pointer-events:none;}
+                body.light-mode .icon { color: #222; text-shadow:none;}
                 
-                .sys-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 12px; font-size:13px;}
-                body.light-mode .sys-card { background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.1); }
+                #desktop-bg { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; pointer-events: none; background-size: cover !important; background-position: center !important; z-index: 1; transition: filter 1s ease, transform 1s ease;}
                 
-                .btn-primary { width:100%; padding:10px; background:var(--accent); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; transition:0.2s;}
-                .btn-primary:hover { filter:brightness(1.2); }
-                .btn-sec { width:100%; padding:10px; background:rgba(255,255,255,0.1); color:inherit; border:1px solid rgba(255,255,255,0.2); border-radius:6px; margin-bottom:10px; cursor:pointer; transition:0.2s;}
+                .sys-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 12px; font-size:13px;}
+                body.light-mode .sys-card { background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05); }
+                
+                .btn-primary { width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; transition:all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
+                .btn-primary:hover { transform:translateY(-2px); box-shadow:0 4px 10px rgba(0,0,0,0.3); filter:brightness(1.1); }
+                .btn-sec { width:100%; padding:12px; background:rgba(255,255,255,0.1); color:inherit; border:1px solid rgba(255,255,255,0.2); border-radius:8px; margin-bottom:10px; cursor:pointer; transition:0.2s;}
                 .btn-sec:hover { background:rgba(255,255,255,0.2); }
-                .btn-danger { width:100%; padding:10px; background:rgba(255,77,77,0.8); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; }
+                .btn-danger { width:100%; padding:12px; background:rgba(255,77,77,0.8); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
                 
-                #widget-notes { position:absolute; top:30px; right:30px; width:220px; height:220px; background:#fff9c4; color:#333; box-shadow:5px 5px 15px rgba(0,0,0,0.3); padding:15px; z-index:5; font-family:'Segoe Print', 'Comic Sans MS', cursive; transform: rotate(2deg); transition: transform 0.2s; cursor:grab; pointer-events:auto;}
-                #widget-notes:active { cursor:grabbing; transform: rotate(0deg) scale(1.05); z-index:9999;}
+                #widget-notes { position:absolute; top:30px; right:30px; width:220px; height:220px; background:linear-gradient(135deg, #fff9c4, #fbc02d); color:#333; box-shadow:5px 10px 20px rgba(0,0,0,0.4); padding:15px; z-index:5; font-family:'Segoe Print', 'Comic Sans MS', cursive; transform: rotate(2deg); transition: transform 0.2s, box-shadow 0.2s; cursor:grab; pointer-events:auto; border-radius:2px 2px 15px 2px;}
+                #widget-notes:active { cursor:grabbing; transform: rotate(0deg) scale(1.05); z-index:9999; box-shadow:10px 20px 30px rgba(0,0,0,0.5);}
                 #widget-notes textarea { width:100%; height:100%; background:transparent; border:none; outline:none; font-family:inherit; font-size:14px; resize:none; color:#333;}
                 
-                .synth-key { background: white; border: 1px solid #ccc; height: 120px; width: 40px; border-radius: 0 0 4px 4px; cursor: pointer; color: black; font-weight: bold; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; box-shadow: 0 4px 5px rgba(0,0,0,0.2); transition: 0.1s;}
-                .synth-key:active { background: #eee; height: 115px; transform: translateY(5px); }
-                .synth-black { background: #222; color: white; height: 80px; width: 30px; position: absolute; margin-left: -15px; z-index: 2; border-radius: 0 0 4px 4px; }
-                .synth-black:active { background: #000; }
+                /* Context Menu Aesthetics */
+                #context-menu { position:absolute; background:rgba(20, 30, 40, 0.85); backdrop-filter:blur(25px) saturate(200%); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:6px; box-shadow:0 15px 35px rgba(0,0,0,0.6); z-index:999999; display:none; min-width:180px; pointer-events:auto; transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-origin: top left;}
+                body.light-mode #context-menu { background:rgba(255,255,255,0.9); color:black; border:1px solid rgba(0,0,0,0.1); }
+                .cm-item { padding:10px 15px; cursor:pointer; font-size:13px; font-weight:500; border-radius:6px; display:flex; align-items:center; gap:10px; transition:0.2s; }
+                .cm-item:hover { background:var(--accent); color:white; padding-left:20px;}
                 
-                #context-menu { position:absolute; background:rgba(30, 40, 50, 0.9); backdrop-filter:blur(15px); border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding:5px; box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:999999; display:none; min-width:150px; pointer-events:auto; }
-                body.light-mode #context-menu { background:rgba(255,255,255,0.9); color:black; border:1px solid rgba(0,0,0,0.2); }
-                .cm-item { padding:8px 12px; cursor:pointer; font-size:13px; border-radius:4px; display:flex; align-items:center; gap:8px; }
-                .cm-item:hover { background:var(--accent); color:white; }
-                
-                .gemi-notif { background: rgba(30, 40, 50, 0.9); backdrop-filter: blur(15px); border: 1px solid var(--accent); border-radius: 8px; padding: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease; opacity: 0; color: white; width: 300px; pointer-events:auto; }
-                body.light-mode .gemi-notif { background: rgba(255,255,255,0.95); border: 1px solid var(--accent); color: black; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+                .gemi-notif { background: rgba(20, 30, 40, 0.85); backdrop-filter: blur(25px) saturate(200%); border: 1px solid var(--accent); border-radius: 12px; padding: 15px 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease; opacity: 0; color: white; width: 320px; pointer-events:auto; }
+                body.light-mode .gemi-notif { background: rgba(255,255,255,0.95); border: 1px solid var(--accent); color: black; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
             `;
             document.head.appendChild(s);
         }
@@ -965,69 +1033,72 @@ else {
                     <div id="desktop-bg"></div>
                     
                     <div id="widget-notes" onmousedown="dragWidget(event, 'widget-notes')">
-                        <div style="font-weight:bold; border-bottom:1px solid #ddd; margin-bottom:5px; font-size:12px; display:flex; justify-content:space-between;"><span>📌 Sticky Note</span></div>
+                        <div style="font-weight:bold; border-bottom:1px solid rgba(0,0,0,0.1); margin-bottom:5px; font-size:12px; display:flex; justify-content:space-between; padding-bottom:5px;"><span>📌 Sticky Note</span></div>
                         <textarea id="sticky-text" oninput="localStorage.setItem('GemiOS_Sticky', this.value)" placeholder="Jot a quick note..."></textarea>
                     </div>
 
                     <div id="desktop-icons"></div>
+                    
                     <div id="window-layer" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:50; pointer-events:none;"></div>
                     
                     <div id="start-menu">
                         <div class="start-header">
-                            <div style="font-size:30px; background:rgba(255,255,255,0.2); border-radius:50%; width:50px; height:50px; display:flex; align-items:center; justify-content:center;">${this.user === 'Admin' ? '👑' : '👤'}</div>
-                            <div><div style="font-size:16px;">${this.user}</div><div style="font-size:11px; opacity:0.8;">GemiOS 27.0 Cloud Engine</div></div>
+                            <div style="font-size:35px; background:rgba(255,255,255,0.1); border-radius:50%; width:60px; height:60px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2);">${this.user === 'Admin' ? '👑' : '👤'}</div>
+                            <div>
+                                <div style="font-size:20px; font-weight:600;">${this.user}</div>
+                                <div style="font-size:12px; opacity:0.7; font-family:monospace;">GemiOS 27.1 / <span style="color:var(--accent); font-weight:bold;">Aesthetic</span></div>
+                            </div>
                         </div>
-                        <div style="overflow-y:auto; padding-bottom:10px;">
+                        <div style="overflow-y:auto; padding-bottom:15px; padding-top:10px;">
                             <div class="start-cat">System & Core</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('sys_task')"><span style="font-size:18px;">📊</span> System Monitor</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('sys_drive')"><span style="font-size:18px;">🗂️</span> Explorer 2.0</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('sys_update')"><span style="font-size:18px;">☁️</span> Cloud Updater</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('sys_set')"><span style="font-size:18px;">⚙️</span> Settings (Theming)</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('sys_log')"><span style="font-size:18px;">📋</span> Master Chronicles</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('sys_time')"><span style="font-size:18px;">⏳</span> Time Machine</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('sys_task')"><span style="font-size:20px;">📊</span> System Monitor</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('sys_drive')"><span style="font-size:20px;">🗂️</span> Explorer 2.0</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('sys_update')"><span style="font-size:20px;">☁️</span> Cloud Updater</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('sys_set')"><span style="font-size:20px;">⚙️</span> Settings (Theming)</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('sys_log')"><span style="font-size:20px;">📋</span> Master Chronicles</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('sys_time')"><span style="font-size:20px;">⏳</span> Time Machine</div>
                             
                             <div class="start-cat">Development & Utilities</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_chat')" style="background:rgba(56,239,125,0.2); border:1px solid #38ef7d;"><span style="font-size:18px;">💬</span> GemiChat (LAN)</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_word')"><span style="font-size:18px;">📄</span> GemiWord</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_voice')"><span style="font-size:18px;">🗣️</span> GemiVoice 2.0 (Multi-Voice)</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_cam')"><span style="font-size:18px;">📸</span> GemiCam</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_view')"><span style="font-size:18px;">🖼️</span> Photo Gallery</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_code')"><span style="font-size:18px;">&lt;/&gt;</span> GemiCode IDE</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('sys_browser')"><span style="font-size:18px;">🌐</span> Web Browser</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('sys_term')"><span style="font-size:18px;">⌨️</span> Bash Terminal</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_calc')"><span style="font-size:18px;">🧮</span> Calculator Pro</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_chat')" style="border:1px solid var(--accent); background:rgba(255,255,255,0.05);"><span style="font-size:20px;">💬</span> GemiChat (LAN)</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_word')"><span style="font-size:20px;">📄</span> GemiWord</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_voice')"><span style="font-size:20px;">🗣️</span> GemiVoice 2.0</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_cam')"><span style="font-size:20px;">📸</span> GemiCam</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_view')"><span style="font-size:20px;">🖼️</span> Photo Gallery</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_code')"><span style="font-size:20px;">&lt;/&gt;</span> GemiCode IDE</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('sys_browser')"><span style="font-size:20px;">🌐</span> Web Browser</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('sys_term')"><span style="font-size:20px;">⌨️</span> Bash Terminal</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_calc')"><span style="font-size:20px;">🧮</span> Calculator Pro</div>
 
                             <div class="start-cat">Entertainment</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_craft')"><span style="font-size:18px;">⛏️</span> GemiCraft (Persistent)</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_amp')"><span style="font-size:18px;">🎵</span> GemiAmp Media Player</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_pong')"><span style="font-size:18px;">🏓</span> Pong 3.0</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_synth')"><span style="font-size:18px;">🎹</span> GemiSynth</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_paint')"><span style="font-size:18px;">🎨</span> Paint</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_snake')"><span style="font-size:18px;">🐍</span> Snake</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_sweeper')"><span style="font-size:18px;">💣</span> Sweeper</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_ttt')"><span style="font-size:18px;">❌</span> Tic-Tac-Toe</div>
-                            <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:10px;">
-                            <div class="start-item" onclick="GemiOS.lockSystem();" style="color:#ff4d4d;"><span style="font-size:18px;">🔒</span> Lock System</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_craft')"><span style="font-size:20px;">⛏️</span> GemiCraft (Persistent)</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_amp')"><span style="font-size:20px;">🎵</span> GemiAmp Media Player</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_pong')"><span style="font-size:20px;">🏓</span> Pong 3.0</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_synth')"><span style="font-size:20px;">🎹</span> GemiSynth</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_paint')"><span style="font-size:20px;">🎨</span> Paint</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_snake')"><span style="font-size:20px;">🐍</span> Snake</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_sweeper')"><span style="font-size:20px;">💣</span> Sweeper</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_ttt')"><span style="font-size:20px;">❌</span> Tic-Tac-Toe</div>
                         </div>
                     </div>
 
-                    <div id="taskbar">
-                        <div class="start" onclick="let sm=document.getElementById('start-menu'); sm.style.display=sm.style.display==='flex'?'none':'flex';">G</div>
-                        <div id="taskbar-apps" style="display:flex; flex-grow:1; overflow:hidden;"></div>
-                        <div style="display:flex; align-items:center; gap:20px; margin-right:10px;">
-                            <div style="font-weight:600; font-size:10px; opacity:0.5; margin-right:10px;">© 2026 Usernameistakenandnotavaliable & Gemini</div>
-                            <div onclick="GemiOS.toggleTheme()" style="cursor:pointer; font-size:20px;" title="Toggle Theme">🌓</div>
-                            <div style="font-weight:600; font-size:12px; background:rgba(255, 255, 255, 0.2); color:white; padding:4px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.4);">v27.0.2 CLOUD</div>
-                            <div id="clock" style="font-weight:600; font-size:14px; letter-spacing:1px;">12:00</div>
+                    <div id="taskbar-container">
+                        <div id="taskbar">
+                            <div class="start" onclick="document.getElementById('start-menu').classList.toggle('open');">G</div>
+                            <div id="taskbar-apps"></div>
+                            <div style="display:flex; align-items:center; gap:15px; margin-left:10px; padding-left:15px; border-left:1px solid rgba(255,255,255,0.1);">
+                                <div onclick="GemiOS.toggleTheme()" style="cursor:pointer; font-size:20px; transition:0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Toggle Theme">🌓</div>
+                                <div id="clock" style="font-weight:600; font-size:14px; letter-spacing:1px;">12:00</div>
+                                <div onclick="GemiOS.lockSystem()" style="cursor:pointer; font-size:18px; color:#ff4d4d; background:rgba(255,77,77,0.1); padding:5px; border-radius:50%; transition:0.2s;" onmouseover="this.style.background='rgba(255,77,77,0.3)'" onmouseout="this.style.background='rgba(255,77,77,0.1)'" title="Power Off">⏻</div>
+                            </div>
                         </div>
                     </div>
                     
                     <div id="context-menu">
                         <div class="cm-item" onclick="location.reload()">🔄 Refresh UI</div>
-                        <div class="cm-item" onclick="GemiOS.PM.launch('sys_set')">🖼️ Change Theme & Wallpaper</div>
+                        <div class="cm-item" onclick="GemiOS.PM.launch('sys_set')">🎨 Change Theme</div>
                         <div class="cm-item" onclick="GemiOS.PM.launch('sys_term')">⌨️ Open Terminal</div>
                         <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:5px 0;">
-                        <div class="cm-item" onclick="GemiOS.lockSystem();" style="color:#ff4d4d;">🔒 Log Out User</div>
+                        <div class="cm-item" onclick="GemiOS.lockSystem();" style="color:#ff4d4d;">⏻ Shut Down</div>
                     </div>
                     
                     <div id="notif-container" style="position:absolute; top:20px; right:20px; z-index:999999; display:flex; flex-direction:column; gap:10px; pointer-events:none;"></div>
