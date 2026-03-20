@@ -1,4 +1,4 @@
 {
-  "version": "30.0.0-APEX-BETA",
-  "notes": "The Apex Update. Added GemiSync NVRAM Exporting. Built the GemiBrain Offline AI Sandbox. Upgraded GemiCam with motion detection security parameters. Deployed GemiStar Space Shooter."
+  "version": "30.0.0-RELEASE",
+  "notes": "THE OFFICIAL RELEASE. Added GemiPhone Mobile Emulator. Added GPM Package Manager to the Terminal. Added GemiMail Client. Overhauled GemiStore layout to support all 28 applications."
 }
