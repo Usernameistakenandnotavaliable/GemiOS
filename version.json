@@ -1,4 +1,4 @@
 {
-  "version": "29.0.0-CREATOR",
-  "notes": "The Creator Update. Added GemiMaker (Visual Game Creation Engine), Custom JS Code Injection, and native App Store publishing."
+  "version": "30.0.0-APEX-BETA",
+  "notes": "The Apex Update. Added GemiSync NVRAM Exporting. Built the GemiBrain Offline AI Sandbox. Upgraded GemiCam with motion detection security parameters. Deployed GemiStar Space Shooter."
 }
