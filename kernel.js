@@ -1,16 +1,28 @@
 // =========================================================================
-// GemiOS CLOUD HYPERVISOR - v26.0.0 (HARDWARE & DYNAMIC DESKTOP)
+// GemiOS CLOUD HYPERVISOR - v26.1.0 (THE TIME MACHINE EXPANSION)
 // =========================================================================
 
-const bootVersion = localStorage.getItem('GemiOS_TargetVersion') || 'v25';
+const bootVersion = localStorage.getItem('GemiOS_TargetVersion') || 'v26';
 console.log("[BOOT] Hypervisor targeting state: " + bootVersion);
 
 if (bootVersion === 'v1') {
-    const originalV1Code = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Windows 7 Web Simulator</title><style>body,html{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;user-select:none;}#desktop{width:100vw;height:100vh;background:linear-gradient(135deg,#004e92,#000428);position:relative;}.window{position:absolute;top:100px;left:150px;width:400px;min-height:250px;background:rgba(255,255,255,0.85);border:1px solid rgba(255,255,255,0.5);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);display:none;flex-direction:column;backdrop-filter:blur(10px);}.title-bar{padding:5px 10px;background:rgba(255,255,255,0.4);border-bottom:1px solid #ccc;cursor:grab;display:flex;justify-content:space-between;align-items:center;border-top-left-radius:8px;border-top-right-radius:8px;font-weight:bold;}.close-btn{background:#ff4d4d;color:white;border:none;padding:2px 10px;border-radius:3px;cursor:pointer;}.window-content{padding:15px;flex-grow:1;background:#fff;border-bottom-left-radius:8px;border-bottom-right-radius:8px;}#taskbar{position:absolute;bottom:0;width:100%;height:40px;background:rgba(20,30,50,0.8);backdrop-filter:blur(10px);display:flex;align-items:center;padding:0 10px;box-sizing:border-box;border-top:1px solid rgba(255,255,255,0.2);}#start-btn{width:36px;height:36px;background:radial-gradient(circle,#4db8ff,#0078d7);border-radius:50%;border:2px solid white;cursor:pointer;display:flex;justify-content:center;align-items:center;color:white;font-weight:bold;box-shadow:0 0 10px rgba(0,120,215,0.8);}#start-menu{position:absolute;bottom:45px;left:0;width:250px;height:350px;background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);border-radius:5px;box-shadow:2px 2px 10px rgba(0,0,0,0.5);display:none;padding:10px;box-sizing:border-box;}.menu-item{padding:10px;cursor:pointer;border-radius:3px;margin-bottom:5px;background:#eee;}.menu-item:hover{background:#0078d7;color:white;}#clock{margin-left:auto;color:white;font-size:14px;}.setting-row{margin-bottom:15px;}input[type=range]{width:100%;}.file-icon{display:inline-block;width:60px;text-align:center;margin:10px;cursor:pointer;}.file-icon div{font-size:30px;}#v1-escape{position:absolute;top:10px;right:10px;background:red;color:white;font-weight:bold;padding:10px;border:2px solid white;border-radius:5px;cursor:pointer;z-index:9999;}</style></head><body><div id="desktop"><button id="v1-escape" onclick="localStorage.setItem('GemiOS_TargetVersion', 'v26'); location.reload();">🚀 Escape to Modern OS</button><div class="window" id="win-explorer" style="left:50px;top:50px;display:flex;"><div class="title-bar" onmousedown="dragWindow(event,'win-explorer')"><span>Windows Explorer</span> <button class="close-btn" onclick="toggleWindow('win-explorer')">X</button></div><div class="window-content" id="file-content"><div class="file-icon" onclick="alert('Accessing C: Drive (Simulation)')"><div>💽</div>C: Drive</div><div class="file-icon" onclick="alert('Opening Documents...')"><div>📁</div>Docs</div><div class="file-icon" onclick="downloadFakeFile()"><div>⬇️</div>Download Test</div></div></div><div id="start-menu"><div class="menu-item" onclick="toggleWindow('win-explorer'); toggleStartMenu();">📁 File Explorer</div><hr><div class="menu-item" onclick="alert('Shutting down simulator...'); window.close();">Shut Down</div></div><div id="taskbar"><div id="start-btn" onclick="toggleStartMenu()">W7</div><div id="clock">12:00 AM</div></div></div><script>function updateClock(){const now=new Date();document.getElementById('clock').innerText=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}setInterval(updateClock,1000);updateClock();function toggleStartMenu(){const menu=document.getElementById('start-menu');menu.style.display=menu.style.display==='block'?'none':'block';}function toggleWindow(id){const win=document.getElementById(id);win.style.display=win.style.display==='flex'?'none':'flex';}let activeWindow=null;let offsetX=0,offsetY=0;function dragWindow(e,windowId){activeWindow=document.getElementById(windowId);document.querySelectorAll('.window').forEach(w=>w.style.zIndex=1);activeWindow.style.zIndex=10;offsetX=e.clientX-activeWindow.offsetLeft;offsetY=e.clientY-activeWindow.offsetTop;document.onmousemove=moveWindow;document.onmouseup=stopDrag;}function moveWindow(e){if(activeWindow){activeWindow.style.left=(e.clientX-offsetX)+'px';activeWindow.style.top=(e.clientY-offsetY)+'px';}}function stopDrag(){document.onmousemove=null;document.onmouseup=null;activeWindow=null;}function downloadFakeFile(){const content="This is a simulated download file from your Windows 7 Web OS!";const blob=new Blob([content],{type:'text/plain'});const url=window.URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='simulated_download.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);window.URL.revokeObjectURL(url);}<\/script></body></html>`;
-    document.open(); document.write(originalV1Code); document.close();
+    // --- KERNEL 1: TRUE ORIGINAL V1.0 (Archive) ---
+    const v1Code = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Windows 7 Web Simulator</title><style>body,html{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;user-select:none;}#desktop{width:100vw;height:100vh;background:linear-gradient(135deg,#004e92,#000428);position:relative;}.window{position:absolute;top:100px;left:150px;width:400px;min-height:250px;background:rgba(255,255,255,0.85);border:1px solid rgba(255,255,255,0.5);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);display:none;flex-direction:column;backdrop-filter:blur(10px);}.title-bar{padding:5px 10px;background:rgba(255,255,255,0.4);border-bottom:1px solid #ccc;cursor:grab;display:flex;justify-content:space-between;align-items:center;border-top-left-radius:8px;border-top-right-radius:8px;font-weight:bold;}.close-btn{background:#ff4d4d;color:white;border:none;padding:2px 10px;border-radius:3px;cursor:pointer;}.window-content{padding:15px;flex-grow:1;background:#fff;border-bottom-left-radius:8px;border-bottom-right-radius:8px;}#taskbar{position:absolute;bottom:0;width:100%;height:40px;background:rgba(20,30,50,0.8);backdrop-filter:blur(10px);display:flex;align-items:center;padding:0 10px;box-sizing:border-box;border-top:1px solid rgba(255,255,255,0.2);}#start-btn{width:36px;height:36px;background:radial-gradient(circle,#4db8ff,#0078d7);border-radius:50%;border:2px solid white;cursor:pointer;display:flex;justify-content:center;align-items:center;color:white;font-weight:bold;box-shadow:0 0 10px rgba(0,120,215,0.8);}#start-menu{position:absolute;bottom:45px;left:0;width:250px;height:350px;background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);border-radius:5px;box-shadow:2px 2px 10px rgba(0,0,0,0.5);display:none;padding:10px;box-sizing:border-box;}.menu-item{padding:10px;cursor:pointer;border-radius:3px;margin-bottom:5px;background:#eee;}.menu-item:hover{background:#0078d7;color:white;}#clock{margin-left:auto;color:white;font-size:14px;}.setting-row{margin-bottom:15px;}input[type=range]{width:100%;}.file-icon{display:inline-block;width:60px;text-align:center;margin:10px;cursor:pointer;}.file-icon div{font-size:30px;}#v1-escape{position:absolute;top:10px;right:10px;background:red;color:white;font-weight:bold;padding:10px;border:2px solid white;border-radius:5px;cursor:pointer;z-index:9999;}</style></head><body><div id="desktop"><button id="v1-escape" onclick="localStorage.setItem('GemiOS_TargetVersion', 'v26'); location.reload();">🚀 Escape to Modern OS</button><div class="window" id="win-explorer" style="left:50px;top:50px;display:flex;"><div class="title-bar" onmousedown="dragWindow(event,'win-explorer')"><span>Windows Explorer</span> <button class="close-btn" onclick="toggleWindow('win-explorer')">X</button></div><div class="window-content" id="file-content"><div class="file-icon" onclick="alert('Accessing C: Drive (Simulation)')"><div>💽</div>C: Drive</div><div class="file-icon" onclick="alert('Opening Documents...')"><div>📁</div>Docs</div><div class="file-icon" onclick="downloadFakeFile()"><div>⬇️</div>Download Test</div></div></div><div id="start-menu"><div class="menu-item" onclick="toggleWindow('win-explorer'); toggleStartMenu();">📁 File Explorer</div><hr><div class="menu-item" onclick="alert('Shutting down simulator...'); window.close();">Shut Down</div></div><div id="taskbar"><div id="start-btn" onclick="toggleStartMenu()">W7</div><div id="clock">12:00 AM</div></div></div><script>function updateClock(){const now=new Date();document.getElementById('clock').innerText=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}setInterval(updateClock,1000);updateClock();function toggleStartMenu(){const menu=document.getElementById('start-menu');menu.style.display=menu.style.display==='block'?'none':'block';}function toggleWindow(id){const win=document.getElementById(id);win.style.display=win.style.display==='flex'?'none':'flex';}let activeWindow=null;let offsetX=0,offsetY=0;function dragWindow(e,windowId){activeWindow=document.getElementById(windowId);document.querySelectorAll('.window').forEach(w=>w.style.zIndex=1);activeWindow.style.zIndex=10;offsetX=e.clientX-activeWindow.offsetLeft;offsetY=e.clientY-activeWindow.offsetTop;document.onmousemove=moveWindow;document.onmouseup=stopDrag;}function moveWindow(e){if(activeWindow){activeWindow.style.left=(e.clientX-offsetX)+'px';activeWindow.style.top=(e.clientY-offsetY)+'px';}}function stopDrag(){document.onmousemove=null;document.onmouseup=null;activeWindow=null;}function downloadFakeFile(){const content="This is a simulated download file from your Windows 7 Web OS!";const blob=new Blob([content],{type:'text/plain'});const url=window.URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='simulated_download.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);window.URL.revokeObjectURL(url);}<\/script></body></html>`;
+    document.open(); document.write(v1Code); document.close();
+
+} else if (bootVersion === 'v10') {
+    // --- KERNEL 2: THE START MENU ERA v10.0 (Archive) ---
+    const v10Code = `<!DOCTYPE html><html><head><title>GemiOS v10</title><style>body{background:#008080;font-family:Tahoma;overflow:hidden;margin:0;user-select:none;}#tb{position:absolute;bottom:0;width:100%;height:35px;background:#c0c0c0;border-top:2px solid #fff;display:flex;align-items:center;z-index:9999;}#sm{position:absolute;bottom:35px;left:0;width:200px;background:#c0c0c0;border:2px outset #fff;display:none;flex-direction:column;z-index:10000;}.app{padding:10px;cursor:pointer;border-bottom:1px solid #a0a0a0;font-weight:bold;}.app:hover{background:#000080;color:#fff;}#wins{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}.win{position:absolute;background:#c0c0c0;border:2px outset #fff;width:300px;pointer-events:auto;box-shadow:2px 2px 5px rgba(0,0,0,0.5);}.tb-title{background:#000080;color:#fff;padding:5px;cursor:grab;display:flex;justify-content:space-between;font-weight:bold;}#v10-escape{position:absolute;top:10px;right:10px;background:red;color:white;font-weight:bold;padding:10px;border:2px solid white;border-radius:5px;cursor:pointer;z-index:9999;}</style></head><body><button id="v10-escape" onclick="localStorage.setItem('GemiOS_TargetVersion', 'v26'); location.reload();">🚀 Escape to Modern OS</button><div style="position:absolute;top:20px;left:20px;color:white;cursor:pointer;text-align:center;width:60px;" onclick="openW('Notepad')"><div style="font-size:30px;">📝</div>Notepad</div><div id="wins"></div><div id="sm"><div style="background:#000080;color:white;padding:10px;font-weight:bold;">GemiOS v10</div><div class="app" onclick="openW('Terminal')">💻 Terminal</div><div class="app" onclick="alert('Games not yet invented!')">🏓 Pong</div><div class="app" onclick="localStorage.setItem('GemiOS_TargetVersion', 'v26');location.reload();">🚀 Upgrade to Modern</div></div><div id="tb"><button onclick="document.getElementById('sm').style.display=document.getElementById('sm').style.display==='flex'?'none':'flex'" style="font-weight:bold;margin-left:2px;padding:2px 10px;border:2px outset #fff;cursor:pointer;height:28px;">Start</button></div><script>let z=10;function openW(t){let w=document.createElement('div');w.className='win';w.style.top=Math.random()*50+50+'px';w.style.left=Math.random()*50+100+'px';w.style.zIndex=++z;w.innerHTML='<div class="tb-title" onmousedown="dragW(event, this.parentElement)"><span>'+t+'</span><button onclick="this.parentElement.parentElement.remove()" style="font-weight:bold;">X</button></div><div style="padding:15px;background:#fff;min-height:100px;">'+t+' v10 App Loaded.<br><br>The TreeFS architecture does not exist yet.</div>';document.getElementById('wins').appendChild(w);}function dragW(e,win){let ox=e.clientX-win.offsetLeft;let oy=e.clientY-win.offsetTop;win.style.zIndex=++z;document.onmousemove=(ev)=>{win.style.left=(ev.clientX-ox)+'px';win.style.top=(ev.clientY-oy)+'px';};document.onmouseup=()=>document.onmousemove=null;}</script></body></html>`;
+    document.open(); document.write(v10Code); document.close();
+
+} else if (bootVersion === 'v20') {
+    // --- KERNEL 3: THE PURE SYSTEM v20.0 (Archive) ---
+    const v20Code = `<!DOCTYPE html><html><head><title>GemiOS v20 PURE</title><style>body{background:#000;color:#0f0;font-family:monospace;overflow:hidden;margin:0;user-select:none;}#tb{position:absolute;bottom:0;width:100%;height:30px;border-top:1px solid #0f0;background:#050505;display:flex;align-items:center;padding:0 10px;box-sizing:border-box;}#sm{position:absolute;bottom:35px;left:5px;border:1px solid #0f0;background:#000;display:none;flex-direction:column;padding:5px;z-index:10000;}.app{cursor:pointer;padding:8px;}.app:hover{background:#0f0;color:#000;font-weight:bold;}#wins{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}.win{position:absolute;border:1px solid #0f0;background:#050505;width:400px;pointer-events:auto;box-shadow:5px 5px 0 #0f0;}.tb-title{border-bottom:1px solid #0f0;padding:5px;cursor:grab;display:flex;justify-content:space-between;background:#111;color:#0f0;}</style></head><body><div style="padding:20px;font-size:16px;">[GemiOS PURE KERNEL v20]<br>WARNING: GAMES BANNED. RESOURCES LOCKED.<br><br>Use the [MENU] below to access tools.</div><div id="wins"></div><div id="sm"><div class="app" onclick="openW('Terminal')">> Root Terminal</div><div class="app" onclick="alert('ACCESS DENIED. Games are disabled in v20.')">> GemiPong</div><div class="app" onclick="localStorage.setItem('GemiOS_TargetVersion', 'v26');location.reload();" style="color:#ff00cc;">> Upgrade Kernel (Hotswap)</div></div><div id="tb"><div onclick="document.getElementById('sm').style.display=document.getElementById('sm').style.display==='flex'?'none':'flex'" style="cursor:pointer;border:1px solid #0f0;padding:2px 10px;">[ MENU ]</div><div style="margin-left:auto;margin-right:20px;">v20.0 PURE KERNEL</div></div><script>let z=10;function openW(t){let w=document.createElement('div');w.className='win';w.style.top=Math.random()*50+50+'px';w.style.left=Math.random()*50+50+'px';w.style.zIndex=++z;w.innerHTML='<div class="tb-title" onmousedown="dragW(event, this.parentElement)"><span>'+t+'</span><span style="cursor:pointer;" onclick="this.parentElement.parentElement.remove()">[X]</span></div><div style="padding:15px;height:200px;">C:\\> _</div>';document.getElementById('wins').appendChild(w);}function dragW(e,win){let ox=e.clientX-win.offsetLeft;let oy=e.clientY-win.offsetTop;win.style.zIndex=++z;document.onmousemove=(ev)=>{win.style.left=(ev.clientX-ox)+'px';win.style.top=(ev.clientY-oy)+'px';};document.onmouseup=()=>document.onmousemove=null;}</script></body></html>`;
+    document.open(); document.write(v20Code); document.close();
+
 } else {
     // =====================================================================
-    // KERNEL 2: GEMIOS v26.0 TITANIUM (DYNAMIC DESKTOP & HARDWARE)
+    // KERNEL 4: GEMIOS v26.1.0 TITANIUM (MODERN OS)
     // =====================================================================
     
     class VirtualFileSystem {
@@ -39,6 +51,7 @@ if (bootVersion === 'v1') {
         write(path, file, data) { let dir = this.getDir(path, true); if(dir) { dir[file] = data; this.save(); return true; } return false; }
         mkdir(path, folderName) { let dir = this.getDir(path); if(dir && dir[folderName] === undefined) { dir[folderName] = {}; this.save(); return true; } return false; }
         format() { localStorage.removeItem('GemiOS_TreeFS'); sessionStorage.removeItem('GemiOS_Session'); location.reload(); }
+        delete(path, file) { let dir = this.getDir(path); if(dir && dir[file] !== undefined) { delete dir[file]; this.save(); return true; } return false; }
     }
 
     class WindowManager {
@@ -118,11 +131,11 @@ if (bootVersion === 'v1') {
         },
         'sys_update': {
             icon: '💻', title: 'Local Updater', width: 380,
-            html: () => `<div class="sys-card" style="text-align:center;"><div style="font-size:40px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">💻</div><h3 style="margin:5px 0;">VS Code Update Center</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v26.0.0-LOCAL</b></p><div id="upd-stat" style="font-size:12px; min-height:15px;"></div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary" style="margin-top:10px;">Check for Local Updates</button></div>`
+            html: () => `<div class="sys-card" style="text-align:center;"><div style="font-size:40px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">💻</div><h3 style="margin:5px 0;">VS Code Update Center</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v26.1.0-LOCAL</b></p><div id="upd-stat" style="font-size:12px; min-height:15px;"></div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary" style="margin-top:10px;">Check for Local Updates</button></div>`
         },
         'sys_time': {
             icon: '⏳', title: 'Time Machine', width: 360,
-            html: () => `<div style="text-align:center; font-size:45px; margin-bottom:15px; filter:drop-shadow(0 5px 10px rgba(0,0,0,0.3));">⏳</div><p style="text-align:center; font-size:12px; margin-top:0;">Boot into historical code.</p><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v1'); location.reload();" style="width:100%; padding:10px; margin-bottom:8px; background:#008080; color:white; border:2px outset #fff; cursor:pointer; font-family:monospace;">Boot TRUE v1.0</button><button onclick="location.reload();" class="btn-primary">Stay on v26.0</button>`
+            html: () => `<div style="text-align:center; font-size:45px; margin-bottom:15px; filter:drop-shadow(0 5px 10px rgba(0,0,0,0.3));">⏳</div><p style="text-align:center; font-size:12px; margin-top:0;">Boot into historical code.</p><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v1'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v1.0 (Web Sim)</button><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v10'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v10.0 (Start Menu)</button><button onclick="localStorage.setItem('GemiOS_TargetVersion', 'v20'); location.reload();" class="btn-sec" style="font-family:monospace;">Boot v20.0 (Pure System)</button><button onclick="location.reload();" class="btn-primary">Stay on v26.1</button>`
         },
         'sys_task': {
             icon: '📊', title: 'Task Manager', width: 400,
@@ -140,7 +153,8 @@ if (bootVersion === 'v1') {
         'sys_log': {
             icon: '📋', title: 'Chronicles', width: 500,
             html: () => `<div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
-                <div class="sys-card" style="border-left:4px solid #38ef7d;"><b>v26.0.0 (Hardware)</b> - Dynamic Desktop Engine. Added GemiCam and Gallery Viewer.</div>
+                <div class="sys-card" style="border-left:4px solid #38ef7d;"><b>v26.1.0 (Time Machine)</b> - Expanded Time Machine to include v10.0 and v20.0 legacy kernels.</div>
+                <div class="sys-card"><b>v26.0.0 (Hardware)</b> - Dynamic Desktop Engine. Added GemiCam and Gallery Viewer.</div>
                 <div class="sys-card"><b>v25.1.3 (Stable)</b> - Repaired missing core methods. Boot sequence verified.</div>
                 <div class="sys-card"><b>v25.1.0 (Auth Update)</b> - Added Real Boot Sequence, Login Screen, and Context Menus.</div>
                 <div class="sys-card"><b>v25.0.0 (TreeFS)</b> - Architectural rewrite to hierarchical file system.</div>
@@ -283,7 +297,7 @@ if (bootVersion === 'v1') {
 
         init() {
             this.injectStyles();
-            this.patchDesktopData(); // Silently ensures old users get the new desktop icons
+            this.patchDesktopData();
             if(sessionStorage.getItem('GemiOS_Session') === 'active') {
                 this.launchDesktop();
             } else {
@@ -291,7 +305,6 @@ if (bootVersion === 'v1') {
             }
         }
         
-        // Ensure Desktop folder has apps in it so the dynamic renderer isn't empty
         patchDesktopData() {
             let desk = this.VFS.getDir('C:/Users/Admin/Desktop', true);
             if(Object.keys(desk).length === 0) {
@@ -346,7 +359,6 @@ if (bootVersion === 'v1') {
             };
         }
         
-        // --- THE DYNAMIC DESKTOP ENGINE ---
         renderDesktopIcons() {
             let desk = this.VFS.getDir('C:/Users/Admin/Desktop');
             let html = '';
@@ -366,7 +378,6 @@ if (bootVersion === 'v1') {
             document.getElementById('desktop-icons').innerHTML = html;
         }
 
-        // --- HARDWARE CAMERA INTEGRATION ---
         takePhoto(pid) {
             let v = document.getElementById(`vid-${pid}`);
             if(!v || !v.srcObject) return alert("Camera not active.");
@@ -395,10 +406,12 @@ if (bootVersion === 'v1') {
             let st = document.getElementById('upd-stat'); st.innerText = 'Fetching version.json...';
             try {
                 let cb = "?t=" + new Date().getTime();
+                // Assumes you are using Live Server locally for VS Code
                 let r = await fetch("./version.json" + cb);
                 if (!r.ok) throw new Error("Server unreachable.");
                 let d = await r.json();
-                if (d.version !== "26.0.0-HARDWARE") {
+                
+                if (d.version !== "26.1.0-TIMEMACHINE") {
                     st.innerHTML = `<span style="color:#ffeb3b">New Version Found: ${d.version}</span><br><i>${d.notes}</i>`;
                     btn.innerText = 'Emulate Live Install'; btn.style.background = '#ff00cc'; 
                     btn.onclick = async () => {
@@ -420,11 +433,45 @@ if (bootVersion === 'v1') {
             } catch (err) { st.innerHTML = `<span style="color:#ff4d4d">Error: ${err.message}</span>`; btn.innerText = 'Retry'; btn.style.background = '#0078d7'; }
         }
 
-        // Mini games
-        initSweeper(pid) { /*...omitted for brevity, same as previous...*/ }
-        initTTT(pid) { /*...omitted for brevity...*/ }
-        playTTT(pid, i, btn) { /*...omitted for brevity...*/ }
-        playNote(freq) { /*...omitted for brevity...*/ }
+        initSweeper(pid) {
+            let grid = document.getElementById(`ms-grid-${pid}`); if(!grid) return; grid.innerHTML = '';
+            for(let i=0; i<81; i++) {
+                let cell = document.createElement('div'); 
+                cell.style.cssText = "width:25px; height:25px; background:rgba(255,255,255,0.8); color:black; border-radius:3px; text-align:center; font-weight:bold; cursor:pointer; line-height:25px; font-size:14px; box-shadow:inset -1px -1px 2px rgba(0,0,0,0.3);";
+                cell.onclick = function() { 
+                    this.style.background = 'rgba(255,255,255,0.4)'; this.style.boxShadow = 'none'; this.style.color = 'white';
+                    if(Math.random() < 0.15) { this.innerText='💣'; this.style.background='#ff4d4d'; setTimeout(()=>alert('Boom!'), 50); GemiOS.initSweeper(pid); } 
+                    else { this.innerText = Math.floor(Math.random()*3)||''; } 
+                };
+                grid.appendChild(cell);
+            }
+        }
+
+        initTTT(pid) {
+            this.tttStates = this.tttStates || {}; this.tttStates[pid] = { b: ['','','','','','','','',''], p: 'X', a: true };
+            let st = document.getElementById(`ttt-stat-${pid}`); st.innerText = "Player X Turn"; st.style.color = "#4db8ff";
+            let grid = document.getElementById(`ttt-b-${pid}`); if(!grid) return; grid.innerHTML = '';
+            for(let i=0; i<9; i++) grid.innerHTML += `<button style="height:60px; font-size:28px; font-weight:bold; border:none; border-radius:4px; background:rgba(255,255,255,0.8); cursor:pointer; box-shadow:inset -1px -1px 3px rgba(0,0,0,0.3);" onclick="GemiOS.playTTT(${pid}, ${i}, this)"></button>`;
+        }
+
+        playTTT(pid, i, btn) {
+            let s = this.tttStates[pid]; if(!s.a || s.b[i] !== '') return;
+            s.b[i] = s.p; btn.innerText = s.p; btn.style.color = s.p==='X'?'#0078d7':'#ff4d4d'; btn.style.background = 'rgba(255,255,255,0.9)'; btn.style.boxShadow = 'none';
+            const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            let won = lines.some(l => s.b[l[0]] && s.b[l[0]]===s.b[l[1]] && s.b[l[0]]===s.b[l[2]]);
+            let stat = document.getElementById(`ttt-stat-${pid}`);
+            if(won) { stat.innerText = `${s.p} Wins!`; stat.style.color = "#38ef7d"; s.a = false; }
+            else if(!s.b.includes('')) { stat.innerText = "Draw!"; stat.style.color = "white"; s.a = false; }
+            else { s.p = s.p === 'X' ? 'O' : 'X'; stat.innerText = `Player ${s.p} Turn`; stat.style.color = s.p==='X'?'#4db8ff':'#ff4d4d';}
+        }
+
+        playNote(freq) {
+            if(!this.actx) this.actx = new (window.AudioContext || window.webkitAudioContext)();
+            let osc = this.actx.createOscillator(); let gain = this.actx.createGain();
+            osc.type = 'sine'; osc.frequency.value = freq;
+            osc.connect(gain); gain.connect(this.actx.destination);
+            osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, this.actx.currentTime + 1); osc.stop(this.actx.currentTime + 1);
+        }
 
         handleTerm(e, pid, inputEl) {
             if(e.key !== 'Enter') return;
@@ -583,13 +630,13 @@ if (bootVersion === 'v1') {
                     <div id="start-menu">
                         <div class="start-header">
                             <div style="font-size:30px; background:rgba(255,255,255,0.2); border-radius:50%; width:50px; height:50px; display:flex; align-items:center; justify-content:center;">👤</div>
-                            <div><div style="font-size:16px;">Admin</div><div style="font-size:11px; opacity:0.8;">GemiOS 26.0 Hardware</div></div>
+                            <div><div style="font-size:16px;">Admin</div><div style="font-size:11px; opacity:0.8;">GemiOS 26.1 Time Machine</div></div>
                         </div>
                         <div style="overflow-y:auto; padding-bottom:10px;">
                             <div class="start-cat">System & Core</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('sys_task')"><span style="font-size:18px;">📊</span> Task Manager</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('sys_drive')"><span style="font-size:18px;">🗂️</span> Explorer 2.0</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('sys_update')"><span style="font-size:18px;">💻</span> Local Updater</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('sys_update')"><span style="font-size:18px;">💻</span> Cloud Updater</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('sys_set')"><span style="font-size:18px;">⚙️</span> Settings</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('sys_log')"><span style="font-size:18px;">📋</span> Master Chronicles</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('sys_time')"><span style="font-size:18px;">⏳</span> Time Machine</div>
@@ -604,7 +651,7 @@ if (bootVersion === 'v1') {
                             <div class="start-item" onclick="GemiOS.PM.launch('app_calc')"><span style="font-size:18px;">🧮</span> Calculator</div>
 
                             <div class="start-cat">Entertainment</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_pong')"><span style="font-size:18px;">🏓</span> Pong</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_pong')"><span style="font-size:18px;">🏓</span> Pong 3.0</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('app_synth')"><span style="font-size:18px;">🎹</span> GemiSynth</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('app_paint')"><span style="font-size:18px;">🎨</span> Paint</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('app_snake')"><span style="font-size:18px;">🐍</span> Snake</div>
@@ -620,7 +667,7 @@ if (bootVersion === 'v1') {
                         <div id="taskbar-apps" style="display:flex; flex-grow:1; overflow:hidden;"></div>
                         <div style="display:flex; align-items:center; gap:20px; margin-right:10px;">
                             <div onclick="GemiOS.toggleTheme()" style="cursor:pointer; font-size:20px;" title="Toggle Theme">🌓</div>
-                            <div style="font-weight:600; font-size:12px; background:rgba(56, 239, 125, 0.2); color:#38ef7d; padding:4px 10px; border-radius:20px; border:1px solid rgba(56,239,125,0.3);">v26.0 HARDWARE</div>
+                            <div style="font-weight:600; font-size:12px; background:rgba(56, 239, 125, 0.2); color:#38ef7d; padding:4px 10px; border-radius:20px; border:1px solid rgba(56,239,125,0.3);">v26.1.0 CLOUD</div>
                             <div id="clock" style="font-weight:600; font-size:14px; letter-spacing:1px;">12:00</div>
                         </div>
                     </div>
