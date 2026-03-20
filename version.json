@@ -1,4 +1,4 @@
 {
-  "version": "27.4.0-SCIENCE",
-  "notes": "The Science & Telemetry Update. Added the live GemiScience physics and mathematics sandbox. Fixed Explorer 2.0 real-time NVRAM progress bar tracking."
+  "version": "27.4.1-CALCULUS",
+  "notes": "Replaced particle lab with native GemiCalc Graphing Engine. Features real-time numerical derivatives and integrals."
 }
