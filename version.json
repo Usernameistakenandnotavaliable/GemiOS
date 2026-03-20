@@ -1,4 +1,4 @@
 {
-  "version": "26.1.1-HOTFIX",
-  "notes": "Fixed premature script termination in legacy code. Reconnected Cloud OTA Updater. All 19 apps restored to Desktop."
+  "version": "26.2.0-WORKFLOW",
+  "notes": "The Workflow Update. Added Aero Snap Window Splitting, GemiWord Rich Text Editor, and GemiVoice TTS Engine."
 }
