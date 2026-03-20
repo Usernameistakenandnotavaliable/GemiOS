@@ -1,4 +1,4 @@
 {
-  "version": "26.5.2-STABLE",
-  "notes": "Eradicated syntax parser crash forever. Repaired GitHub Cloud OTA Connectivity."
+  "version": "27.0.0-IMMERSION",
+  "notes": "The Immersion Update. Massive UI/UX overhaul. Added Multi-User Authentication, GemiChat LAN, Draggable Desktop Icons, Accent Color Theming, and Persistent Worlds in GemiCraft."
 }
