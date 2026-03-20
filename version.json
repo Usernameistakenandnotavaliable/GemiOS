@@ -1,4 +1,4 @@
 {
-  "version": "26.5.0-COPYRIGHT",
-  "notes": "The Copyright Update. Integrated global DRM watermarks across all Window Manager instances, Taskbar branding, and Bootloader legal notices. Our intellectual property is secure."
+  "version": "26.5.1-TERRARIA",
+  "notes": "The Terraria Hotfix. Overhauled GemiCraft world generation and added a real-time block selection hotbar. Replaced native browser alerts with a frosted-glass Toast Notification system."
 }
