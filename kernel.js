@@ -1,5 +1,5 @@
 // =========================================================================
-// GemiOS CLOUD HYPERVISOR - v27.2.0 (THE INCEPTION UPDATE)
+// GemiOS CLOUD HYPERVISOR - v27.3.0 (PERFORMANCE & NVRAM UPDATE)
 // =========================================================================
 
 const bootVersion = localStorage.getItem('GemiOS_TargetVersion') || 'v27';
@@ -11,32 +11,51 @@ else if (bootVersion === 'v10') { document.open(); document.write(atob('PCFET0NU
 else if (bootVersion === 'v20') { document.open(); document.write(atob('PCFET0NUWVBFIGh0bWw+PGh0bWw+PGhlYWQ+PHRpdGxlPkdlbWlPUyB2MjA8L3RpdGxlPjxzdHlsZT5ib2R5e2JhY2tncm91bmQ6IzAwMDtjb2xvcjojMGYwO2ZvbnQtZmFtaWx5Om1vbm9zcGFjZTtwYWRkaW5nOjUwcHg7fTwvc3R5bGU+PC9oZWFkPjxib2R5PjxoMj5bR2VtaU9TIFBVUkUgS0VSTkVMIHYyMF08L2gyPjxidXR0b24gb25jbGljaz0ibG9jYWxTdG9yYWdlLnNldEl0ZW0oJ0dlbWlPU19UYXJnZXRWZXJzaW9uJywndjI3Jyk7bG9jYXRpb24ucmVsb2FkKCkiIHN0eWxlPSJjb2xvcjojZjBmO2JhY2tncm91bmQ6YmxhY2s7Ym9yZGVyOjFweCBzb2xpZCAjZjBmO3BhZGRpbmc6MTBweDsiPkhvdHN3YXAgdG8gdjI3PC9idXR0b24+PC9ib2R5PjwvaHRtbD4=')); document.close(); }
 else {
     // =====================================================================
-    // KERNEL 4: GEMIOS v27.2 TITANIUM (THE INCEPTION UPDATE)
+    // KERNEL 4: GEMIOS v27.3 TITANIUM (PERFORMANCE & NVRAM UPDATE)
     // =====================================================================
     
     class VirtualFileSystem {
         constructor() {
+            this.MAX_STORAGE = 51200; // STRICT 50KB NVRAM LIMIT
             let drive = localStorage.getItem('GemiOS_TreeFS');
             if(!drive) {
                 this.root = {
                     "C:": {
-                        "System": { "boot.log": "GemiOS V27.2 Initialized." },
+                        "System": { "boot.log": "GemiOS V27.3 Initialized." },
                         "Users": { 
                             "Admin": { "Documents": {}, "Pictures": {}, "Desktop": {}, "Downloads": {} },
                             "Guest": { "Documents": {}, "Pictures": {}, "Desktop": {}, "Downloads": {} }
                         }
                     }
                 };
-                this.save();
+                this.forceSave();
             } else { 
                 this.root = JSON.parse(drive); 
                 if(!this.root["C:"]["Users"]["Guest"]) {
                     this.root["C:"]["Users"]["Guest"] = { "Documents": {}, "Pictures": {}, "Desktop": {}, "Downloads": {} };
-                    this.save();
+                    this.forceSave();
                 }
             }
         }
-        save() { localStorage.setItem('GemiOS_TreeFS', JSON.stringify(this.root)); }
+        
+        getUsage() {
+            let bytes = new Blob([JSON.stringify(this.root)]).size;
+            return { used: bytes, max: this.MAX_STORAGE };
+        }
+
+        forceSave() { localStorage.setItem('GemiOS_TreeFS', JSON.stringify(this.root)); }
+
+        save() { 
+            let data = JSON.stringify(this.root);
+            let size = new Blob([data]).size;
+            if(size > this.MAX_STORAGE) {
+                if(window.GemiOS) GemiOS.notify("Disk Full!", `Action aborted. NVRAM exceeds 50KB limit. (${(size/1024).toFixed(2)}KB)`, false);
+                return false; // REJECT SAVE
+            }
+            localStorage.setItem('GemiOS_TreeFS', data); 
+            return true;
+        }
+
         getDir(path, create = false) {
             let parts = path.split('/').filter(p => p); let curr = this.root;
             for(let p of parts) { 
@@ -45,9 +64,25 @@ else {
             }
             return curr;
         }
+        
         read(path, file) { let dir = this.getDir(path); return (dir && dir[file] !== undefined) ? dir[file] : null; }
-        write(path, file, data) { let dir = this.getDir(path, true); if(dir) { dir[file] = data; this.save(); return true; } return false; }
-        mkdir(path, folderName) { let dir = this.getDir(path); if(dir && dir[folderName] === undefined) { dir[folderName] = {}; this.save(); return true; } return false; }
+        
+        write(path, file, data) { 
+            let dir = this.getDir(path, true); 
+            if(dir) { 
+                let backup = dir[file];
+                dir[file] = data; 
+                if(!this.save()) {
+                    // Revert if full
+                    if(backup) dir[file] = backup; else delete dir[file];
+                    return false;
+                }
+                return true; 
+            } 
+            return false; 
+        }
+        
+        mkdir(path, folderName) { let dir = this.getDir(path); if(dir && dir[folderName] === undefined) { dir[folderName] = {}; return this.save(); } return false; }
         format() { localStorage.removeItem('GemiOS_TreeFS'); sessionStorage.removeItem('GemiOS_Session'); location.reload(); }
         delete(path, file) { let dir = this.getDir(path); if(dir && dir[file] !== undefined) { delete dir[file]; this.save(); return true; } return false; }
     }
@@ -150,8 +185,33 @@ else {
         },
         'sys_drive': {
             icon: '🗂️', title: 'Explorer 2.0', width: 520,
-            html: (pid) => `<div class="sys-card" style="display:flex; gap:10px; align-items:center; background:rgba(0,120,215,0.2);"><button onclick="GemiOS.navDrive(${pid}, 'UP')" class="btn-sec" style="width:auto; margin:0; padding:5px 10px; border-color:#0078d7;">⬆️ Up</button><input type="text" id="d-path-${pid}" value="C:/" disabled style="flex-grow:1; background:transparent; color:inherit; border:none; font-weight:bold; font-size:14px; outline:none;"></div><div id="d-list-${pid}" style="flex-grow:1; min-height:200px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:10px;"></div>`,
+            html: (pid) => `
+                <div class="sys-card" style="display:flex; gap:10px; align-items:center; background:rgba(0,120,215,0.2);"><button onclick="GemiOS.navDrive(${pid}, 'UP')" class="btn-sec" style="width:auto; margin:0; padding:5px 10px; border-color:#0078d7;">⬆️ Up</button><input type="text" id="d-path-${pid}" value="C:/" disabled style="flex-grow:1; background:transparent; color:inherit; border:none; font-weight:bold; font-size:14px; outline:none;"></div>
+                <div id="d-list-${pid}" style="flex-grow:1; min-height:200px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:10px;"></div>
+                <div style="height:4px; background:#222; border-radius:2px; margin-top:10px; overflow:hidden;"><div id="d-bar-${pid}" style="height:100%; background:var(--accent); width:0%;"></div></div>
+            `,
             onLaunch: (pid) => { GemiOS.driveStates[pid] = 'C:/Users/' + GemiOS.user; GemiOS.renderDrive(pid); }
+        },
+        'sys_disk': {
+            icon: '💽', title: 'GemiDisk Utility', width: 400,
+            html: (pid) => `
+                <div class="sys-card" style="text-align:center;">
+                    <div style="font-size:40px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">💽</div>
+                    <h3 style="margin:5px 0;">Virtual NVRAM Status</h3>
+                    <p style="font-size:12px; opacity:0.8;">Strict 50KB Storage Quota Enforced</p>
+                    <div style="width:100%; height:20px; background:rgba(0,0,0,0.5); border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.2); margin:15px 0;">
+                        <div id="disk-fill-${pid}" style="width:0%; height:100%; background:var(--accent); transition:width 0.5s ease;"></div>
+                    </div>
+                    <b id="disk-text-${pid}">Calculating...</b>
+                </div>
+            `,
+            onLaunch: (pid) => {
+                let usage = GemiOS.VFS.getUsage();
+                let pct = (usage.used / usage.max) * 100;
+                document.getElementById(`disk-fill-${pid}`).style.width = Math.min(pct, 100) + '%';
+                document.getElementById(`disk-fill-${pid}`).style.background = pct > 90 ? '#ff4d4d' : 'var(--accent)';
+                document.getElementById(`disk-text-${pid}`).innerText = `${(usage.used/1024).toFixed(2)} KB / ${(usage.max/1024).toFixed(2)} KB Used`;
+            }
         },
         'sys_set': {
             icon: '⚙️', title: 'System Settings', width: 420,
@@ -171,7 +231,7 @@ else {
         },
         'sys_update': {
             icon: '☁️', title: 'Cloud Updater', width: 380,
-            html: () => `<div class="sys-card" style="text-align:center; flex-grow:1;"><div style="font-size:40px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">☁️</div><h3 style="margin:5px 0;">GitHub Update Center</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v27.2.0-INCEPTION</b></p><div id="upd-stat" style="font-size:12px; min-height:15px;"></div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary" style="margin-top:10px;">Check for Cloud Updates</button></div>`
+            html: () => `<div class="sys-card" style="text-align:center; flex-grow:1;"><div style="font-size:40px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">☁️</div><h3 style="margin:5px 0;">GitHub Update Center</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v27.3.0-PERFORMANCE</b></p><div id="upd-stat" style="font-size:12px; min-height:15px;"></div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary" style="margin-top:10px;">Check for Cloud Updates</button></div>`
         },
         'sys_store': {
             icon: '🛍️', title: 'GemiStore', width: 480,
@@ -243,7 +303,8 @@ else {
         'sys_log': {
             icon: '📋', title: 'Chronicles', width: 500,
             html: () => `<div style="flex-grow:1; overflow-y: auto; padding-right: 5px;">
-                <div class="sys-card" style="border-left:4px solid #38ef7d;"><b>v27.2.0 (Inception)</b> - Added GemiVM Virtual Machine. Added Native Window Resizing. Added GemiStore.</div>
+                <div class="sys-card" style="border-left:4px solid #38ef7d;"><b>v27.3.0 (Performance & NVRAM)</b> - Enabled Hyper-Boot zero-latency caching. Implemented strict 50KB Virtual Disk Quota. Added GemiDisk Utility.</div>
+                <div class="sys-card"><b>v27.2.0 (Inception)</b> - Added GemiVM Virtual Machine. Added Native Window Resizing. Added GemiStore.</div>
                 <div class="sys-card"><b>v27.1.0 (Aesthetic)</b> - Graphical Boot/Shutdown. Modern Glass Dock. Smoothed Animations.</div>
                 <div class="sys-card"><b>v27.0.2 (Ultimate Stable)</b> - Re-written template strings to eradicate syntax crashes. Virtual Blob Injection.</div>
                 <div class="sys-card"><b>v27.0.0 (Immersion)</b> - Multi-User Login. GemiChat LAN. GemiCraft World Saving. Themed Accents. Draggable Icons.</div>
@@ -255,7 +316,6 @@ else {
         'app_vm': {
             icon: '💽', title: 'GemiVM', width: 700,
             html: (pid) => {
-                // A self-contained retro OS inside an iframe!
                 let miniOS = `<!DOCTYPE html><html><head><style>body{background:#008080;font-family:Tahoma;overflow:hidden;margin:0;user-select:none;color:black;}#tb{position:absolute;bottom:0;width:100%;height:30px;background:#c0c0c0;border-top:2px solid #fff;display:flex;align-items:center;} .win{position:absolute;background:#c0c0c0;border:2px outset #fff;width:300px;box-shadow:2px 2px 5px rgba(0,0,0,0.5);}.tb-title{background:#000080;color:#fff;padding:5px;font-weight:bold;cursor:pointer;}button{font-family:Tahoma;}</style></head><body><div class="win" style="top:30px;left:30px;"><div class="tb-title">VM Guest System</div><div style="padding:15px;background:#fff;height:100px;">GemiVM Sandbox Active.<br><br><button onclick="alert('Nested Execution Successful!')">Ping Hardware</button></div></div><div class="win" style="top:100px;left:250px;"><div class="tb-title">Virtual Drive A:</div><div style="padding:15px;background:#fff;height:100px;">No Floppy Disk Inserted.</div></div><div id="tb"><button style="font-weight:bold;margin-left:2px;border:2px outset #fff;">Start</button><span style="margin-left:auto;margin-right:10px;">Guest Memory Isolated</span></div></body></html>`;
                 let srcDoc = miniOS.replace(/"/g, '&quot;');
                 return `<iframe srcdoc="${srcDoc}" style="width:100%; flex-grow:1; border:none; background:#000; border-radius:6px; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);"></iframe>`;
@@ -345,7 +405,7 @@ else {
                 if(fileData) return `<div style="text-align:center; flex-grow:1; display:flex; align-items:center; justify-content:center;"><img src="${fileData}" style="max-width:100%; max-height:100%; border-radius:6px; box-shadow:0 5px 15px rgba(0,0,0,0.5);"></div>`;
                 let pics = GemiOS.VFS.getDir('C:/Users/' + GemiOS.user + '/Pictures') || {}; let h = '';
                 for(let p in pics) { h += `<img src="${pics[p]}" style="width:100%; border-radius:6px; margin-bottom:15px; border:1px solid rgba(255,255,255,0.2);">`; }
-                if(h === '') h = '<div style="text-align:center; padding:40px; opacity:0.5; font-size:18px; flex-grow:1;">No photos found.</div>';
+                if(h === '') h = '<div style="text-align:center; padding:40px; opacity:0.5; font-size:18px; flex-grow:1;">No photos found. Drag & Drop to import!</div>';
                 return `<div style="flex-grow:1; overflow-y:auto; padding-right:5px;">${h}</div>`;
             }
         },
@@ -467,7 +527,6 @@ else {
                     
                     let p = {x: cvs.width/2, y: 50, vx: 0, vy: 0, w: 14, h: 28, speed: 3.5, jump: -8, ground: false};
                     let keys = {}; let selectedBlock = 2;
-                    let time = 0; 
                     
                     let updateHotbar = (b) => {
                         selectedBlock = b;
@@ -505,7 +564,6 @@ else {
                     GemiOS.craftItvs[pid] = setInterval(() => {
                         if(!document.getElementById(`craft-cvs-${pid}`)) { clearInterval(GemiOS.craftItvs[pid]); document.removeEventListener('keydown', keydown); document.removeEventListener('keyup', keyup); return; }
                         
-                        // Handle resize dynamically
                         if(cvs.width !== cvs.offsetWidth || cvs.height !== cvs.offsetHeight) {
                              cvs.width = cvs.offsetWidth; cvs.height = cvs.offsetHeight;
                         }
@@ -516,12 +574,7 @@ else {
                         if(!checkCol(p.x + p.vx, p.y)) { p.x += p.vx; } else { p.vx = 0; }
                         if(!checkCol(p.x, p.y + p.vy)) { p.y += p.vy; p.ground = false; } else { if(p.vy > 0) p.ground = true; p.vy = 0; p.y = Math.round(p.y); }
 
-                        time += 0.001;
-                        let rC = Math.floor(Math.max(20, 135 * Math.sin(time)));
-                        let gC = Math.floor(Math.max(20, 206 * Math.sin(time)));
-                        let bC = Math.floor(Math.max(40, 235 * Math.sin(time)));
-                        cvs.style.background = `rgb(${rC},${gC},${bC})`;
-                        ctx.clearRect(0,0,cvs.width,cvs.height); 
+                        ctx.fillStyle = '#87CEEB'; ctx.fillRect(0,0,cvs.width,cvs.height); 
                         
                         for(let x=0; x<cols; x++) {
                             for(let y=0; y<rows; y++) {
@@ -550,7 +603,6 @@ else {
                     can.onmouseup = () => drawing = false; can.onmouseout = () => drawing = false;
                     can.onmousemove = (e) => { if(drawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.strokeStyle = document.getElementById(`p-col-${pid}`).value; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.stroke(); } };
                     
-                    // Handle resize
                     window.addEventListener('resize', () => {
                          if(can.width !== can.offsetWidth) {
                              let temp = ctx.getImageData(0,0,can.width,can.height);
@@ -659,41 +711,40 @@ else {
         
         patchDesktopData() {
             let desk = this.VFS.getDir('C:/Users/' + this.user + '/Desktop', true);
-            // Notice: VM, Clock, Matrix are NOT loaded to desktop by default. Store only!
             let appsToLoad = {
                 'Explorer.app': 'sys_drive', 'TaskMgr.app': 'sys_task', 'Updater.app': 'sys_update',
-                'GemiStore.app': 'sys_store', 'Chronicles.app': 'sys_log', 'TimeMach.app': 'sys_time', 
-                'Settings.app': 'sys_set', 'Browser.app': 'sys_browser', 'GemiCode.app': 'app_code', 
-                'Terminal.app': 'sys_term', 'Notepad.app': 'app_note', 'GemiWord.app': 'app_word', 
-                'GemiVoice.app': 'app_voice', 'GemiChat.app': 'app_chat', 'GemiAmp.app': 'app_amp', 
-                'Calc.app': 'app_calc', 'Camera.app': 'app_cam', 'Gallery.app': 'app_view', 
-                'Pong.app': 'app_pong', 'Paint.app': 'app_paint', 'Synth.app': 'app_synth', 
-                'Snake.app': 'app_snake', 'Sweeper.app': 'app_sweeper', 'TicTac.app': 'app_ttt', 
-                'GemiCraft.app': 'app_craft'
+                'Chronicles.app': 'sys_log', 'TimeMach.app': 'sys_time', 'Settings.app': 'sys_set',
+                'Browser.app': 'sys_browser', 'GemiCode.app': 'app_code', 'Terminal.app': 'sys_term',
+                'Notepad.app': 'app_note', 'GemiWord.app': 'app_word', 'GemiVoice.app': 'app_voice', 
+                'GemiChat.app': 'app_chat', 'GemiAmp.app': 'app_amp', 'Calc.app': 'app_calc', 
+                'Camera.app': 'app_cam', 'Gallery.app': 'app_view', 'Pong.app': 'app_pong', 
+                'Paint.app': 'app_paint', 'Synth.app': 'app_synth', 'Snake.app': 'app_snake', 
+                'Sweeper.app': 'app_sweeper', 'TicTac.app': 'app_ttt', 'GemiCraft.app': 'app_craft',
+                'GemiDisk.app': 'sys_disk'
             };
             for(let a in appsToLoad) { if(!desk[a]) this.VFS.write('C:/Users/' + this.user + '/Desktop', a, appsToLoad[a]); }
         }
         
         runBootSequence() {
             document.body.innerHTML = `
-                <div id="gui-boot" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#050505;display:flex;flex-direction:column;justify-content:center;align-items:center;color:white;z-index:999999;transition:opacity 0.8s ease;">
+                <div id="gui-boot" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#050505;display:flex;flex-direction:column;justify-content:center;align-items:center;color:white;z-index:999999;transition:opacity 0.5s ease;">
                     <div style="font-size:90px; animation: float 3s ease-in-out infinite; filter:drop-shadow(0 0 25px var(--accent));">🌌</div>
                     <h1 style="font-family:'Inter',sans-serif; font-weight:600; letter-spacing:6px; margin-top:20px; font-size:32px;">GemiOS<span style="color:var(--accent);">27</span></h1>
-                    <div style="margin-top:5px; font-family:monospace; font-size:12px; color:#666; letter-spacing:2px;">LOADING INCEPTION ENGINE...</div>
+                    <div style="margin-top:5px; font-family:monospace; font-size:12px; color:#666; letter-spacing:2px;">MOUNTING NVRAM...</div>
                     <div class="spinner" style="margin-top:40px;"></div>
                 </div>
             `;
             setTimeout(() => {
                 let bs = document.getElementById('gui-boot');
                 bs.style.opacity = '0';
-                setTimeout(() => this.showLoginScreen(), 800);
-            }, 3000); 
+                setTimeout(() => this.showLoginScreen(), 500);
+            }, 1000); 
         }
         
         showLoginScreen() {
             document.body.innerHTML = `
                 <div id="desktop-bg" style="filter:blur(15px) brightness(0.6); transform:scale(1.05);"></div>
-                <div id="login-ui" style="position:absolute; top:0; left:0; width:100vw; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; z-index:999; animation: fadeIn 1s ease forwards;">
+                <div id="login-ui" style="position:absolute; top:0; left:0; width:100vw; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; z-index:999; animation: fadeIn 0.5s ease forwards;">
                     <div style="font-size:70px; background:rgba(255,255,255,0.1); border-radius:50%; width:120px; height:120px; display:flex; justify-content:center; align-items:center; margin-bottom:20px; border:2px solid rgba(255,255,255,0.2); box-shadow:0 10px 30px rgba(0,0,0,0.5); backdrop-filter:blur(10px);">👥</div>
                     <h2 style="margin:0 0 30px 0; font-size:28px; font-weight:500; letter-spacing:2px;">Select User</h2>
                     <div style="display:flex; gap:25px; margin-bottom:20px;">
@@ -743,28 +794,28 @@ else {
                 osc.stop(t + i * 0.2 + 1.0);
             });
         }
+        
+        authenticate(username) { 
+            let ui = document.getElementById('login-ui');
+            if(ui) { ui.style.transition = 'opacity 0.3s ease, transform 0.3s ease'; ui.style.opacity = '0'; ui.style.transform = 'scale(1.1)'; }
+            this.user = username;
+            this.patchDesktopData();
+            this.playStartupChime(); 
+            sessionStorage.setItem('GemiOS_Session', 'active'); 
+            sessionStorage.setItem('GemiOS_User', username);
+            setTimeout(() => { this.launchDesktop(); }, 300);
+        }
 
         lockSystem() {
             this.playShutdownChime();
             let bg = document.getElementById('desktop-bg');
             if(bg) bg.style.filter = "blur(20px) grayscale(100%) brightness(0.2)";
             let overlay = document.createElement('div');
-            overlay.style.cssText = 'position:absolute;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);z-index:9999999;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 1s ease;pointer-events:none;color:white;font-family:sans-serif;';
+            overlay.style.cssText = 'position:absolute;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);z-index:9999999;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 0.8s ease;pointer-events:none;color:white;font-family:sans-serif;';
             overlay.innerHTML = `<div class="spinner" style="margin-bottom:20px;"></div><div style="font-size:18px; letter-spacing:2px; font-weight:300;">Shutting down...</div>`;
             document.body.appendChild(overlay);
             setTimeout(() => { overlay.style.opacity = '1'; }, 50);
-            setTimeout(() => { sessionStorage.removeItem('GemiOS_Session'); location.reload(); }, 2000);
-        }
-        
-        authenticate(username) { 
-            let ui = document.getElementById('login-ui');
-            if(ui) { ui.style.transition = 'opacity 0.5s ease, transform 0.5s ease'; ui.style.opacity = '0'; ui.style.transform = 'scale(1.1)'; }
-            this.user = username;
-            this.patchDesktopData();
-            this.playStartupChime(); 
-            sessionStorage.setItem('GemiOS_Session', 'active'); 
-            sessionStorage.setItem('GemiOS_User', username);
-            setTimeout(() => { this.launchDesktop(); }, 500);
+            setTimeout(() => { sessionStorage.removeItem('GemiOS_Session'); location.reload(); }, 1000);
         }
 
         notify(title, message, isSuccess = true) {
@@ -794,15 +845,6 @@ else {
                 document.onmouseup = () => document.onmousemove = null;
             };
         }
-
-        // --- GEMISTORE INSTALL LOGIC ---
-        installApp(filename, appId, pid) {
-            this.VFS.write('C:/Users/' + this.user + '/Desktop', filename, appId);
-            this.notify("GemiStore", `${filename} has been installed!`);
-            this.renderDesktopIcons();
-            // Re-render store list to show it's installed
-            if(this.Registry['sys_store'].onLaunch) this.Registry['sys_store'].onLaunch(pid);
-        }
         
         initRealityBridge() {
             document.body.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); });
@@ -813,9 +855,10 @@ else {
                 
                 let reader = new FileReader();
                 reader.onload = (event) => {
-                    this.VFS.write('C:/Users/' + this.user + '/Downloads', file.name, event.target.result);
-                    this.notify("Reality Bridge Success", `Imported ${file.name} to Downloads.`);
-                    for(let pid in this.driveStates) { this.renderDrive(pid); }
+                    if(this.VFS.write('C:/Users/' + this.user + '/Downloads', file.name, event.target.result)) {
+                        this.notify("Reality Bridge Success", `Imported ${file.name} to Downloads.`);
+                        for(let pid in this.driveStates) { this.renderDrive(pid); }
+                    }
                 };
                 if(file.name.endsWith('.txt') || file.name.endsWith('.rtf')) { reader.readAsText(file); } 
                 else { reader.readAsDataURL(file); }
@@ -874,8 +917,9 @@ else {
             c.getContext('2d').drawImage(v, 0, 0);
             let data = c.toDataURL('image/jpeg');
             let name = 'Photo_' + new Date().getTime() + '.jpg';
-            this.VFS.write('C:/Users/' + this.user + '/Pictures', name, data);
-            this.notify("Photo Captured", `Saved to Pictures/${name}`);
+            if(this.VFS.write('C:/Users/' + this.user + '/Pictures', name, data)) {
+                this.notify("Photo Captured", `Saved to Pictures/${name}`);
+            }
         }
 
         updateChatBox(pid) {
@@ -910,8 +954,9 @@ else {
 
         saveCraft() {
             if(this.craftWorld) {
-                this.VFS.write('C:/Users/' + this.user + '/Documents', 'world.dat', JSON.stringify(this.craftWorld));
-                this.notify("GemiCraft", "World saved to Documents/world.dat");
+                if(this.VFS.write('C:/Users/' + this.user + '/Documents', 'world.dat', JSON.stringify(this.craftWorld))) {
+                    this.notify("GemiCraft", "World saved to Documents/world.dat");
+                }
             }
         }
         loadCraft() {
@@ -945,7 +990,7 @@ else {
                 if (!r.ok) throw new Error("GitHub server unreachable.");
                 let d = await r.json();
                 
-                if (d.version !== "27.2.0-INCEPTION") {
+                if (d.version !== "27.3.0-PERFORMANCE") {
                     st.innerHTML = `<span style="color:#ffeb3b">New Version Found: ${d.version}</span><br><i>${d.notes}</i>`;
                     btn.innerText = 'Emulate Live Install'; btn.style.background = '#ff00cc'; 
                     btn.onclick = async () => {
@@ -971,6 +1016,7 @@ else {
             } catch (err) { st.innerHTML = `<span style="color:#ff4d4d">Error: ${err.message}</span>`; btn.innerText = 'Retry'; btn.style.background = '#0078d7'; }
         }
 
+        // Mini games
         initSweeper(pid) {
             let grid = document.getElementById(`ms-grid-${pid}`); if(!grid) return; grid.innerHTML = '';
             for(let i=0; i<81; i++) {
@@ -1138,21 +1184,21 @@ else {
                             <div style="font-size:35px; background:rgba(255,255,255,0.1); border-radius:50%; width:60px; height:60px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2);">${this.user === 'Admin' ? '👑' : '👤'}</div>
                             <div>
                                 <div style="font-size:20px; font-weight:600;">${this.user}</div>
-                                <div style="font-size:12px; opacity:0.7; font-family:monospace;">GemiOS 27.2 / <span style="color:var(--accent); font-weight:bold;">Inception</span></div>
+                                <div style="font-size:12px; opacity:0.7; font-family:monospace;">GemiOS 27.3 / <span style="color:var(--accent); font-weight:bold;">NVRAM</span></div>
                             </div>
                         </div>
                         <div style="overflow-y:auto; padding-bottom:15px; padding-top:10px;">
                             <div class="start-cat">System & Core</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('sys_store')"><span style="font-size:20px;">🛍️</span> GemiStore (App Center)</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('sys_disk')" style="border:1px solid var(--accent); background:rgba(255,255,255,0.05);"><span style="font-size:20px;">💽</span> GemiDisk Utility</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('sys_task')"><span style="font-size:20px;">📊</span> System Monitor</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('sys_drive')"><span style="font-size:20px;">🗂️</span> Explorer 2.0</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('sys_update')"><span style="font-size:20px;">☁️</span> Cloud Updater</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('sys_set')"><span style="font-size:20px;">⚙️</span> Settings (Theming)</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('sys_log')"><span style="font-size:20px;">📋</span> Master Chronicles</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('sys_time')"><span style="font-size:20px;">⏳</span> Time Machine</div>
                             
                             <div class="start-cat">Development & Utilities</div>
-                            <div class="start-item" onclick="GemiOS.PM.launch('app_chat')" style="border:1px solid var(--accent); background:rgba(255,255,255,0.05);"><span style="font-size:20px;">💬</span> GemiChat (LAN)</div>
+                            <div class="start-item" onclick="GemiOS.PM.launch('app_chat')"><span style="font-size:20px;">💬</span> GemiChat (LAN)</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('app_word')"><span style="font-size:20px;">📄</span> GemiWord</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('app_voice')"><span style="font-size:20px;">🗣️</span> GemiVoice 2.0</div>
                             <div class="start-item" onclick="GemiOS.PM.launch('app_cam')"><span style="font-size:20px;">📸</span> GemiCam</div>
