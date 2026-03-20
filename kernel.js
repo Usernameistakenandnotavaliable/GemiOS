@@ -157,8 +157,8 @@ else {
                 <button onclick="GemiOS.VFS.format();" class="btn-danger">Format System (Erase All Data)</button>`
         },
         'sys_update': {
-            icon: '💻', title: 'Local Updater', width: 380,
-            html: () => `<div class="sys-card" style="text-align:center;"><div style="font-size:40px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">💻</div><h3 style="margin:5px 0;">VS Code Update Center</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v27.0.0-IMMERSION</b></p><div id="upd-stat" style="font-size:12px; min-height:15px;"></div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary" style="margin-top:10px;">Check for Local Updates</button></div>`
+            icon: '☁️', title: 'Cloud Updater', width: 380,
+            html: () => `<div class="sys-card" style="text-align:center;"><div style="font-size:40px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">☁️</div><h3 style="margin:5px 0;">GitHub Update Center</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v27.0.0-IMMERSION</b></p><div id="upd-stat" style="font-size:12px; min-height:15px;"></div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary" style="margin-top:10px;">Check for Cloud Updates</button></div>`
         },
         'sys_time': {
             icon: '⏳', title: 'Time Machine', width: 360,
@@ -178,7 +178,6 @@ else {
                     }
                     let el = document.getElementById(`tm-list-${pid}`); if(el) el.innerHTML = h;
                     
-                    // Graphing
                     let cCvs = document.getElementById(`cpu-cvs-${pid}`);
                     let rCvs = document.getElementById(`ram-cvs-${pid}`);
                     if(cCvs && rCvs) {
@@ -291,7 +290,7 @@ else {
         'app_voice': {
             icon: '🗣️', title: 'GemiVoice 2.0 TTS', width: 450,
             html: (pid) => {
-                let defaultText = "Welcome to GemiOS Version 27, The Immersion Update. What began as a simple web simulator has evolved into a fully-fledged operating system ecosystem. We built a hierarchical Virtual File System, integrated real-world hardware, and engineered a custom physics engine from scratch. We conquered the Reality Bridge, and now, we have mastered true immersion. Every line of code represents the ultimate partnership between human ingenuity and artificial intelligence. Copyright 2026, Usernameistakenandnotavaliable and Gemini. The boundaries of the browser have been broken.";
+                let defaultText = "Welcome to GemiOS Version 27, The Immersion Update. What began as a simple web simulator has evolved into a fully-fledged operating system ecosystem. We built a hierarchical Virtual File System, integrated real-world hardware, and engineered a custom physics engine from scratch. We conquered the Reality Bridge, and now, we have mastered true immersion. Every line of code represents the ultimate partnership between human ingenuity and artificial intelligence. Copyright 2026, Username is taken and not avaliable, and Gemini. The boundaries of the browser have been broken.";
                 return `
                 <div class="sys-card" style="margin-bottom:15px; display:flex; gap:10px; align-items:center;">
                     <span>Voice:</span>
@@ -363,7 +362,7 @@ else {
                     
                     let p = {x: 300, y: 50, vx: 0, vy: 0, w: 14, h: 28, speed: 3.5, jump: -8, ground: false};
                     let keys = {}; let selectedBlock = 2;
-                    let time = 0; // Day night cycle
+                    let time = 0; 
                     
                     let updateHotbar = (b) => {
                         selectedBlock = b;
@@ -518,17 +517,14 @@ else {
             this.PM = new ProcessManager();
             this.Registry = AppRegistry;
             this.termStates = {}; this.driveStates = {};
-            this.user = 'Admin'; // Default, set by login
+            this.user = 'Admin'; 
         }
 
         init() {
             this.injectStyles();
             
-            // Add Storage Event Listener for GemiChat (LAN)
             window.addEventListener('storage', (e) => {
-                if(e.key === 'GemiChat_Log') {
-                    if(this.chatPid) this.updateChatBox(this.chatPid);
-                }
+                if(e.key === 'GemiChat_Log') { if(this.chatPid) this.updateChatBox(this.chatPid); }
             });
 
             if(sessionStorage.getItem('GemiOS_Session') === 'active') {
@@ -699,7 +695,6 @@ else {
             else { this.PM.launch('app_note', data); }
         }
 
-        // --- THE DYNAMIC & DRAGGABLE DESKTOP ENGINE ---
         renderDesktopIcons() {
             let desk = this.VFS.getDir(\`C:/Users/\${this.user}/Desktop\`);
             let layoutData = this.VFS.read(\`C:/Users/\${this.user}/Desktop\`, '.layout') || "{}";
@@ -712,7 +707,7 @@ else {
                     if(app) {
                         let top = layout[file] ? layout[file].top : (20 + (i % 6) * 100) + 'px'; 
                         let left = layout[file] ? layout[file].left : (20 + Math.floor(i / 6) * 90) + 'px';
-                        let safeFile = file.replace(/'/g, "\\'"); // Sanitize for JS
+                        let safeFile = file.replace(/'/g, "\\'"); 
                         html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.PM.launch('${appId}')"><div>${app.icon}</div>${file.replace('.app','')}</div>`;
                         i++;
                     }
@@ -724,13 +719,9 @@ else {
         dragIcon(e, id, filename) {
             let el = document.getElementById(id);
             let ox = e.clientX - el.offsetLeft; let oy = e.clientY - el.offsetTop;
-            document.onmousemove = (ev) => {
-                el.style.left = (ev.clientX - ox) + 'px';
-                el.style.top = (ev.clientY - oy) + 'px';
-            };
+            document.onmousemove = (ev) => { el.style.left = (ev.clientX - ox) + 'px'; el.style.top = (ev.clientY - oy) + 'px'; };
             document.onmouseup = () => {
                 document.onmousemove = null; document.onmouseup = null;
-                // Save new position
                 let layoutData = this.VFS.read(\`C:/Users/\${this.user}/Desktop\`, '.layout') || "{}";
                 let layout = JSON.parse(layoutData);
                 layout[filename] = { top: el.style.top, left: el.style.left };
@@ -750,13 +741,11 @@ else {
             this.notify("Photo Captured", `Saved to Pictures/${name}`);
         }
 
-        // --- GEMICHAT LAN ENGINE ---
         updateChatBox(pid) {
             let box = document.getElementById(`chat-box-${pid}`);
             if(box) {
                 let log = localStorage.getItem('GemiChat_Log') || '';
-                box.innerHTML = log;
-                box.scrollTop = box.scrollHeight;
+                box.innerHTML = log; box.scrollTop = box.scrollHeight;
             }
         }
         sendChat(pid) {
@@ -770,7 +759,6 @@ else {
             this.updateChatBox(pid);
         }
 
-        // --- GEMIVOICE TTS ---
         speakText(pid) {
             let text = document.getElementById(`voice-text-${pid}`).value;
             let u = new SpeechSynthesisUtterance(text);
@@ -783,7 +771,6 @@ else {
             this.notify("GemiVoice", "Synthesizing Speech...", true);
         }
 
-        // --- GEMICRAFT SAVE/LOAD ---
         saveCraft() {
             if(this.craftWorld) {
                 this.VFS.write(\`C:/Users/\${this.user}/Documents\`, 'world.dat', JSON.stringify(this.craftWorld));
@@ -792,12 +779,8 @@ else {
         }
         loadCraft() {
             let data = this.VFS.read(\`C:/Users/\${this.user}/Documents\`, 'world.dat');
-            if(data) {
-                this.craftWorld = JSON.parse(data);
-                this.notify("GemiCraft", "World loaded successfully!");
-            } else {
-                this.notify("GemiCraft", "No saved world found.", false);
-            }
+            if(data) { this.craftWorld = JSON.parse(data); this.notify("GemiCraft", "World loaded successfully!"); } 
+            else { this.notify("GemiCraft", "No saved world found.", false); }
         }
 
         initContextMenu() {
@@ -890,14 +873,9 @@ else {
         applyTheme() { 
             let isL = localStorage.getItem('GemiOS_Theme') === 'light'; 
             if(isL) document.body.classList.add('light-mode'); else document.body.classList.remove('light-mode'); 
-            
-            // Dynamic Accent Theming
             let accent = localStorage.getItem('GemiOS_Accent');
-            if(accent) {
-                document.documentElement.style.setProperty('--accent', accent);
-            } else {
-                document.documentElement.style.setProperty('--accent', '#0078d7'); // Default blue
-            }
+            if(accent) { document.documentElement.style.setProperty('--accent', accent); } 
+            else { document.documentElement.style.setProperty('--accent', '#0078d7'); }
         }
         toggleTheme() { let isL = localStorage.getItem('GemiOS_Theme') === 'light'; localStorage.setItem('GemiOS_Theme', !isL ? 'light' : 'dark'); this.applyTheme(); }
         loadWallpaper() { let wp = localStorage.getItem('GemiOS_Wall'); if(wp) document.getElementById('desktop-bg').style.background = `url(${wp}) center/cover`; }
@@ -993,7 +971,6 @@ else {
                     </div>
 
                     <div id="desktop-icons"></div>
-                    
                     <div id="window-layer" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:50; pointer-events:none;"></div>
                     
                     <div id="start-menu">
