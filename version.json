@@ -1,4 +1,4 @@
 {
-  "version": "26.3.0-ENGINE",
-  "notes": "The Game Engine Update. Embedded a custom 2D Physics API into the kernel. Released GemiCraft 2D Sandbox."
+  "version": "26.4.0-REALITY",
+  "notes": "The Reality Bridge Update. Added native drag-and-drop file import, Smart Explorer file associations, and GemiAmp Media Player."
 }
