@@ -1,4 +1,4 @@
 {
-  "version": "26.4.0-REALITY",
-  "notes": "The Reality Bridge Update. Added native drag-and-drop file import, Smart Explorer file associations, and GemiAmp Media Player."
+  "version": "26.4.1-AUDIO",
+  "notes": "The Audio Ecosystem Hotfix. Replaced abrupt reloads with a procedural WebAudio API Startup Chime and a soft-fade Shutdown sequence."
 }
