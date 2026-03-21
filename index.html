@@ -2,95 +2,196 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GemiOS BIOS (Air-Gapped Boot)</title>
+    <title>GemiOS BIOS Setup Utility</title>
     <style>
-        body { background: black; color: #38ef7d; font-family: 'Consolas', monospace; padding: 20px; overflow: hidden; margin: 0; }
-        #bios-screen { height: 100vh; width: 100vw; display: flex; flex-direction: column; position: relative; }
+        body { background: #000; color: #ccc; font-family: 'Perfect DOS VGA 437', 'Consolas', monospace; margin: 0; overflow: hidden; user-select: none; }
+        #post-screen { padding: 20px; }
+        #bios-screen { display: none; background: #0000AA; width: 100vw; height: 100vh; flex-direction: column; }
+        .bios-header { background: #ccc; color: #0000AA; text-align: center; padding: 5px; font-weight: bold; }
+        .bios-nav { display: flex; background: #0000AA; color: #ccc; padding: 5px 20px; border-bottom: 2px solid #ccc; }
+        .bios-nav div { margin-right: 20px; cursor: pointer; padding: 2px 10px; }
+        .bios-nav div.active { background: #ccc; color: #0000AA; }
+        .bios-body { display: flex; flex-grow: 1; padding: 20px; gap: 20px; }
+        .bios-main { flex: 2; border: 2px solid #ccc; padding: 15px; }
+        .bios-help { flex: 1; border: 2px solid #ccc; padding: 15px; color: #aaa; }
+        .bios-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .bios-val { color: #FFF; font-weight: bold; }
+        .bios-val.editable { cursor: pointer; color: #FFFF55; }
+        .bios-val.editable:hover { background: #000; }
+        .bios-footer { border-top: 2px solid #ccc; padding: 10px 20px; display: flex; justify-content: space-between; color: #aaa; }
         .log { margin-bottom: 5px; }
-        .error { color: #ff4d4d; font-weight: bold; }
-        .success { color: #4db8ff; font-weight: bold; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-        .cursor { display: inline-block; width: 8px; height: 15px; background: #38ef7d; animation: blink 1s step-end infinite; }
-        .copyright { position: absolute; bottom: 20px; left: 20px; color: #555; font-size: 12px; }
+        .error { color: #ff4d4d; }
+        .success { color: #4db8ff; }
+        button { background: #ccc; color: #0000AA; border: none; padding: 5px 15px; font-family: inherit; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #FFF; }
     </style>
 </head>
 <body>
 
+<div id="post-screen">
+    <div>GemiSys Network BIOS v35.0 (Air-Gapped Engine)</div>
+    <div style="color:#888;">Main Memory: 10240 KB OK</div>
+    <div id="boot-log" style="margin-top: 15px;"></div>
+    <div style="position:absolute; bottom:20px; width:calc(100% - 40px); display:flex; justify-content:space-between;">
+        <span>Press [F2] to enter SETUP</span>
+        <span>© 2026 GemiOS Corp.</span>
+    </div>
+</div>
+
 <div id="bios-screen">
-    <div>GemiSys Network BIOS v8.1 (Air-Gapped Engine)</div>
-    <div>Initializing Hardware Interface... OK</div>
-    <div id="boot-log"></div>
-    <div><span class="cursor"></span></div>
-    <div class="copyright">© 2026 GemiOS Corporation. Built by Usernameistakenandnotavaliable & Gemini.</div>
+    <div class="bios-header">GemiOS BIOS Setup Utility</div>
+    <div class="bios-nav">
+        <div id="tab-main" class="active" onclick="switchTab('main')">Main</div>
+        <div id="tab-boot" onclick="switchTab('boot')">Boot</div>
+        <div id="tab-sec" onclick="switchTab('sec')">Security</div>
+        <div id="tab-exit" onclick="switchTab('exit')">Exit</div>
+    </div>
+    <div class="bios-body">
+        <div class="bios-main" id="bios-content">
+            </div>
+        <div class="bios-help">
+            <b>Item Specific Help</b>
+            <hr style="border:0; border-top:1px solid #ccc; margin:10px 0;">
+            <div id="bios-desc">Select an item to view its description.</div>
+        </div>
+    </div>
+    <div class="bios-footer">
+        <span>[Mouse] Select Item</span>
+        <span>[ESC] Exit</span>
+        <span>[F10] Save and Exit</span>
+    </div>
 </div>
 
 <script>
-    // HARDCODED GITHUB CLOUD ARCHITECTURE
     const GITHUB_USER = "Usernameistakenandnotavaliable"; 
     const REPO_NAME = "GemiOS";
     const BRANCH = "main";
     const BASE_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/${BRANCH}/`;
 
+    let bootTimer;
+    let biosOpen = false;
+    let fastBoot = localStorage.getItem('GemiOS_BIOS_FastBoot') === 'true';
+
     const logDiv = document.getElementById('boot-log');
-    function log(msg, type = '') { 
-        logDiv.innerHTML += `<div class="log ${type}">> ${msg}</div>`; 
+    function log(msg, type = '') { logDiv.innerHTML += `<div class="log ${type}">${msg}</div>`; }
+
+    // --- BIOS LOGIC ---
+    document.addEventListener('keydown', (e) => { 
+        if(e.key === 'F2' && !biosOpen) openBios(); 
+        if(e.key === 'Escape' && biosOpen) { saveAndExit(); }
+        if(e.key === 'F10' && biosOpen) { saveAndExit(); }
+    });
+
+    function openBios() {
+        clearTimeout(bootTimer);
+        biosOpen = true;
+        document.getElementById('post-screen').style.display = 'none';
+        document.getElementById('bios-screen').style.display = 'flex';
+        switchTab('main');
     }
 
+    function switchTab(tab) {
+        document.querySelectorAll('.bios-nav div').forEach(d => d.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        let content = document.getElementById('bios-content');
+        let desc = document.getElementById('bios-desc');
+
+        if(tab === 'main') {
+            desc.innerText = "System Overview. Displays virtual hardware specifications allocated to the GemiOS Hypervisor.";
+            content.innerHTML = `
+                <div class="bios-row"><span>System Time</span><span class="bios-val">${new Date().toLocaleTimeString()}</span></div>
+                <div class="bios-row"><span>System Date</span><span class="bios-val">${new Date().toLocaleDateString()}</span></div>
+                <br>
+                <div class="bios-row"><span>Processor Type</span><span class="bios-val">GemiNode Quantum v9</span></div>
+                <div class="bios-row"><span>Processor Speed</span><span class="bios-val">4.20 GHz Virtualized</span></div>
+                <br>
+                <div class="bios-row"><span>Total NVRAM</span><span class="bios-val">10240 KB</span></div>
+                <div class="bios-row"><span>Kernel Version</span><span class="bios-val">${localStorage.getItem('GemiOS_Cache_Ver') || 'None'}</span></div>
+            `;
+        } else if(tab === 'boot') {
+            desc.innerText = "Fast Boot skips the POST delay and boots directly into the OS.";
+            content.innerHTML = `
+                <div class="bios-row" onmouseover="document.getElementById('bios-desc').innerText='Skip the 2-second POST delay.'">
+                    <span>Fast Boot</span>
+                    <span class="bios-val editable" onclick="toggleFastBoot(this)">${fastBoot ? 'Enabled' : 'Disabled'}</span>
+                </div>
+            `;
+        } else if(tab === 'sec') {
+            desc.innerText = "WARNING: Secure Erase will permanently delete all files, apps, and kernel data from the NVRAM.";
+            content.innerHTML = `
+                <div class="bios-row"><span>Administrator Password</span><span class="bios-val">Clear</span></div>
+                <div class="bios-row"><span>User Password</span><span class="bios-val">Clear</span></div>
+                <br>
+                <button onclick="if(confirm('Are you sure? This will wipe the entire OS!')) { localStorage.clear(); location.reload(); }">Secure Erase NVRAM (Format Disk)</button>
+            `;
+        } else if(tab === 'exit') {
+            desc.innerText = "Save settings and continue to OS Boot Sequence.";
+            content.innerHTML = `
+                <div class="bios-row"><span class="bios-val editable" onclick="saveAndExit()">Save Changes and Exit</span></div>
+                <div class="bios-row"><span class="bios-val editable" onclick="location.reload()">Discard Changes and Exit</span></div>
+            `;
+        }
+    }
+
+    function toggleFastBoot(el) {
+        fastBoot = !fastBoot;
+        el.innerText = fastBoot ? 'Enabled' : 'Disabled';
+        localStorage.setItem('GemiOS_BIOS_FastBoot', fastBoot);
+    }
+
+    function saveAndExit() {
+        document.getElementById('bios-screen').style.display = 'none';
+        document.getElementById('post-screen').style.display = 'block';
+        biosOpen = false;
+        log("Changes saved. Resuming boot...", "success");
+        setTimeout(systemBoot, 500);
+    }
+
+    // --- BOOT SEQUENCE ---
     function executeKernel(kernelCode) {
-        log("Compiling Virtual Blob...");
+        log("Mounting Virtual Blob...");
         let blob = new Blob([kernelCode], { type: 'application/javascript' });
         let blobUrl = URL.createObjectURL(blob);
         let script = document.createElement('script');
         script.src = blobUrl;
-        
-        script.onload = () => {
-            setTimeout(() => {
-                document.getElementById('bios-screen').style.display = 'none'; 
-                URL.revokeObjectURL(blobUrl); 
-            }, 300);
-        };
-        script.onerror = () => { log("BOOT FAILURE: Virtual Blob failed to execute.", "error"); };
+        script.onload = () => { setTimeout(() => { document.getElementById('post-screen').style.display = 'none'; URL.revokeObjectURL(blobUrl); }, 200); };
+        script.onerror = () => { log("FATAL: Virtual Blob failed to mount.", "error"); };
         document.body.appendChild(script);
     }
 
     async function systemBoot() {
-        log("Initiating Boot Sequence...");
-        
         let cachedKernel = localStorage.getItem('GemiOS_Cache_Kernel');
         let cachedVer = localStorage.getItem('GemiOS_Cache_Ver');
 
-        // TRUE PERSISTENCE: If we have the kernel, NEVER check the internet.
         if (cachedKernel && cachedVer) {
-            log(`⚡ NVRAM Snapshot Found. Booting OS Version: [${cachedVer}]`, "success");
-            log("Bypassing Network. Initiating Air-Gapped Boot...");
+            log(`[NVRAM OK] Booting Version: ${cachedVer}`, "success");
             executeKernel(cachedKernel);
             return;
         }
 
-        // FIRST TIME SETUP OR WIPED NVRAM: Fetch from Cloud
-        log("No NVRAM Snapshot found. Establishing connection to GemiOS Cloud (GitHub)...", "error");
+        log("Firmware missing. Connecting to Cloud Repository...", "error");
         try {
             let cacheBuster = "?t=" + new Date().getTime(); 
             let verResponse = await fetch(BASE_URL + "version.json" + cacheBuster);
-            if (!verResponse.ok) throw new Error("Could not find version.json on GitHub.");
+            if (!verResponse.ok) throw new Error("Network unreachable.");
             let verData = await verResponse.json();
-            log(`Authorized Cloud Version: [${verData.version}]`);
-
-            log("Downloading Titanium Kernel Payload from Cloud...");
+            
+            log("Downloading Kernel Payload...");
             let kernelResponse = await fetch(BASE_URL + "kernel.js" + cacheBuster);
-            if (!kernelResponse.ok) throw new Error("Could not find kernel.js on GitHub.");
+            if (!kernelResponse.ok) throw new Error("Kernel missing.");
             let kernelCode = await kernelResponse.text();
             
-            // Save to NVRAM so we NEVER have to download it again until user updates
             localStorage.setItem('GemiOS_Cache_Kernel', kernelCode);
             localStorage.setItem('GemiOS_Cache_Ver', verData.version);
-            log("Kernel downloaded and locked to NVRAM.", "success");
+            log("Kernel locked to NVRAM.", "success");
 
             executeKernel(kernelCode);
-        } catch (error) { log("CLOUD BOOT FAILURE: " + error.message, "error"); }
+        } catch (error) { log("BOOT FAILURE: " + error.message, "error"); }
     }
     
-    setTimeout(systemBoot, 500);
+    // Start boot sequence (delay if Fast Boot is off to allow F2 press)
+    log("Initializing Memory Matrix...");
+    bootTimer = setTimeout(systemBoot, fastBoot ? 100 : 2500);
 </script>
 </body>
 </html>
