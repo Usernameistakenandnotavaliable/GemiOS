@@ -1,4 +1,4 @@
 {
-  "version": "33.1.0-REGISTRY",
-  "notes": "Created the registry for the OS to help with optimization and applications."
+  "version": "34.0.0-DRIVE",
+  "notes": "The Persistent Drive Update. Expanded NVRAM quota to 10MB. Added physical I/O Save visual indicators. Built the Safe Firmware Wipe into the Bootloader to protect user files."
 }
