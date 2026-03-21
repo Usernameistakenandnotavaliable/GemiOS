@@ -1,4 +1,4 @@
 {
-  "version": "34.0.0-DRIVE",
-  "notes": "The Persistent Drive Update. Expanded NVRAM quota to 10MB. Added physical I/O Save visual indicators. Built the Safe Firmware Wipe into the Bootloader to protect user files."
+  "version": "32.3.0-LIMITLESS",
+  "notes": "The Limitless Edition. Re-merged all logic loops and un-minified the physics and rendering structures. Every single application in the OS is permanently functioning in this single kernel payload."
 }
