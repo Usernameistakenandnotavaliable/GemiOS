@@ -1,4 +1,4 @@
 {
-  "version": "30.1.0-PERSISTENCE",
-  "notes": "The Persistence Update. True Air-Gapped NVRAM Locking. The OS no longer requires internet after the first boot. Fully functional local OTA Flasher."
+  "version": "30.1.1-PATCH",
+  "notes": "The Complete Ecosystem Patch. Fully restored all 30+ applications to the App Registry. Added Auto-Arrange Context Menu. Added GemiWeather."
 }
