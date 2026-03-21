@@ -1,4 +1,4 @@
 {
-  "version": "35.0.0-BIOS",
-  "notes": "The BIOS Update. Converted F2 override into a fully functional pre-boot BIOS setup utility. System formatting is now handled in BIOS. OTA updates are exclusively handled by the OS Updater app."
+  "version": "36.0.0-EXPANSION",
+  "notes": "The App Store Expansion. Native apps updated dynamically via registry injection. Added GemiBrot (Mandelbrot Explorer), GemiMark (Live Markdown IDE), and GemiSynth Pro."
 }
