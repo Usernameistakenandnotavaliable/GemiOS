@@ -1,4 +1,4 @@
 {
-  "version": "32.3.0-LIMITLESS",
-  "notes": "The Limitless Edition. Every single application from the V30 payload has had its internal logic, canvas rendering, and physics intervals permanently restored and packed into the primary kernel."
+  "version": "33.1.0-REGISTRY",
+  "notes": "Created the registry for the OS to help with optimization and applications."
 }
