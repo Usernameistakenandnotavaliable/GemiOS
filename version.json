@@ -1,4 +1,4 @@
 {
-  "version": "36.0.0-EXPANSION",
-  "notes": "The App Store Expansion. Native apps updated dynamically via registry injection. Added GemiBrot (Mandelbrot Explorer), GemiMark (Live Markdown IDE), and GemiSynth Pro."
+  "version": "36.1.0-DYNAMIC",
+  "notes": "The Dynamic Link Update. Kernel is completely decoupled from the App Registry. The Boot sequence now fetches and injects registry.js directly into memory on the fly. Dual-OTA flasher active."
 }
