@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GemiOS BIOS (Air-Gapped Boot)</title>
+    <style>
+        body { background: black; color: #38ef7d; font-family: 'Consolas', monospace; padding: 20px; overflow: hidden; margin: 0; }
+        #bios-screen { height: 100vh; width: 100vw; display: flex; flex-direction: column; position: relative; }
+        .log { margin-bottom: 5px; }
+        .error { color: #ff4d4d; font-weight: bold; }
+        .success { color: #4db8ff; font-weight: bold; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .cursor { display: inline-block; width: 8px; height: 15px; background: #38ef7d; animation: blink 1s step-end infinite; }
+        .copyright { position: absolute; bottom: 20px; left: 20px; color: #555; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div id="bios-screen">
+    <div>GemiSys Network BIOS v8.1 (Air-Gapped Engine)</div>
+    <div>Initializing Hardware Interface... OK</div>
+    <div id="boot-log"></div>
+    <div><span class="cursor"></span></div>
+    <div class="copyright">© 2026 GemiOS Corporation. Built by Usernameistakenandnotavaliable & Gemini.</div>
+</div>
+
+<script>
+    // HARDCODED GITHUB CLOUD ARCHITECTURE
+    const GITHUB_USER = "Usernameistakenandnotavaliable"; 
+    const REPO_NAME = "GemiOS";
+    const BRANCH = "main";
+    const BASE_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/${BRANCH}/`;
+
+    const logDiv = document.getElementById('boot-log');
+    function log(msg, type = '') { 
+        logDiv.innerHTML += `<div class="log ${type}">> ${msg}</div>`; 
+    }
+
+    function executeKernel(kernelCode) {
+        log("Compiling Virtual Blob...");
+        let blob = new Blob([kernelCode], { type: 'application/javascript' });
+        let blobUrl = URL.createObjectURL(blob);
+        let script = document.createElement('script');
+        script.src = blobUrl;
+        
+        script.onload = () => {
+            setTimeout(() => {
+                document.getElementById('bios-screen').style.display = 'none'; 
+                URL.revokeObjectURL(blobUrl); 
+            }, 300);
+        };
+        script.onerror = () => { log("BOOT FAILURE: Virtual Blob failed to execute.", "error"); };
+        document.body.appendChild(script);
+    }
+
+    async function systemBoot() {
+        log("Initiating Boot Sequence...");
+        
+        let cachedKernel = localStorage.getItem('GemiOS_Cache_Kernel');
+        let cachedVer = localStorage.getItem('GemiOS_Cache_Ver');
+
+        // TRUE PERSISTENCE: If we have the kernel, NEVER check the internet.
+        if (cachedKernel && cachedVer) {
+            log(`⚡ NVRAM Snapshot Found. Booting OS Version: [${cachedVer}]`, "success");
+            log("Bypassing Network. Initiating Air-Gapped Boot...");
+            executeKernel(cachedKernel);
+            return;
+        }
+
+        // FIRST TIME SETUP OR WIPED NVRAM: Fetch from Cloud
+        log("No NVRAM Snapshot found. Establishing connection to GemiOS Cloud (GitHub)...", "error");
+        try {
+            let cacheBuster = "?t=" + new Date().getTime(); 
+            let verResponse = await fetch(BASE_URL + "version.json" + cacheBuster);
+            if (!verResponse.ok) throw new Error("Could not find version.json on GitHub.");
+            let verData = await verResponse.json();
+            log(`Authorized Cloud Version: [${verData.version}]`);
+
+            log("Downloading Titanium Kernel Payload from Cloud...");
+            let kernelResponse = await fetch(BASE_URL + "kernel.js" + cacheBuster);
+            if (!kernelResponse.ok) throw new Error("Could not find kernel.js on GitHub.");
+            let kernelCode = await kernelResponse.text();
+            
+            // Save to NVRAM so we NEVER have to download it again until user updates
+            localStorage.setItem('GemiOS_Cache_Kernel', kernelCode);
+            localStorage.setItem('GemiOS_Cache_Ver', verData.version);
+            log("Kernel downloaded and locked to NVRAM.", "success");
+
+            executeKernel(kernelCode);
+        } catch (error) { log("CLOUD BOOT FAILURE: " + error.message, "error"); }
+    }
+    
+    setTimeout(systemBoot, 500);
+</script>
+</body>
+</html>
