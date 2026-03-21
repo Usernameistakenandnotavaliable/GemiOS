@@ -1,4 +1,4 @@
 {
-  "version": "32.0.0-MASTERPIECE",
-  "notes": "The Masterpiece Edition. Fully restored and stabilized all 32 native applications. Rewrote inline HTML events to eradicate parser syntax fractures. All systems operating flawlessly."
+  "version": "32.1.0-UNABRIDGED",
+  "notes": "The Unabridged Edition. Fully restored all backend application logic, game engine loops, and physics intervals to the App Registry. Everything works."
 }
