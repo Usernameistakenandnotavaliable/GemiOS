@@ -1,4 +1,4 @@
 {
-  "version": "30.1.1-PATCH",
-  "notes": "The Complete Ecosystem Patch. Fully restored all 30+ applications to the App Registry. Added Auto-Arrange Context Menu. Added GemiWeather."
+  "version": "31.0.0-AUTONOMY",
+  "notes": "The Autonomy Update. Added Background OTA Daemon. Added GemiShare (Individual File Extraction). Added Gemi3D Rendering Engine."
 }
