@@ -1,4 +1,4 @@
 {
-  "version": "39.0.0-ENTERPRISE",
-  "notes": "The Enterprise Update. Added OS Installer (Home, Pro, Education). Integrated Developer Studio for custom app creation and monetization. Patched GemiCrypt logic scope. Overhauled Boot and Shutdown Web Audio synthesis."
+  "version": "40.0.0-ECOSYSTEM",
+  "notes": "The Ecosystem Update. Calm Shutdown Chimes deployed. Multi-Tiered App Store with live discounting engine active. Pro Edition includes pre-installed GemiDev Studio. GemiCrypt trading scope heavily isolated and bulletproofed."
 }
