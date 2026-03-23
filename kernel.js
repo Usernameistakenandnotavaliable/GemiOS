@@ -32,72 +32,7 @@ if (bootVersion !== 'v37' && bootVersion !== 'v36') {
         delete(path, file) { let dir = this.getDir(path); if(dir && dir[file] !== undefined) { delete dir[file]; this.save(); return true; } return false; }
     }
 
-    class WindowManager {
-        constructor() { this.zIndex = 100; this.windows = {}; }
-        createWindow(pid, title, content, width) {
-            let wid = 'win_' + pid;
-            let watermark = `<div style="position:absolute; bottom:4px; right:8px; font-size:9px; color:inherit; opacity:0.3; pointer-events:none; font-weight:bold; font-family:sans-serif; z-index:9999;">© 2026 GemiOS</div>`;
-            let html = `
-                <div class="win" id="${wid}" data-maximized="false" style="top:${Math.random()*40+60}px; left:${Math.random()*60+120}px; width:${width}px; z-index:${++this.zIndex};" onmousedown="GemiOS.WM.focus('${wid}')">
-                    <div class="title-bar" ondblclick="GemiOS.WM.maximize('${wid}')" onmousedown="GemiOS.WM.drag(event, '${wid}')">
-                        <span>${title}</span> 
-                        <div>
-                            <button class="ctrl-btn min-btn" onclick="GemiOS.WM.minimize('${wid}', '${pid}')">-</button>
-                            <button class="ctrl-btn snap-btn" onclick="GemiOS.WM.snap('${wid}', 'left')">&lt;</button>
-                            <button class="ctrl-btn snap-btn" onclick="GemiOS.WM.snap('${wid}', 'right')">&gt;</button>
-                            <button class="ctrl-btn close-btn" onclick="GemiOS.PM.kill(${pid})">X</button>
-                        </div>
-                    </div>
-                    <div class="content" id="content_${pid}" style="position:relative; overflow:hidden; display:flex; flex-direction:column;">${content}${watermark}</div>
-                    <div class="resize-handle"></div>
-                </div>`;
-            document.getElementById('window-layer').insertAdjacentHTML('beforeend', html);
-            this.windows[pid] = document.getElementById(wid);
-            this.updateTaskbar(pid, title);
-        }
-        focus(wid) { let el = document.getElementById(wid); if(el) el.style.zIndex = ++this.zIndex; }
-        drag(e, wid) {
-            let w = document.getElementById(wid); if(!w || w.dataset.maximized === "true") return;
-            let ox = e.clientX - w.offsetLeft; let oy = e.clientY - w.offsetTop; this.focus(wid); w.style.transition = 'none';
-            document.onmousemove = (ev) => { w.style.left = (ev.clientX - ox) + 'px'; w.style.top = Math.max(0, ev.clientY - oy) + 'px'; };
-            document.onmouseup = () => { document.onmousemove = null; w.style.transition = 'width 0.3s, height 0.3s, top 0.3s, left 0.3s, background 0.3s, color 0.3s, transform 0.3s'; document.onmouseup = null; };
-        }
-        maximize(wid) {
-            let w = document.getElementById(wid); if(!w) return;
-            if(w.dataset.maximized === "true") { w.style.top = w.dataset.pT; w.style.left = w.dataset.pL; w.style.width = w.dataset.pW; w.style.height = w.dataset.pH; w.dataset.maximized = "false"; w.style.borderRadius = "12px"; } 
-            else { w.dataset.pT = w.style.top; w.dataset.pL = w.style.left; w.dataset.pW = w.style.width; w.dataset.pH = w.style.height; w.style.top = "0px"; w.style.left = "0px"; w.style.width = "100vw"; w.style.height = "calc(100vh - 60px)"; w.dataset.maximized = "true"; w.style.borderRadius = "0px"; }
-        }
-        snap(wid, side) {
-            let w = document.getElementById(wid); if(!w) return;
-            if(w.dataset.maximized === "false") { w.dataset.pT = w.style.top; w.style.left = w.style.left; w.dataset.pW = w.style.width; w.dataset.pH = w.style.height; }
-            w.style.top = "0px"; w.style.height = "calc(100vh - 60px)"; w.style.width = "50vw"; w.style.borderRadius = "0px";
-            if (side === 'left') w.style.left = "0px"; else w.style.left = "50vw"; w.dataset.maximized = "true"; this.focus(wid);
-        }
-        minimize(wid, pid) {
-            let w = document.getElementById(wid); if(!w) return;
-            if(w.style.opacity === '0') { w.style.opacity = '1'; w.style.transform = 'scale(1) translateY(0)'; w.style.pointerEvents = 'auto'; this.focus(wid); document.getElementById('tb-item-'+pid).classList.add('active'); 
-            } else { w.style.opacity = '0'; w.style.transform = 'scale(0.9) translateY(20px)'; w.style.pointerEvents = 'none'; document.getElementById('tb-item-'+pid).classList.remove('active'); }
-        }
-        updateTaskbar(pid, title) { document.getElementById('taskbar-apps').innerHTML += `<div id="tb-item-${pid}" class="tb-item active" onclick="GemiOS.WM.minimize('win_${pid}', '${pid}')">${title.substring(0,10)}</div>`; }
-        removeWindow(pid) { if(this.windows[pid]) { this.windows[pid].remove(); delete this.windows[pid]; } let tbItem = document.getElementById('tb-item-'+pid); if(tbItem) tbItem.remove(); }
-    }
-
-    class ProcessManager {
-        constructor() { this.processes = {}; this.pidCounter = 1000; }
-        launch(appId, fileData = null) {
-            let sm = document.getElementById('start-menu'); if (sm) sm.classList.remove('open');
-            if(!GemiOS.Registry[appId]) return GemiOS.notify("Execution Error", `App ${appId} not found.`, false);
-            let pid = ++this.pidCounter; let app = GemiOS.Registry[appId];
-            this.processes[pid] = { id: appId, title: app.title };
-            GemiOS.WM.createWindow(pid, app.title, app.html(pid, fileData), app.width);
-            if(app.onLaunch) app.onLaunch(pid, fileData);
-        }
-        kill(pid) {
-            if(!this.processes[pid]) return; let appId = this.processes[pid].id;
-            if(GemiOS.Registry[appId].onKill) GemiOS.Registry[appId].onKill(pid);
-            let w = document.getElementById('win_' + pid);
-            if(w) { w.style.opacity = '0'; w.style.transform = 'scale(0.9)'; setTimeout(() => { GemiOS.WM.removeWindow(pid); delete this.processes[pid]; }, 200); } 
-            else { GemiOS.WM.removeWindow(pid); delete this.processes[pid]; }
+  
         }
     }
 
