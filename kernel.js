@@ -347,28 +347,7 @@ if (bootVersion !== 'v37' && bootVersion !== 'v36') {
                 let cb = "?t=" + new Date().getTime(); let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/version.json" + cb); if (!r.ok) throw new Error("GitHub server unreachable."); let d = await r.json();
                 let currentVer = localStorage.getItem('GemiOS_Cache_Ver') || "36.3.0-REMOVAL";
                 
-                if (d.version !== currentVer) {
-                    st.innerHTML = `<span style="color:#ffeb3b">New Version Found: ${d.version}</span><br><i>${d.notes}</i>`; btn.innerText = 'Download & Install'; btn.style.background = '#ff00cc'; 
-                    btn.onclick = async () => {
-                        document.getElementById('ota-overlay').style.display = 'flex'; let fill = document.getElementById('ota-fill'); let text = document.getElementById('ota-text');
-                        try { 
-                            text.innerText = "Downloading Kernel..."; fill.style.width = "30%"; 
-                            let kRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/kernel.js" + cb); if(!kRes.ok) throw new Error("Kernel download failed."); let kCode = await kRes.text(); 
-                            
-                            text.innerText = "Downloading Registry..."; fill.style.width = "60%"; 
-                            let regRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/registry.js" + cb); if(!regRes.ok) throw new Error("Registry download failed."); let regCode = await regRes.text(); 
-                            
-                            text.innerText = "Writing to NVRAM..."; fill.style.width = "90%"; 
-                            localStorage.setItem('GemiOS_Cache_Kernel', kCode); 
-                            localStorage.setItem('GemiOS_Cache_Registry', regCode); 
-                            localStorage.setItem('GemiOS_Cache_Ver', d.version); 
-                            
-                            fill.style.width = "100%"; document.getElementById('ota-title').innerText = "System Patched"; document.getElementById('ota-restart-prompt').style.display = 'flex'; this.notify("Update Complete", "System requires restart.", true); 
-                        } catch(e) { text.innerText = "UPDATE FAILED: " + e.message; fill.style.background = "red"; }
-                    };
-                } else { st.innerHTML = `<span style="color:#38ef7d">System is up to date!</span>`; btn.innerText = 'Latest OS Installed'; btn.style.background = '#38ef7d'; btn.style.color = 'black'; btn.onclick = null; }
-            } catch (err) { st.innerHTML = `<span style="color:#ff4d4d">Error: ${err.message}</span>`; btn.innerText = 'Retry'; btn.style.background = '#0078d7'; }
-        }
+                i
 
         applyTheme() { let isL = localStorage.getItem('GemiOS_Theme') === 'light'; if(isL) document.body.classList.add('light-mode'); else document.body.classList.remove('light-mode'); let accent = localStorage.getItem('GemiOS_Accent'); if(accent) { document.documentElement.style.setProperty('--accent', accent); } else { document.documentElement.style.setProperty('--accent', '#0078d7'); } }
         toggleTheme() { let isL = localStorage.getItem('GemiOS_Theme') === 'light'; localStorage.setItem('GemiOS_Theme', !isL ? 'light' : 'dark'); this.applyTheme(); }
