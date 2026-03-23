@@ -1,4 +1,4 @@
 {
-  "version": "36.1.0-DYNAMIC",
-  "notes": "The Dynamic Link Update. Kernel is completely decoupled from the App Registry. The Boot sequence now fetches and injects registry.js directly into memory on the fly. Dual-OTA flasher active."
+  "version": "36.3.0-REMOVAL",
+  "notes": "The Removal Update. Deprecated GemiCraft and Arcade games to optimize memory limit. Added GemiFlow (Kanban), GemiCrypt (Live Market Tracker), and GemiPlayer (Unified Media)."
 }
