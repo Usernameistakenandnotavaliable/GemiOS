@@ -1,4 +1,4 @@
 {
-  "version": "36.3.0-REMOVAL",
-  "notes": "The Removal Update. Deprecated GemiCraft and Arcade games to optimize memory limit. Added GemiFlow (Kanban), GemiCrypt (Live Market Tracker), and GemiPlayer (Unified Media)."
+  "version": "37.0.0-ECONOMY",
+  "notes": "The Economy Update. Deployed the Virtual Wallet and GemiCoin standard. GemiStore apps now cost GemiCoins based on code complexity. GemiCrypt upgraded with Buy/Sell execution to fund your workspace. Re-engineered Web Audio API polyphonic sweeps for boot sequences. Fixed taskbar semantic bug."
 }
