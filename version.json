@@ -1,4 +1,4 @@
 {
-  "version": "42.0.0-COMMUNITY",
-  "notes": "The Community Update. Introduced GemiShare Cartridges! You can now Export Base64 compiled apps from GemiDev Studio and Redeem Cartridges in the GemiStore to share user-generated content natively."
+  "version": "43.0.0-NETWORK",
+  "notes": "The Global Network Update. GemiDev Studio can now push apps to the live Global Network. GemiDefender actively scans network installs. Haptic audio engine implemented for Window Manager. Added GemiEmu Sandbox and Dev Docs."
 }
