@@ -1,4 +1,4 @@
 {
-  "version": "40.1.0-CHAOS",
-  "notes": "The Chaos Update. Introduced the first simulated malware (GemiVirus) to the App Store to test NVRAM security protocols. Proceed with extreme caution."
+  "version": "42.0.0-COMMUNITY",
+  "notes": "The Community Update. Introduced GemiShare Cartridges! You can now Export Base64 compiled apps from GemiDev Studio and Redeem Cartridges in the GemiStore to share user-generated content natively."
 }
