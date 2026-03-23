@@ -1,4 +1,4 @@
 {
-  "version": "40.0.0-ECOSYSTEM",
-  "notes": "The Ecosystem Update. Calm Shutdown Chimes deployed. Multi-Tiered App Store with live discounting engine active. Pro Edition includes pre-installed GemiDev Studio. GemiCrypt trading scope heavily isolated and bulletproofed."
+  "version": "40.1.0-CHAOS",
+  "notes": "The Chaos Update. Introduced the first simulated malware (GemiVirus) to the App Store to test NVRAM security protocols. Proceed with extreme caution."
 }
