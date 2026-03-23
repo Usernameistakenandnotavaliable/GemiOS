@@ -1,4 +1,4 @@
 {
-  "version": "37.0.0-EMY",
-  "notes": "The Economy Update. Deployed the Virtual Wallet and GemiCoin standard. GemiStore apps now cost GemiCoins based on code complexity. GemiCrypt upgraded with Buy/Sell execution to fund your workspace. Re-engineered Web Audio API polyphonic sweeps for boot sequences. Fixed taskbar semantic bug."
+  "version": "37.1.0-HOTFIX",
+  "notes": "The Registry Hotfix. Fixed fatal Linker crash by completely internalizing GemiCrypt's logic scope. GemiStore fully populated and monetized."
 }
