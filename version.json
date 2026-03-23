@@ -1,4 +1,4 @@
 {
-  "version": "37.1.0-HOTFIX",
-  "notes": "The Registry Hotfix. Fixed fatal Linker crash by completely internalizing GemiCrypt's logic scope. GemiStore fully populated and monetized."
+  "version": "38.0.0-CONTROL",
+  "notes": "The Command & Control Update. Injected universal GemiSearch into the Start Menu. Built native slide-out Action Center for persistent notifications. Upgraded desktop context menu with quick-file creation capabilities."
 }
