@@ -13,10 +13,6 @@ if (bootVersion !== 'v37' && bootVersion !== 'v36') {
             this.MAX_STORAGE = 10485760; // 10MB Quota
             let drive = localStorage.getItem('GemiOS_TreeFS');
             if(!drive) {
-                this.root = { "C:": { "System": { "boot.log": "GemiOS V37.0 Initialized.", "sys_mail.json": "[]" }, "Users": { "Admin": { "Documents": {}, "Pictures": {}, "Desktop": {}, "Downloads": {} }, "Guest": { "Documents": {}, "Pictures": {}, "Desktop": {}, "Downloads": {} } } } };
-                this.forceSave();
-            } else { this.root = JSON.parse(drive); }
-        }
         getUsage() { return { used: new Blob([JSON.stringify(this.root)]).size, max: this.MAX_STORAGE }; }
         forceSave() { localStorage.setItem('GemiOS_TreeFS', JSON.stringify(this.root)); }
         save() { 
