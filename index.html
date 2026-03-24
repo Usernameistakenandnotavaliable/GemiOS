@@ -12,9 +12,9 @@
                    font-src 'self' https://fonts.gstatic.com;
                    object-src 'none';
                    img-src 'self' data: blob: https:;
-                   connect-src https://raw.githubusercontent.com">
+                   connect-src https://raw.githubusercontent.com ws://127.0.0.1:5500 ws://localhost:5500 http://127.0.0.1:5500 https://cdnjs.cloudflare.com">
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.0/purify.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.0/purify.min.js"></script>
 
     <style>
         body { background: #000; color: #38ef7d; font-family: 'Courier New', Courier, monospace; margin: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh; padding: 20px; box-sizing: border-box; }
@@ -25,7 +25,7 @@
 </head>
 <body>
     <div id="post-screen">
-GemiOS Cloud Hypervisor [Version 5.0.0]
+GemiOS Cloud Hypervisor [Version 50.0.0]
 (c) 2026 GemiOS Systems. All rights reserved.
 
 Memory Test: 10485760K OK
@@ -40,7 +40,6 @@ Initializing Bootloader...
         let biosOpen = false;
         let postEl = document.getElementById('post-screen');
 
-        // Add the F2 Prompt
         setTimeout(() => {
             if(!biosOpen) postEl.innerHTML = postEl.innerHTML.replace('<span class="blink">_</span>', 'Press [F2] to enter Megatrends Setup Utility.<br><br><span class="blink">_</span>');
         }, 800);
