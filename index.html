@@ -2,104 +2,45 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GemiOS BIOS</title>
-
-    <meta http-equiv="Content-Security-Policy"
-          content="default-src 'self' https://cdnjs.cloudflare.com;
-                   script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdnjs.cloudflare.com;
-                   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-                   font-src 'self' https://fonts.gstatic.com;
-                   object-src 'none';
-                   img-src 'self' data: blob: https:;
-                   connect-src 'self' https://raw.githubusercontent.com ws://127.0.0.1:5500 ws://localhost:5500 http://127.0.0.1:5500">
-
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * ws: wss:;">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.0/purify.min.js"></script>
 
     <style>
-        body { background: #000; color: #38ef7d; font-family: 'Courier New', Courier, monospace; margin: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh; padding: 20px; box-sizing: border-box; }
+        body { background: #000; color: #38ef7d; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; box-sizing: border-box; }
         #post-screen { white-space: pre-wrap; font-size: 16px; line-height: 1.5; }
-        .blink { animation: blinker 1s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
-    <div id="post-screen">
-GemiOS Cloud Hypervisor [Version 50.0.0]
+    <div id="post-screen">GemiOS Cloud Hypervisor [Version 50.0.0]
 (c) 2026 GemiOS Systems. All rights reserved.
 
-Memory Test: 10485760K OK
-Initializing Bootloader...
-
-<span class="blink">_</span>
-    </div>
+Memory Test: 10485760K OK... Initializing...</div>
 
     <script>
-        let bootTimeout;
-        let biosOpen = false;
-        let postEl = document.getElementById('post-screen');
+        const log = (msg) => document.getElementById('post-screen').innerHTML += "\n" + msg;
 
-        setTimeout(() => {
-            if(!biosOpen) postEl.innerHTML = postEl.innerHTML.replace('<span class="blink">_</span>', 'Press [F2] to enter Megatrends Setup Utility.<br><br><span class="blink">_</span>');
-        }, 800);
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'F2' && !biosOpen) {
-                biosOpen = true;
-                clearTimeout(bootTimeout);
-                postEl.innerHTML = `
-=== MEGATRENDS BIOS UTILITY ===
-
-1. Continue Boot Sequence
-2. Wipe Virtual Disk (Format NVRAM)
-3. Flush OS Cache (Clear Stale Linker Data)
-
-Press 1, 2, or 3 to select.
-`;
-                document.addEventListener('keydown', handleBiosInput);
-            }
-        });
-
-        function handleBiosInput(e) {
-            if(e.key === '1') {
-                document.removeEventListener('keydown', handleBiosInput);
-                postEl.innerHTML += '\nResuming boot...';
-                loadKernel();
-            } else if(e.key === '2') {
-                indexedDB.deleteDatabase('GemiOS_Fs');
-                postEl.innerHTML += '\n<span style="color:#ffb400">Virtual Disk Formatted. Rebooting...</span>';
-                setTimeout(()=>location.reload(), 1500);
-            } else if(e.key === '3') {
-                localStorage.clear();
-                postEl.innerHTML += '\n<span style="color:#ffb400">System Cache Flushed. Rebooting...</span>';
-                setTimeout(()=>location.reload(), 1500);
-            }
-        }
-
-        async function loadKernel() {
-            let cachedKernel = localStorage.getItem('GemiOS_Cache_Kernel');
-            postEl.innerHTML += '\nFetching GemiOS Kernel...\n';
+        async function boot() {
+            log("Searching for System Kernel...");
+            
+            // Try loading from GitHub directly to avoid local 404 confusion
+            const cloudUrl = "https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/kernel.js?t=" + Date.now();
+            
             try {
-                // PORTABILITY FIX: Uses local path first!
-                let r = await fetch("./kernel.js?t=" + Date.now());
+                let r = await fetch(cloudUrl, { cache: "no-store" });
                 if(r.ok) {
                     let code = await r.text();
-                    localStorage.setItem('GemiOS_Cache_Kernel', code);
-                    postEl.innerHTML += 'Kernel OK. Handing over execution to OS...';
-                    setTimeout(() => eval(code), 500);
-                } else {
-                    if(cachedKernel) { postEl.innerHTML += 'Booting from Cache...'; setTimeout(() => eval(cachedKernel), 500); }
-                    else postEl.innerHTML += '<span style="color:red">FATAL: Kernel not found. SYSTEM HALTED.</span>';
-                }
-            } catch(err) {
-                if(cachedKernel) { postEl.innerHTML += 'Booting from Cache...'; setTimeout(() => eval(cachedKernel), 500); }
-                else postEl.innerHTML += '<span style="color:red">FATAL: Network error. SYSTEM HALTED.</span>';
+                    log("Kernel OK. Handing over execution...");
+                    setTimeout(() => { eval(code); }, 500);
+                } else { throw new Error(); }
+            } catch(e) {
+                log("<span style='color:red'>BOOT FAILURE: Kernel not found on Cloud.</span>");
             }
         }
 
-        bootTimeout = setTimeout(() => {
-            if(!biosOpen) loadKernel();
-        }, 2000);
+        setTimeout(boot, 1000);
     </script>
 </body>
 </html>
