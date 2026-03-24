@@ -1,4 +1,4 @@
 {
-  "version": "47.0.0-SETUP",
-  "notes": "The Setup Update. Replaced instant boot with an authentic Multi-Stage OS Installer. Added functional hardware toggles for Audio, Animation, and Networking drivers that write permanently to the NVRAM disk."
+  "version": "47.1.0-HOTFIX",
+  "notes": "The QA Hotfix. Fixed the Iframe Mouse Swallow bug, allowing perfect window dragging over complex apps like GemiEmu. Upgraded the OTA Network Daemon to automatically launch the Cloud Updater when an update is detected."
 }
