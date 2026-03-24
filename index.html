@@ -81,7 +81,8 @@ Press 1, 2, or 3 to select.
             let cachedKernel = localStorage.getItem('GemiOS_Cache_Kernel');
             postEl.innerHTML += '\nFetching GemiOS Kernel via TCP/IP...\n';
             try {
-                let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/kernel.js?t=" + Date.now());
+                // V50 FIX: Using /refs/heads/main/ to bypass GitHub's 5-minute CDN cache!
+                let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/kernel.js?t=" + Date.now());
                 if(r.ok) {
                     let code = await r.text();
                     localStorage.setItem('GemiOS_Cache_Kernel', code);
