@@ -1,4 +1,4 @@
 {
-  "version": "47.1.0-HOTFIX",
-  "notes": "The QA Hotfix. Fixed the Iframe Mouse Swallow bug, allowing perfect window dragging over complex apps like GemiEmu. Upgraded the OTA Network Daemon to automatically launch the Cloud Updater when an update is detected."
+  "version": "47.2.0-HOTFIX",
+  "notes": "The Stability Patch. Restored CSS pointer-events allowing perfect Window Manager clicks and smooth dragging. Auto-Launch OTA Notification integrated."
 }
