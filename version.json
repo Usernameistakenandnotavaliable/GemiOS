@@ -1,4 +1,4 @@
 {
-  "version": "49.0.0-CREATOR",
-  "notes": "The Creator Update. Abstracted OS logic to support multi-file dependencies. Introduced engine.js to handle complex visual block rendering for GemiMaker Studio."
+  "version": "50.0.0-GOLD",
+  "notes": "The Modular Core Update. Celebrating 50 major versions! Hard-split the BIOS Bootloader from the OS Kernel. Fully mitigated CSP dynamic eval execution bugs. Restored perfect UI rendering."
 }
