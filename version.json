@@ -1,4 +1,4 @@
 {
-  "version": "48.0.0-QUALITY",
-  "notes": "The Quality of Life Update. Deployed auto-flush mechanism to fix Execution ID errors. Completely overhauled Desktop Icons with glassmorphism CSS. Added Quick Launch pinning to Taskbar. Added auto-launch mechanism to OTA Network Daemon."
+  "version": "49.0.0-CREATOR",
+  "notes": "The Creator Update. Abstracted OS logic to support multi-file dependencies. Introduced engine.js to handle complex visual block rendering for GemiMaker Studio."
 }
