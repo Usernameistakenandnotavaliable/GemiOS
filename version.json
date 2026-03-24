@@ -1,4 +1,4 @@
 {
-  "version": "46.0.0-BOUNTY",
-  "notes": "The Bounty Update. Deployed the GemiGov Relief Fund for malware recovery. Introduced the 500 🪙 White Hat Bug Bounty to incentivize developers writing AV software!"
+  "version": "47.0.0-SETUP",
+  "notes": "The Setup Update. Replaced instant boot with an authentic Multi-Stage OS Installer. Added functional hardware toggles for Audio, Animation, and Networking drivers that write permanently to the NVRAM disk."
 }
