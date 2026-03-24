@@ -1,4 +1,4 @@
 {
-  "version": "43.0.0-NETWORK",
-  "notes": "The Global Network Update. GemiDev Studio can now push apps to the live Global Network. GemiDefender actively scans network installs. Haptic audio engine implemented for Window Manager. Added GemiEmu Sandbox and Dev Docs."
+  "version": "44.0.0-MULTIMEDIA",
+  "notes": "The Multimedia Update. Expanded Haptic Audio Engine with new UI feedback profiles. Added GemiBeat drum machine and PixelPro art editor. Updated GemiDocs with Cartridge Sideloading exploit documentation."
 }
