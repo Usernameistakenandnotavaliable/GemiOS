@@ -12,7 +12,7 @@
                    font-src 'self' https://fonts.gstatic.com;
                    object-src 'none';
                    img-src 'self' data: blob: https:;
-                   connect-src https://raw.githubusercontent.com ws://127.0.0.1:5500 ws://localhost:5500 http://127.0.0.1:5500 https://cdnjs.cloudflare.com">
+                   connect-src 'self' https://raw.githubusercontent.com ws://127.0.0.1:5500 ws://localhost:5500 http://127.0.0.1:5500">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.0/purify.min.js"></script>
 
@@ -35,7 +35,6 @@ Initializing Bootloader...
     </div>
 
     <script>
-        // === THE BIOS BOOTLOADER ===
         let bootTimeout;
         let biosOpen = false;
         let postEl = document.getElementById('post-screen');
@@ -79,22 +78,22 @@ Press 1, 2, or 3 to select.
 
         async function loadKernel() {
             let cachedKernel = localStorage.getItem('GemiOS_Cache_Kernel');
-            postEl.innerHTML += '\nFetching GemiOS Kernel via TCP/IP...\n';
+            postEl.innerHTML += '\nFetching GemiOS Kernel...\n';
             try {
-                // V50 FIX: Using /refs/heads/main/ to bypass GitHub's 5-minute CDN cache!
-                let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/kernel.js?t=" + Date.now());
+                // PORTABILITY FIX: Uses local path first!
+                let r = await fetch("./kernel.js?t=" + Date.now());
                 if(r.ok) {
                     let code = await r.text();
                     localStorage.setItem('GemiOS_Cache_Kernel', code);
                     postEl.innerHTML += 'Kernel OK. Handing over execution to OS...';
                     setTimeout(() => eval(code), 500);
                 } else {
-                    if(cachedKernel) { postEl.innerHTML += 'Network Offline. Booting from Cache...'; setTimeout(() => eval(cachedKernel), 500); }
-                    else postEl.innerHTML += '<span style="color:red">FATAL: Kernel not found and no cache exists. SYSTEM HALTED.</span>';
+                    if(cachedKernel) { postEl.innerHTML += 'Booting from Cache...'; setTimeout(() => eval(cachedKernel), 500); }
+                    else postEl.innerHTML += '<span style="color:red">FATAL: Kernel not found. SYSTEM HALTED.</span>';
                 }
             } catch(err) {
-                if(cachedKernel) { postEl.innerHTML += 'Network Offline. Booting from Cache...'; setTimeout(() => eval(cachedKernel), 500); }
-                else postEl.innerHTML += '<span style="color:red">FATAL: Network error and no cache exists. SYSTEM HALTED.</span>';
+                if(cachedKernel) { postEl.innerHTML += 'Booting from Cache...'; setTimeout(() => eval(cachedKernel), 500); }
+                else postEl.innerHTML += '<span style="color:red">FATAL: Network error. SYSTEM HALTED.</span>';
             }
         }
 
