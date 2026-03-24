@@ -1,4 +1,4 @@
 {
-  "version": "44.0.0-MULTIMEDIA",
-  "notes": "The Multimedia Update. Expanded Haptic Audio Engine with new UI feedback profiles. Added GemiBeat drum machine and PixelPro art editor. Updated GemiDocs with Cartridge Sideloading exploit documentation."
+  "version": "44.1.0-HEURISTIC",
+  "notes": "The Heuristic Hotfix. GemiDefender AV upgraded to perform Deep String Heuristics to catch dynamic Cartridge Exploits. Added Active Firewall intercept to Cartridge Sideloading bay."
 }
