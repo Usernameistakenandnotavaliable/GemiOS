@@ -1,4 +1,4 @@
 {
-  "version": "45.0.0-ZEROTRUST",
-  "notes": "The Zero-Trust Update. GemiDefender Ultimate deployed with Active Memory Scanning and Process Assassination. New CoinDrainer trojan discovered in the Store. Exposed Process Manager to AV heuristics."
+  "version": "46.0.0-BOUNTY",
+  "notes": "The Bounty Update. Deployed the GemiGov Relief Fund for malware recovery. Introduced the 500 🪙 White Hat Bug Bounty to incentivize developers writing AV software!"
 }
