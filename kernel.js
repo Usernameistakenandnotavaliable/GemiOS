@@ -2,8 +2,6 @@
    GemiOS CLOUD HYPERVISOR - v50.0 (THE MASTER BUILD)
 =====================================================================*/
 (() => {
-  document.body.innerHTML = ''; // Wipe BIOS screen
-
   class EventBus { constructor() { this.handlers = new Map(); } on(ev, fn) { if (!this.handlers.has(ev)) this.handlers.set(ev, []); this.handlers.get(ev).push(fn); } off(ev, fn) { const arr = this.handlers.get(ev); if (!arr) return; this.handlers.set(ev, arr.filter(f => f !== fn)); } emit(ev, data) { const arr = this.handlers.get(ev); if (!arr) return; arr.forEach(fn => fn(data)); } }
 
   class VFS {
@@ -232,15 +230,15 @@
     async loadDependencies() {
         window.GemiRegistry = window.GemiRegistry || {};
         
-        // V50 SMART FETCH: Tries local file first. If it fails, downloads from GitHub.
         async function smartFetch(filename) {
             try { 
                 let res = await fetch("./" + filename + "?t=" + Date.now()); 
                 if (res.ok) return await res.text(); 
             } catch (e) {} 
             
-            console.log("[LINKER] Local " + filename + " not found. Fetching from GitHub...");
-            let resCloud = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/" + filename + "?t=" + Date.now());
+            console.log("[LINKER] Local " + filename + " not found. Fetching from GitHub Cloud...");
+            // V50: Use refs/heads/main to bypass edge cache
+            let resCloud = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/" + filename + "?t=" + Date.now(), {cache: "no-store"});
             if (resCloud.ok) return await resCloud.text();
             throw new Error(filename + " missing on Local and Cloud.");
         }
@@ -268,7 +266,7 @@
     }
 
     _setupIdleTimer(){ const reset = () => { this.idleTime = 0; this.WM.hideScreensaver(); }; document.onmousemove = document.onkeydown = document.onclick = reset; setInterval(()=> { this.idleTime++; if (this.idleTime >= 60) this.WM.showScreensaver(); },1000); }
-    _startOTADaemon(){ if (localStorage.getItem('GemiOS_Driver_Net')==='false') return; setInterval(async ()=>{ try { const resp = await fetch('https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/version.json?t=' + Date.now()); if (resp.ok) { const d = await resp.json(); const cur = localStorage.getItem('GemiOS_Cache_Ver') || '50.0.0-GOLD'; if (d.version !== cur) { this.notify('🚀 Update Detected!', `Version ${d.version} found.`, true); setTimeout(()=>this.pm.launch('sys_update'),2000); } } } catch (_) {} },15000); }
+    _startOTADaemon(){ if (localStorage.getItem('GemiOS_Driver_Net')==='false') return; setInterval(async ()=>{ try { const resp = await fetch('https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/version.json?t=' + Date.now(), {cache: "no-store"}); if (resp.ok) { const d = await resp.json(); const cur = localStorage.getItem('GemiOS_Cache_Ver') || '50.0.0-GOLD'; if (d.version !== cur) { this.notify('🚀 Update Detected!', `Version ${d.version} found.`, true); setTimeout(()=>this.pm.launch('sys_update'),2000); } } } catch (_) {} },15000); }
     _startEconomyDaemon(){ setInterval(()=>{ const customStr = localStorage.getItem('GemiOS_CustomApps') || '{}'; const custom = JSON.parse(customStr); const keys = Object.keys(custom); if (keys.length && Math.random()<0.4){ const app = custom[keys[Math.floor(Math.random()*keys.length)]]; const price = Number(app.price)||0; if (price>0){ const profit = Math.floor(price*0.9); this.wallet+=profit; this._saveWallet(); this.notify('App Sale! 💸',`Someone bought ${app.title}. +🪙${profit}`,true); this.audio.play('buy'); } } },20000); }
     _saveWallet(){ localStorage.setItem('GemiOS_Wallet',String(this.wallet)); let wd = document.getElementById('os-wallet-display'); if(wd) wd.innerText = `🪙 ${Math.floor(this.wallet)}`; }
     
@@ -363,22 +361,27 @@
     async renderDesktopIcons(){ 
         const deskEl = document.getElementById('desktop-icons'); deskEl.innerHTML = ''; 
         const deskData = await this.VFS.getDir('C:/Users/' + this.user + '/Desktop') || {}; 
-        let html = ''; let i = 0; 
+        const layoutData = await this.VFS.read('C:/Users/' + this.user + '/Desktop', '.layout') || "{}"; 
+        const layout = JSON.parse(layoutData); let html = ''; let i = 0; 
         for(let file in deskData) { 
             if(file.endsWith('.app') || file.endsWith('.gbs') || file.endsWith('.gzip') || file.endsWith('.txt')) { 
+                let top = layout[file] ? layout[file].top : (20 + Math.floor(i / 10) * 100) + 'px'; 
+                let left = layout[file] ? layout[file].left : (20 + (i % 10) * 90) + 'px'; 
                 let safeFile = file.replace(/'/g, "\\'"); 
                 if(file.endsWith('.app')) { 
                     let appId = deskData[file]; let app = window.GemiRegistry ? window.GemiRegistry[appId] : null; 
-                    if(app) { html += `<div class="icon" id="icon-${i}" ondblclick="GemiOS.pm.launch('${appId}')"><div>${app.icon}</div>${file.replace('.app','')}</div>`; } 
+                    if(app) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.pm.launch('${appId}')"><div>${app.icon}</div>${file.replace('.app','')}</div>`; } 
                 } 
-                else if (file.endsWith('.gbs')) { html += `<div class="icon" id="icon-${i}" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>📜</div>${file}</div>`; } 
-                else if (file.endsWith('.gzip')) { html += `<div class="icon" id="icon-${i}" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>🗜️</div>${file}</div>`; } 
-                else if (file.endsWith('.txt')) { html += `<div class="icon" id="icon-${i}" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>📝</div>${file}</div>`; } 
+                else if (file.endsWith('.gbs')) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>📜</div>${file}</div>`; } 
+                else if (file.endsWith('.gzip')) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>🗜️</div>${file}</div>`; } 
+                else if (file.endsWith('.txt')) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>📝</div>${file}</div>`; } 
                 i++; 
             } 
         } 
         deskEl.innerHTML = html; 
     }
+
+    dragIcon(e, id, filename) { let el = document.getElementById(id); let ox = e.clientX - el.offsetLeft; let oy = e.clientY - el.offsetTop; document.onmousemove = (ev) => { el.style.left = (ev.clientX - ox) + 'px'; el.style.top = (ev.clientY - oy) + 'px'; }; document.onmouseup = async () => { document.onmousemove = null; document.onmouseup = null; let layoutData = await this.VFS.read('C:/Users/' + this.user + '/Desktop', '.layout') || "{}"; let layout = JSON.parse(layoutData); layout[filename] = { top: el.style.top, left: el.style.left }; await this.VFS.write('C:/Users/' + this.user + '/Desktop', '.layout', JSON.stringify(layout)); }; }
 
     async importCartridge(b64String) {
         try {
@@ -448,13 +451,13 @@
     async triggerOTA(btn) {
         btn.innerText = 'Pinging Cloud Server...'; btn.style.background = '#444'; let st = document.getElementById('upd-stat'); st.innerText = 'Fetching version.json...';
         try {
-            let cb = "?t=" + new Date().getTime(); let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/version.json" + cb); if (!r.ok) throw new Error("GitHub server unreachable."); let d = await r.json();
+            let cb = "?t=" + new Date().getTime(); let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/version.json" + cb, {cache: "no-store"}); if (!r.ok) throw new Error("GitHub server unreachable."); let d = await r.json();
             let currentVer = localStorage.getItem('GemiOS_Cache_Ver') || "50.0.0-GOLD";
             if (d.version !== currentVer) {
                 st.innerHTML = `<span style="color:#ffeb3b">New Version Found: ${d.version}</span><br><i>${d.notes}</i>`; btn.innerText = 'Download & Install'; btn.style.background = '#ff00cc'; 
                 btn.onclick = async () => {
                     document.getElementById('ota-overlay').style.display = 'flex'; let fill = document.getElementById('ota-fill'); let text = document.getElementById('ota-text');
-                    try { text.innerText = "Downloading Kernel..."; fill.style.width = "30%"; let kRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/kernel.js" + cb); if(!kRes.ok) throw new Error("Kernel download failed."); let kCode = await kRes.text(); text.innerText = "Downloading Registry..."; fill.style.width = "60%"; let regRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/registry.js" + cb); if(!regRes.ok) throw new Error("Registry download failed."); let regCode = await regRes.text(); text.innerText = "Writing to NVRAM..."; fill.style.width = "90%"; localStorage.setItem('GemiOS_Cache_Kernel', kCode); localStorage.setItem('GemiOS_Cache_Registry', regCode); localStorage.setItem('GemiOS_Cache_Ver', d.version); fill.style.width = "100%"; document.getElementById('ota-title').innerText = "System Patched"; document.getElementById('ota-restart-prompt').style.display = 'flex'; this.notify("Update Complete", "System requires restart.", true); } catch(e) { text.innerText = "UPDATE FAILED: " + e.message; fill.style.background = "red"; }
+                    try { text.innerText = "Downloading Kernel..."; fill.style.width = "30%"; let kRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/kernel.js" + cb); if(!kRes.ok) throw new Error("Kernel download failed."); let kCode = await kRes.text(); text.innerText = "Downloading Registry..."; fill.style.width = "60%"; let regRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/registry.js" + cb); if(!regRes.ok) throw new Error("Registry download failed."); let regCode = await regRes.text(); text.innerText = "Writing to NVRAM..."; fill.style.width = "90%"; localStorage.setItem('GemiOS_Cache_Kernel', kCode); localStorage.setItem('GemiOS_Cache_Registry', regCode); localStorage.setItem('GemiOS_Cache_Ver', d.version); fill.style.width = "100%"; document.getElementById('ota-title').innerText = "System Patched"; document.getElementById('ota-restart-prompt').style.display = 'flex'; this.notify("Update Complete", "System requires restart.", true); } catch(e) { text.innerText = "UPDATE FAILED: " + e.message; fill.style.background = "red"; }
                 };
             } else { st.innerHTML = `<span style="color:#38ef7d">System is up to date!</span>`; btn.innerText = 'Latest OS Installed'; btn.style.background = '#38ef7d'; btn.style.color = 'black'; btn.onclick = null; }
         } catch (err) { st.innerHTML = `<span style="color:#ff4d4d">Error: ${err.message}</span>`; btn.innerText = 'Retry'; btn.style.background = '#0078d7'; }
