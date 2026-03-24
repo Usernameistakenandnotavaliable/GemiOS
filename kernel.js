@@ -1,5 +1,5 @@
 /*=====================================================================
-   GemiOS CLOUD HYPERVISOR - v50.0 (THE MODULAR CORE)
+   GemiOS CLOUD HYPERVISOR - v51.0 (THE DESKTOP EXPERIENCE)
 =====================================================================*/
 (() => {
   class EventBus { constructor() { this.handlers = new Map(); } on(ev, fn) { if (!this.handlers.has(ev)) this.handlers.set(ev, []); this.handlers.get(ev).push(fn); } off(ev, fn) { const arr = this.handlers.get(ev); if (!arr) return; this.handlers.set(ev, arr.filter(f => f !== fn)); } emit(ev, data) { const arr = this.handlers.get(ev); if (!arr) return; arr.forEach(fn => fn(data)); } }
@@ -8,7 +8,7 @@
     constructor(bus) { this.bus = bus; this.MAX_STORAGE = 10 * 1024 * 1024; this.DB_NAME = 'GemiOS_Fs'; this.STORE = 'nodes'; this.db = null; }
     async _open() { if (this.db) return this.db; return new Promise((res, rej) => { const req = indexedDB.open(this.DB_NAME, 1); req.onupgradeneeded = ev => { const db = ev.target.result; db.createObjectStore(this.STORE, { keyPath: 'path' }); }; req.onsuccess = ev => { this.db = ev.target.result; res(this.db); }; req.onerror = ev => rej(ev.target.error); }); }
     async _store(mode = 'readonly') { const db = await this._open(); return db.transaction(this.STORE, mode).objectStore(this.STORE); }
-    async ensureRoot() { const store = await this._store('readwrite'); const rec = await store.get('root'); if (!rec) { await store.add({ path: 'root', data: { "C:": { System: { "boot.log": "GemiOS V50.0 Initialized.", "sys_mail.json": "[]" }, Users: { Admin: { Desktop: {}, Documents: {}, Pictures: {}, Downloads: {} }, Guest: { Desktop: {}, Documents: {}, Pictures: {}, Downloads: {} } } } } }); } }
+    async ensureRoot() { const store = await this._store('readwrite'); const rec = await store.get('root'); if (!rec) { await store.add({ path: 'root', data: { "C:": { System: { "boot.log": "GemiOS V51.0 Initialized.", "sys_mail.json": "[]" }, Users: { Admin: { Desktop: {}, Documents: {}, Pictures: {}, Downloads: {} }, Guest: { Desktop: {}, Documents: {}, Pictures: {}, Downloads: {} } } } } }); } }
     async getNode(path) { const store = await this._store(); const rec = await store.get(path); return rec?.data ?? null; }
     async saveNode(path, data) { const size = new TextEncoder().encode(JSON.stringify(data)).length; const usage = await this.getUsage(); if (usage.used + size > this.MAX_STORAGE) { this.bus.emit('notify', {title:'Disk Full!',msg:'NVRAM quota exceeded.',success:false}); return false; } const store = await this._store('readwrite'); await store.put({ path, data }); this.bus.emit('vfs:changed'); return true; }
     async getUsage() { const store = await this._store(); const all = await store.getAll(); const used = all.reduce((t, r) => t + new TextEncoder().encode(JSON.stringify(r.data)).length, 0); return { used, max: this.MAX_STORAGE }; }
@@ -44,16 +44,23 @@
     async launch(appId,fileData=null){ 
         const app = window.GemiRegistry ? window.GemiRegistry[appId] : null; 
         if (!app){ this.bus.emit('notify',{title:'Execution Error',msg:`App ${appId} missing.`,success:false}); return; } 
-        const pid = ++this.nextPid; this.processes.set(pid,{app,pid,raw:app}); this.audio.play('click'); 
+        const pid = ++this.nextPid; this.processes.set(pid,{app,pid,raw:app, id:appId}); this.audio.play('click'); 
         let sm = document.getElementById('start-menu'); if(sm) sm.classList.remove('open');
         this.bus.emit('wm:create-window',{pid,app,fileData}); 
         if (app.onLaunch) app.onLaunch(pid, fileData); 
     }
-    async kill(pid){ if (!this.processes.has(pid)) return; const app = this.processes.get(pid).app; if(app.onKill) app.onKill(pid); this.bus.emit('wm:close-window',pid); setTimeout(()=>{ this.processes.delete(pid); },250); }
+    async kill(pid){ 
+        if (!this.processes.has(pid)) return; 
+        const app = this.processes.get(pid).app; 
+        if(app.onKill) app.onKill(pid); 
+        this.bus.emit('wm:close-window',pid); 
+        setTimeout(()=>{ this.processes.delete(pid); GemiOS.WM._renderDock(); },250); 
+    }
   }
 
   class WindowManager {
     constructor(bus, audio){ this.bus = bus; this.audio = audio; this.zIndex = 100; this.enableAnim = localStorage.getItem('GemiOS_Driver_Anim') !== 'false'; this.bus.on('wm:create-window', cfg => this._createWindow(cfg)); this.bus.on('wm:close-window', pid => this._closeWindow(pid)); }
+    
     _createWindow({pid, app, fileData}) {
       const wid = `win_${pid}`;
       const isSystem = (app.tag === 'sys' || app.tag === 'pro' || app.tag === 'edu' || app.tag === 'fin');
@@ -63,7 +70,7 @@
       const html = `
         <div class="win ${this.enableAnim ? 'win-animated' : 'win-static'}" id="${wid}" data-maximized="false" style="top:${Math.random()*40+60}px; left:${Math.random()*60+120}px; width:${app.width}px; z-index:${++this.zIndex};" onmousedown="GemiOS.WM.focus('${wid}')">
           <div class="title-bar" ondblclick="GemiOS.WM.maximize('${wid}')" onmousedown="GemiOS.WM.drag(event,'${wid}')">
-            <span>${app.title}</span>
+            <div style="display:flex; align-items:center; gap:8px;"><span>${app.icon}</span> <span>${app.title}</span></div>
             <div onmousedown="event.stopPropagation()">
               <button class="ctrl-btn min-btn" onclick="GemiOS.WM.minimize('${wid}')">-</button>
               <button class="ctrl-btn snap-btn" onclick="GemiOS.WM.snap('${wid}','left')">&lt;</button>
@@ -75,15 +82,54 @@
           <div class="resize-handle"></div>
         </div>`;
       document.getElementById('window-layer').insertAdjacentHTML('beforeend', html);
-      this._addTaskbarItem(pid, app.title); this.audio.play('open');
+      this.audio.play('open');
+      this._renderDock(); // Refresh dock to show indicator
     }
+
     focus(wid){ const el = document.getElementById(wid); if (el) el.style.zIndex = ++this.zIndex; }
+    
     drag(e,wid){ const win = document.getElementById(wid); if (!win || win.dataset.maximized==='true') return; const offsetX = e.clientX - win.offsetLeft; const offsetY = e.clientY - win.offsetTop; this.focus(wid); let iframes = document.querySelectorAll('iframe'); iframes.forEach(ifr => ifr.style.pointerEvents = 'none'); if(this.enableAnim) win.style.transition = 'none'; const move = ev => { win.style.left = ev.clientX - offsetX + 'px'; win.style.top = Math.max(0, ev.clientY - offsetY) + 'px'; }; const up = () => { document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); if(this.enableAnim) win.style.transition = 'width 0.3s, height 0.3s, top 0.3s, left 0.3s'; iframes.forEach(ifr => ifr.style.pointerEvents = 'auto'); }; document.addEventListener('mousemove',move); document.addEventListener('mouseup',up); }
-    maximize(wid){ const win = document.getElementById(wid); if (!win) return; if (win.dataset.maximized==='true'){ win.style.top = win.dataset.pT; win.style.left = win.dataset.pL; win.style.width = win.dataset.pW; win.style.height= win.dataset.pH; win.dataset.maximized='false'; win.style.borderRadius='12px'; } else { win.dataset.pT = win.style.top; win.dataset.pL = win.style.left; win.dataset.pW = win.style.width; win.dataset.pH = win.style.height; win.style.top = '0'; win.style.left = '0'; win.style.width = '100vw'; win.style.height = 'calc(100vh - 60px)'; win.dataset.maximized='true'; win.style.borderRadius='0'; } }
-    snap(wid, side){ const win = document.getElementById(wid); if (!win) return; if(win.dataset.maximized === "false") { win.dataset.pT = win.style.top; win.dataset.pL = win.style.left; win.dataset.pW = win.style.width; win.dataset.pH = win.style.height; } win.style.top = '0'; win.style.height = 'calc(100vh - 60px)'; win.style.width = '50vw'; win.style.left = side==='left' ? '0' : '50vw'; win.dataset.maximized='true'; win.style.borderRadius='0'; this.focus(wid); }
-    minimize(wid){ const win = document.getElementById(wid); if (!win) return; const tb = document.getElementById('tb-item-'+win.id.split('_')[1]); if (win.style.opacity === '0'){ win.style.opacity='1'; win.style.transform='scale(1) translateY(0)'; win.style.pointerEvents='auto'; tb.classList.add('active'); } else { win.style.opacity='0'; win.style.transform='scale(0.9) translateY(20px)'; win.style.pointerEvents='none'; tb.classList.remove('active'); } }
-    _addTaskbarItem(pid,title){ const apps = document.getElementById('taskbar-apps'); const itm = document.createElement('div'); itm.id = `tb-item-${pid}`; itm.className = 'tb-item active'; itm.textContent = title.length>12? title.slice(0,12) : title; itm.onclick = () => this.minimize(`win_${pid}`); apps.appendChild(itm); }
-    _closeWindow(pid){ const win = document.getElementById(`win_${pid}`); if (win){ win.style.opacity = '0'; win.style.transform = 'scale(0.9)'; setTimeout(() => { win.remove(); const tb = document.getElementById(`tb-item-${pid}`); if (tb) tb.remove(); this.audio.play('close'); }, 200); } }
+    
+    maximize(wid){ const win = document.getElementById(wid); if (!win) return; if (win.dataset.maximized==='true'){ win.style.top = win.dataset.pT; win.style.left = win.dataset.pL; win.style.width = win.dataset.pW; win.style.height= win.dataset.pH; win.dataset.maximized='false'; win.style.borderRadius='12px'; } else { win.dataset.pT = win.style.top; win.dataset.pL = win.style.left; win.dataset.pW = win.style.width; win.dataset.pH = win.style.height; win.style.top = '0'; win.style.left = '0'; win.style.width = '100vw'; win.style.height = 'calc(100vh - 80px)'; win.dataset.maximized='true'; win.style.borderRadius='0'; } }
+    
+    snap(wid, side){ const win = document.getElementById(wid); if (!win) return; if(win.dataset.maximized === "false") { win.dataset.pT = win.style.top; win.dataset.pL = win.style.left; win.dataset.pW = win.style.width; win.dataset.pH = win.style.height; } win.style.top = '0'; win.style.height = 'calc(100vh - 80px)'; win.style.width = '50vw'; win.style.left = side==='left' ? '0' : '50vw'; win.dataset.maximized='true'; win.style.borderRadius='0'; this.focus(wid); }
+    
+    minimize(wid){ const win = document.getElementById(wid); if (!win) return; if (win.style.opacity === '0'){ win.style.opacity='1'; win.style.transform='scale(1) translateY(0)'; win.style.pointerEvents='auto'; } else { win.style.opacity='0'; win.style.transform='scale(0.9) translateY(40px)'; win.style.pointerEvents='none'; } }
+    
+    // V51: THE GLASSCORP DOCK RENDERER
+    _renderDock() {
+        const dock = document.getElementById('dock-apps');
+        if(!dock) return;
+        
+        let pinnedApps = ['sys_drive', 'sys_store', 'sys_set'];
+        let runningPids = Array.from(GemiOS.pm.processes.values());
+        let allDockApps = [...pinnedApps];
+        
+        // Add running apps that aren't pinned
+        runningPids.forEach(p => { if(!allDockApps.includes(p.id)) allDockApps.push(p.id); });
+
+        let html = '';
+        allDockApps.forEach(appId => {
+            let appData = window.GemiRegistry ? window.GemiRegistry[appId] : null;
+            if(!appData) return;
+            
+            // Check if app is running to add the indicator dot
+            let runningInstance = runningPids.find(p => p.id === appId);
+            let indicator = runningInstance ? `<div style="width:4px; height:4px; background:var(--accent); border-radius:50%; position:absolute; bottom:2px;"></div>` : '';
+            
+            // If running, clicking minimizes/restores. If not, it launches.
+            let clickAction = runningInstance ? `GemiOS.WM.minimize('win_${runningInstance.pid}')` : `GemiOS.pm.launch('${appId}')`;
+
+            html += `<div class="dock-icon" onclick="${clickAction}" title="${appData.title}">
+                        <div style="font-size:24px;">${appData.icon}</div>
+                        ${indicator}
+                     </div>`;
+        });
+        
+        dock.innerHTML = html;
+    }
+
+    _closeWindow(pid){ const win = document.getElementById(`win_${pid}`); if (win){ win.style.opacity = '0'; win.style.transform = 'scale(0.9)'; setTimeout(() => { win.remove(); this.audio.play('close'); }, 200); } }
     showScreensaver(){ let ss = document.getElementById('gemi-screensaver'); if (!ss){ ss = document.createElement('canvas'); ss.id = 'gemi-screensaver'; ss.style.cssText = 'position:absolute;top:0;left:0;width:100vw;height:100vh;background:black;z-index:9999998;opacity:0;pointer-events:none;transition:opacity 1s ease'; document.body.appendChild(ss); const ctx = ss.getContext('2d'); const stars = []; for(let i=0;i<200;i++) stars.push({x:Math.random()*window.innerWidth, y:Math.random()*window.innerHeight, s:Math.random()*2}); setInterval(()=> { if (ss.style.opacity==='1'){ if (ss.width!==window.innerWidth){ ss.width=window.innerWidth; ss.height=window.innerHeight; } ctx.fillStyle='rgba(0,0,0,0.2)'; ctx.fillRect(0,0,ss.width,ss.height); ctx.fillStyle='white'; stars.forEach(st=>{ ctx.beginPath(); ctx.arc(st.x,st.y,st.s,0,Math.PI*2); ctx.fill(); st.x-=st.s; if(st.x<0){ st.x=ss.width; st.y=Math.random()*ss.height; } }); } },30); } ss.style.opacity='1'; ss.style.pointerEvents='auto'; }
     hideScreensaver(){ const ss = document.getElementById('gemi-screensaver'); if (ss){ ss.style.opacity='0'; ss.style.pointerEvents='none'; } }
   }
@@ -96,22 +142,13 @@
     }
 
     async init(){
-      this.injectStyles(); // Override the black BIOS screen immediately
-      await this.VFS.ensureRoot(); 
-      await this.theme.applyFromStorage(); 
-      await this.loadDependencies();
-      
+      this.injectStyles(); 
+      await this.VFS.ensureRoot(); await this.theme.applyFromStorage(); await this.loadDependencies();
       if(this.wallet <= 10 && !localStorage.getItem('GemiOS_Relief_Claimed')) { setTimeout(() => { this.wallet += 150; this._saveWallet(); this.notify("GemiGov Relief Fund 🏦", "150 🪙 deposited!"); localStorage.setItem('GemiOS_Relief_Claimed', 'true'); }, 4000); }
-      
-      this._setupIdleTimer(); 
-      this._buildUI(); 
-      this.patchDesktopData();
-      this.renderDesktopIcons(); 
-      this._startOTADaemon(); 
-      this._startEconomyDaemon(); 
-      this.initRealityBridge();
+      this._setupIdleTimer(); this._buildUI(); this.patchDesktopData(); this._startOTADaemon(); this._startEconomyDaemon(); this.initRealityBridge();
     }
 
+    // V51 STUNNING UI CSS OVERHAUL
     injectStyles() {
         const s = document.createElement('style');
         s.textContent = `
@@ -121,94 +158,77 @@
             body.light-mode { background: linear-gradient(135deg, #e0eafc, #cfdef3); color: #222; }
             ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; } body.light-mode ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); }
             @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
-            @keyframes spin { 100% { transform: rotate(360deg); } }
             @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
             @keyframes popIn { 0% { opacity: 0; transform: scale(0.9) translateY(20px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
             @keyframes blink { 0%, 100% { opacity:1; } 50% { opacity:0.2; } }
             .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-            .win { position:absolute; background:rgba(20, 30, 40, 0.7); backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%); color:white; border-radius:12px; box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; pointer-events:auto; resize:both; overflow:hidden;}
-            .win-animated { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; transition: width 0.3s, height 0.3s, top 0.3s, left 0.3s; }
+            
+            /* Refined Windows */
+            .win { position:absolute; background:rgba(20, 30, 40, 0.75); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); color:white; border-radius:12px; box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; pointer-events:auto; resize:both; overflow:hidden;}
+            .win-animated { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; transition: width 0.3s, height 0.3s, top 0.3s, left 0.3s, transform 0.3s, opacity 0.3s; }
             .win-static { animation: none; transition: none; opacity:1; }
-            body.light-mode .win { background: rgba(255,255,255,0.85); border: 1px solid var(--accent); color: #222; box-shadow: 0 30px 60px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.8); }
-            .resize-handle { position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: nwse-resize; z-index: 10000; background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.2) 50%); }
-            .title-bar { padding:12px 18px; font-weight:600; font-size: 14px; display:flex; justify-content:space-between; align-items: center; border-bottom:1px solid rgba(255,255,255,0.05); cursor:grab; }
-            body.light-mode .title-bar { border-bottom: 1px solid rgba(0,0,0,0.05); }
+            body.light-mode .win { background: rgba(255,255,255,0.85); border: 1px solid var(--accent); color: #222; box-shadow: 0 20px 50px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.8); }
+            
+            .title-bar { padding:10px 15px; font-weight:600; font-size: 13px; display:flex; justify-content:space-between; align-items: center; border-bottom:1px solid rgba(255,255,255,0.05); cursor:grab; background:rgba(0,0,0,0.2);}
+            body.light-mode .title-bar { border-bottom: 1px solid rgba(0,0,0,0.05); background:rgba(0,0,0,0.03);}
             .content { padding:15px; flex-grow: 1; overflow-y: auto; display:flex; flex-direction:column; }
-            .ctrl-btn { border:none; color:white; cursor:pointer; width: 22px; height: 22px; border-radius:50%; font-weight:bold; font-size: 11px; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; margin-left: 6px; }
-            .close-btn { background:rgba(255, 77, 77, 0.8); } .close-btn:hover { background:#ff4d4d; transform: scale(1.1); }
-            .min-btn { background:rgba(255, 180, 0, 0.8); } .min-btn:hover { background:#ffb400; transform: scale(1.1); }
-            .snap-btn { background:rgba(255, 255, 255, 0.2); } .snap-btn:hover { background:rgba(255, 255, 255, 0.4); transform: scale(1.1); }
-            body.light-mode .snap-btn { background:rgba(0, 0, 0, 0.1); color:#222;} body.light-mode .snap-btn:hover { background:rgba(0, 0, 0, 0.2); }
-            #taskbar-container { position:absolute; bottom:15px; width:100%; display:flex; justify-content:center; pointer-events:none; z-index:99999; }
-            #taskbar { pointer-events:auto; height:60px; background:rgba(10, 15, 20, 0.6); backdrop-filter:blur(25px) saturate(180%); display:flex; align-items:center; padding: 0 15px; border-radius:30px; border:1px solid rgba(255,255,255,0.1); box-shadow: 0 15px 35px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1); transition: all 0.3s ease; }
+            .ctrl-btn { border:none; color:white; cursor:pointer; width: 14px; height: 14px; border-radius:50%; font-size: 0px; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; margin-left: 6px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.3);}
+            .ctrl-btn:hover { font-size: 10px; font-weight:bold; }
+            .close-btn { background:#ff5f56; } .close-btn:hover { background:#ff4d4d; }
+            .min-btn { background:#ffbd2e; } .min-btn:hover { background:#ffb400; }
+            .snap-btn { background:#27c93f; } .snap-btn:hover { background:#1e9c2e; }
+            
+            /* V51 FLOATING DOCK */
+            #taskbar-container { position:absolute; bottom:20px; width:100%; display:flex; justify-content:center; pointer-events:none; z-index:99999; }
+            #taskbar { pointer-events:auto; height:65px; background:rgba(20, 25, 30, 0.6); backdrop-filter:blur(30px) saturate(180%); display:flex; align-items:center; padding: 0 20px; border-radius:24px; border:1px solid rgba(255,255,255,0.1); box-shadow: 0 15px 35px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1); transition: all 0.3s ease; gap: 15px;}
             body.light-mode #taskbar { background: rgba(255,255,255,0.7); border: 1px solid rgba(0,0,0,0.1); color: #222; box-shadow: 0 15px 35px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.8);}
-            .start { width:44px; height:44px; background:linear-gradient(135deg, var(--accent), #005a9e); border-radius:50%; border:2px solid rgba(255,255,255,0.2); text-align:center; line-height:40px; cursor:pointer; font-weight: 600; font-size: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); transition: 0.2s;}
-            .start:hover { transform: scale(1.1) translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6); border-color:white; }
-            .ql-icon { width:35px; height:35px; border-radius:10px; display:flex; justify-content:center; align-items:center; font-size:18px; cursor:pointer; transition:0.2s; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.05); }
-            .ql-icon:hover { background:rgba(255,255,255,0.2); transform:translateY(-2px); border-color:rgba(255,255,255,0.4); }
-            body.light-mode .ql-icon { background:rgba(0,0,0,0.05); border-color:rgba(0,0,0,0.05); } body.light-mode .ql-icon:hover { background:rgba(0,0,0,0.1); border-color:rgba(0,0,0,0.2); }
-            #taskbar-apps { display:flex; align-items:center; margin: 0 20px; gap: 8px; }
-            .tb-item { padding: 8px 15px; background: rgba(255,255,255,0.05); border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity:0.6;}
-            .tb-item.active { opacity:1; background:rgba(255,255,255,0.1); border-bottom: 2px solid var(--accent); border-radius: 12px 12px 4px 4px; }
-            .tb-item:hover { background: rgba(255,255,255,0.15); transform:translateY(-3px); }
-            body.light-mode .tb-item { background: rgba(0,0,0,0.05); } body.light-mode .tb-item.active { background: rgba(0,0,0,0.08); } body.light-mode .tb-item:hover { background: rgba(0,0,0,0.1); }
-            #start-menu { position:absolute; bottom:90px; left:50%; transform:translateX(-50%); width:380px; max-height:650px; background:rgba(20, 30, 40, 0.85); backdrop-filter:blur(35px) saturate(200%); border-radius:20px; box-shadow:0 25px 60px rgba(0,0,0,0.7), inset 0 1px 1px rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); display:none; flex-direction:column; z-index:100000; overflow:hidden; pointer-events:auto;}
+            
+            .start { width:45px; height:45px; background:linear-gradient(135deg, var(--accent), #005a9e); border-radius:12px; border:1px solid rgba(255,255,255,0.2); text-align:center; line-height:45px; cursor:pointer; font-weight: 600; font-size: 22px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); transition: 0.2s;}
+            .start:hover { transform: scale(1.05) translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6); border-color:white; }
+            
+            /* Dock Icons */
+            #dock-apps { display:flex; align-items:center; gap: 8px; border-left:1px solid rgba(255,255,255,0.1); padding-left:15px; border-right:1px solid rgba(255,255,255,0.1); padding-right:15px;}
+            .dock-icon { width:45px; height:45px; border-radius:12px; display:flex; flex-direction:column; justify-content:center; align-items:center; cursor:pointer; transition:0.2s; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.05); position:relative;}
+            .dock-icon:hover { background:rgba(255,255,255,0.15); transform:translateY(-5px); border-color:rgba(255,255,255,0.3); box-shadow:0 8px 15px rgba(0,0,0,0.3);}
+            body.light-mode .dock-icon { background:rgba(0,0,0,0.05); border-color:rgba(0,0,0,0.05); } body.light-mode .dock-icon:hover { background:rgba(0,0,0,0.1); border-color:rgba(0,0,0,0.2); }
+            
+            /* Start Menu */
+            #start-menu { position:absolute; bottom:100px; left:50%; transform:translateX(-50%); width:400px; max-height:600px; background:rgba(25, 35, 45, 0.85); backdrop-filter:blur(40px) saturate(200%); border-radius:20px; box-shadow:0 25px 60px rgba(0,0,0,0.7), inset 0 1px 1px rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); display:none; flex-direction:column; z-index:100000; overflow:hidden; pointer-events:auto;}
             #start-menu.open { display:flex; animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
             body.light-mode #start-menu { background:rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.1); color: #222;}
             .start-header { background: linear-gradient(135deg, rgba(0,0,0,0.2), transparent); color:white; padding:25px; font-weight:600; display:flex; align-items:center; gap: 15px; border-bottom:1px solid rgba(255,255,255,0.05);}
-            body.light-mode .start-header { color:#222; border-bottom:1px solid rgba(0,0,0,0.05);}
-            .start-cat { font-size:11px; font-weight:bold; color:#888; margin: 15px 20px 5px 20px; text-transform:uppercase; letter-spacing:1px; }
-            .start-item { padding:10px 20px; cursor:pointer; display:flex; align-items:center; gap:15px; font-size:14px; font-weight:500; transition: 0.2s; border-radius: 10px; margin: 2px 10px; }
-            .start-item:hover { background:var(--accent); color:white; transform: translateX(5px); }
-            body.light-mode .start-item:hover { background:var(--accent); color:white; }
-            .icon { position:absolute; width:75px; cursor:pointer; transition: 0.2s; z-index:10; border-radius:12px; padding:10px 5px; pointer-events:auto; text-align:center; color:white; font-size:12px; font-weight:500; text-shadow:0 2px 4px rgba(0,0,0,0.8); display:flex; flex-direction:column; align-items:center;} 
-            .icon:hover { background:rgba(255,255,255,0.15); backdrop-filter:blur(10px); outline:1px solid rgba(255,255,255,0.3); transform:translateY(-2px); box-shadow:0 10px 20px rgba(0,0,0,0.3); }
-            .icon:active { transform: scale(0.95); cursor:grabbing; }
-            .icon div { font-size: 38px; margin-bottom: 5px; filter:drop-shadow(0 4px 5px rgba(0,0,0,0.5)); pointer-events:none;}
+            .start-item { padding:12px 20px; cursor:pointer; display:flex; align-items:center; gap:15px; font-size:14px; font-weight:500; transition: 0.2s; border-radius: 12px; margin: 4px 12px; background:rgba(255,255,255,0.02);}
+            .start-item:hover { background:var(--accent); color:white; transform: translateX(5px); box-shadow:0 4px 10px rgba(0,0,0,0.2); }
+            
+            /* Beautiful Desktop Grid Icons */
+            #desktop-icons { display:grid; grid-template-columns: repeat(auto-fill, 90px); grid-auto-rows: 100px; gap: 10px; padding: 20px; pointer-events:none; position:absolute; top:0; left:0; width:100%; height:100%; z-index:10; align-content:start;}
+            .icon { width:100%; height:100%; cursor:pointer; transition: 0.2s; border-radius:12px; padding:10px 5px; pointer-events:auto; text-align:center; color:white; font-size:12px; font-weight:500; text-shadow:0 1px 3px rgba(0,0,0,0.8); display:flex; flex-direction:column; align-items:center; justify-content:center; box-sizing:border-box;} 
+            .icon:hover { background:rgba(255,255,255,0.1); backdrop-filter:blur(10px); outline:1px solid rgba(255,255,255,0.2); transform:translateY(-2px); box-shadow:0 10px 20px rgba(0,0,0,0.2); }
+            .icon div { font-size: 40px; margin-bottom: 8px; filter:drop-shadow(0 4px 5px rgba(0,0,0,0.5)); pointer-events:none;}
             body.light-mode .icon { color: #222; text-shadow:0 1px 2px rgba(255,255,255,0.8); }
-            body.light-mode .icon:hover { background:rgba(0,0,0,0.05); outline:1px solid rgba(0,0,0,0.1); }
+            
             #desktop-bg { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; pointer-events: none; background-size: cover !important; background-position: center !important; z-index: 1; transition: filter 1s ease, transform 1s ease;}
             .sys-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 12px; font-size:13px;}
-            body.light-mode .sys-card { background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.1); }
             .btn-primary { width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; transition:all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
             .btn-primary:hover { transform:translateY(-2px); box-shadow:0 4px 10px rgba(0,0,0,0.3); filter:brightness(1.1); }
-            .btn-primary:disabled { background:#555; cursor:not-allowed; transform:none; box-shadow:none; filter:none; }
             .btn-sec { width:100%; padding:12px; background:rgba(255,255,255,0.1); color:inherit; border:1px solid rgba(255,255,255,0.2); border-radius:8px; margin-bottom:10px; cursor:pointer; transition:0.2s;}
             .btn-sec:hover { background:rgba(255,255,255,0.2); }
-            .btn-sec:disabled { opacity:0.5; cursor:not-allowed; }
             .btn-danger { width:100%; padding:12px; background:rgba(255,77,77,0.8); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
-            #widget-notes { position:absolute; top:30px; right:30px; width:220px; height:220px; background:linear-gradient(135deg, #fff9c4, #fbc02d); color:#333; box-shadow:5px 10px 20px rgba(0,0,0,0.4); padding:15px; z-index:5; font-family:'Segoe Print', 'Comic Sans MS', cursive; transform: rotate(2deg); transition: transform 0.2s, box-shadow 0.2s; cursor:grab; pointer-events:auto; border-radius:2px 2px 15px 2px;}
-            #widget-notes:active { cursor:grabbing; transform: rotate(0deg) scale(1.05); z-index:9999; box-shadow:10px 20px 30px rgba(0,0,0,0.5);}
-            #widget-notes textarea { width:100%; height:100%; background:transparent; border:none; outline:none; font-family:inherit; font-size:14px; resize:none; color:#333;}
-            #context-menu { position:absolute; background:rgba(30, 40, 50, 0.85); backdrop-filter:blur(25px) saturate(200%); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:6px; box-shadow:0 15px 35px rgba(0,0,0,0.6); z-index:999999; display:none; min-width:180px; pointer-events:auto; transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-origin: top left;}
-            body.light-mode #context-menu { background:rgba(255,255,255,0.9); color:black; border:1px solid rgba(0,0,0,0.1); }
-            .cm-item { padding:10px 15px; cursor:pointer; font-size:13px; font-weight:500; border-radius:6px; display:flex; align-items:center; gap:10px; transition:0.2s; }
-            .cm-item:hover { background:var(--accent); color:white; padding-left:20px;}
+            
             .gemi-notif { background: rgba(20, 30, 40, 0.85); backdrop-filter: blur(25px) saturate(200%); border: 1px solid var(--accent); border-radius: 12px; padding: 15px 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease; opacity: 0; color: white; width: 320px; pointer-events:auto; }
-            body.light-mode .gemi-notif { background: rgba(255,255,255,0.95); border: 1px solid var(--accent); color: black; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
-            #notif-panel { position:absolute; top:0; right:-320px; width:320px; height:calc(100vh - 75px); background:rgba(10, 15, 20, 0.85); backdrop-filter:blur(30px) saturate(180%); border-left:1px solid rgba(255,255,255,0.1); z-index:99998; transition:right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display:flex; flex-direction:column; box-shadow:-10px 0 30px rgba(0,0,0,0.5); }
-            body.light-mode #notif-panel { background:rgba(255,255,255,0.9); color:black; border-left:1px solid rgba(0,0,0,0.1); }
-            .io-indicator { position:absolute; bottom:18px; right:75px; font-size:18px; opacity:0.2; transition:opacity 0.2s ease; z-index:999999; }
-            .io-indicator.active { opacity:1; animation: blink 0.2s infinite; color: var(--accent); }
+            #notif-container { position:absolute; top:20px; right:20px; z-index:999999; display:flex; flex-direction:column; gap:10px; pointer-events:none;}
         `;
         document.head.appendChild(s);
     }
 
     async loadDependencies() {
-        window.GemiRegistry = {}; // Failsafe
+        window.GemiRegistry = {};
         try {
             let r1 = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/registry.js?t=" + Date.now());
-            if(r1.ok) { 
-                let code1 = await r1.text(); 
-                try { eval(code1); localStorage.setItem('GemiOS_Cache_Registry', code1); } 
-                catch(e) { console.error("Registry Eval Error:", e); try { eval(localStorage.getItem('GemiOS_Cache_Registry') || ''); } catch(e2){} }
-            }
+            if(r1.ok) { let code1 = await r1.text(); try { eval(code1); localStorage.setItem('GemiOS_Cache_Registry', code1); } catch(e) { console.error(e); } }
             
             let r2 = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/engine.js?t=" + Date.now());
-            if(r2.ok) { 
-                let code2 = await r2.text(); 
-                try { eval(code2); } catch(e) { console.error("Engine Eval Error:", e); }
-            }
+            if(r2.ok) { let code2 = await r2.text(); try { eval(code2); } catch(e) {} }
 
             let customApps = JSON.parse(localStorage.getItem('GemiOS_CustomApps') || '{}');
             let globalNetwork = JSON.parse(localStorage.getItem('GemiOS_GlobalNetwork') || '[]');
@@ -221,35 +241,16 @@
                 let fileName = gApp.title.replace(/\s/g, '') + '_net.app';
                 window.GemiRegistry[fileName] = { price: gApp.price, id: gApp.id, icon: gApp.icon, desc: gApp.desc, title: gApp.title, width: 500, htmlString: gApp.htmlString, isNetwork: true };
             });
-        } catch(e) { console.warn("Dependency load failed."); }
+        } catch(e) { console.warn("Network Error."); }
     }
 
     _setupIdleTimer(){ const reset = () => { this.idleTime = 0; this.WM.hideScreensaver(); }; document.onmousemove = document.onkeydown = document.onclick = reset; setInterval(()=> { this.idleTime++; if (this.idleTime >= 60) this.WM.showScreensaver(); },1000); }
-    
-    _startOTADaemon(){ if (localStorage.getItem('GemiOS_Driver_Net')==='false') return; setInterval(async ()=>{ try { const resp = await fetch('https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/version.json?t=' + Date.now()); if (resp.ok) { const d = await resp.json(); const cur = localStorage.getItem('GemiOS_Cache_Ver') || '50.0.0-MODULAR'; if (d.version !== cur) { this.notify('🚀 Update Detected!', `Version ${d.version} found.`, true); setTimeout(()=>this.pm.launch('sys_update'),2000); } } } catch (_) {} },15000); }
-    
-    async triggerOTA(btn) {
-        btn.innerText = 'Pinging Cloud Server...'; btn.style.background = '#444'; let st = document.getElementById('upd-stat'); st.innerText = 'Fetching version.json...';
-        try {
-            let cb = "?t=" + new Date().getTime(); let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/version.json" + cb); if (!r.ok) throw new Error("GitHub server unreachable."); let d = await r.json();
-            let currentVer = localStorage.getItem('GemiOS_Cache_Ver') || "50.0.0-MODULAR";
-            if (d.version !== currentVer) {
-                st.innerHTML = `<span style="color:#ffeb3b">New Version Found: ${d.version}</span><br><i>${d.notes}</i>`; btn.innerText = 'Download & Install'; btn.style.background = '#ff00cc'; 
-                btn.onclick = async () => {
-                    document.getElementById('ota-overlay').style.display = 'flex'; let fill = document.getElementById('ota-fill'); let text = document.getElementById('ota-text');
-                    try { text.innerText = "Downloading Kernel..."; fill.style.width = "30%"; let kRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/kernel.js" + cb); if(!kRes.ok) throw new Error("Kernel download failed."); let kCode = await kRes.text(); text.innerText = "Downloading Registry..."; fill.style.width = "60%"; let regRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/registry.js" + cb); if(!regRes.ok) throw new Error("Registry download failed."); let regCode = await regRes.text(); text.innerText = "Writing to NVRAM..."; fill.style.width = "90%"; localStorage.setItem('GemiOS_Cache_Kernel', kCode); localStorage.setItem('GemiOS_Cache_Registry', regCode); localStorage.setItem('GemiOS_Cache_Ver', d.version); fill.style.width = "100%"; document.getElementById('ota-title').innerText = "System Patched"; document.getElementById('ota-restart-prompt').style.display = 'flex'; this.notify("Update Complete", "System requires restart.", true); } catch(e) { text.innerText = "UPDATE FAILED: " + e.message; fill.style.background = "red"; }
-                };
-            } else { st.innerHTML = `<span style="color:#38ef7d">System is up to date!</span>`; btn.innerText = 'Latest OS Installed'; btn.style.background = '#38ef7d'; btn.style.color = 'black'; btn.onclick = null; }
-        } catch (err) { st.innerHTML = `<span style="color:#ff4d4d">Error: ${err.message}</span>`; btn.innerText = 'Retry'; btn.style.background = '#0078d7'; }
-    }
-
+    _startOTADaemon(){ if (localStorage.getItem('GemiOS_Driver_Net')==='false') return; setInterval(async ()=>{ try { const resp = await fetch('https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/version.json?t=' + Date.now()); if (resp.ok) { const d = await resp.json(); const cur = localStorage.getItem('GemiOS_Cache_Ver') || '51.0.0-DESKTOP'; if (d.version !== cur) { this.notify('🚀 Update Detected!', `Version ${d.version} found.`, true); setTimeout(()=>this.pm.launch('sys_update'),2000); } } } catch (_) {} },15000); }
     _startEconomyDaemon(){ setInterval(()=>{ const customStr = localStorage.getItem('GemiOS_CustomApps') || '{}'; const custom = JSON.parse(customStr); const keys = Object.keys(custom); if (keys.length && Math.random()<0.4){ const app = custom[keys[Math.floor(Math.random()*keys.length)]]; const price = Number(app.price)||0; if (price>0){ const profit = Math.floor(price*0.9); this.wallet+=profit; this._saveWallet(); this.notify('App Sale! 💸',`Someone bought ${app.title}. +🪙${profit}`,true); this.audio.play('buy'); } } },20000); }
     _saveWallet(){ localStorage.setItem('GemiOS_Wallet',String(this.wallet)); let wd = document.getElementById('os-wallet-display'); if(wd) wd.innerText = `🪙 ${Math.floor(this.wallet)}`; }
     
     notify(title,msg,success=true){ this.bus.emit('notify',{title,msg,success}); }
     toggleTheme(){ this.theme.toggleTheme(); }
-    triggerIO() { let io = document.getElementById('io-indicator'); if(io) { io.style.opacity = '1'; setTimeout(() => { io.style.opacity = '0.2'; }, 800); } }
-    
     lockSystem(){ this.audio.play('shutdown'); const overlay = document.createElement('div'); overlay.style.cssText='position:absolute;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.8);z-index:9999999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;font-family:sans-serif;'; overlay.innerHTML='<div class="spinner" style="margin-bottom:15px;"></div> Shutting down...'; document.body.appendChild(overlay); setTimeout(()=>location.reload(),2500); }
 
     patchDesktopData() { 
@@ -259,11 +260,10 @@
         
         this.VFS.getDir('C:/Users/' + this.user + '/Desktop', true).then(async (realDesk) => {
             for(let a in desk) { if(realDesk && !realDesk[a]) await this.VFS.write('C:/Users/' + this.user + '/Desktop', a, desk[a]); }
-            this.renderDesktopIcons();
+            this.renderDesktopIcons(); this.WM._renderDock(); // Initial render
         });
     }
 
-    // --- OS CORE LOGIC IMPLEMENTATIONS ---
     runSearch(q){ const items = document.querySelectorAll('.start-item'); const cats = document.querySelectorAll('.start-cat'); if (!q){ items.forEach(i=>i.style.display='flex'); cats.forEach(c=>c.style.display='block'); return; } const low = q.toLowerCase(); items.forEach(i=> i.style.display = i.textContent.toLowerCase().includes(low) ? 'flex' : 'none'); cats.forEach(c=>c.style.display='none'); }
     
     async handleTerm(e, pid, inEl) {
@@ -284,10 +284,10 @@
                     let appData = window.GemiRegistry[appName];
                     if(appData) { 
                         let price = appData.price || 0;
-                        if(appData.isNetwork) { log('[GPM] Downloading from Global Network...'); let payload = appData.htmlString || ""; if(payload.includes("VFS.format") || payload.includes("localStorage.clear")) { log('<span style="color:red">[GPM ERR] GemiDefender blocked Payload!</span>'); return; } }
-                        if(this.wallet >= price) { this.wallet -= price; this._saveWallet(); log(`[GPM] Transaction... -🪙${price}`); if(await this.VFS.write('C:/Users/' + this.user + '/Desktop', appName, appData.id)) { log(`[GPM] SUCCESS: Installed.`); this.renderDesktopIcons(); this.audio.play('buy'); } else log(`[GPM] ERROR: NVRAM Full.`); } else { log(`[GPM] ERROR: Insufficient funds.`); this.audio.play('error'); }
-                    } else log(`[GPM] ERROR: Package ${appName} not found.`); 
-                } else log('Usage: gpm install [app_name.app]'); 
+                        if(appData.isNetwork) { log('[GPM] Downloading from Global Network...'); let payload = appData.htmlString || ""; if(payload.includes("VFS.format") || payload.includes("localStorage.clear")) { log('<span style="color:red">[GPM ERR] AV Blocked Payload!</span>'); return; } }
+                        if(this.wallet >= price) { this.wallet -= price; this._saveWallet(); log(`[GPM] Transaction... -🪙${price}`); if(await this.VFS.write('C:/Users/' + this.user + '/Desktop', appName, appData.id)) { log(`[GPM] SUCCESS.`); this.renderDesktopIcons(); this.audio.play('buy'); } else log(`[GPM] ERROR: Full.`); } else { log(`[GPM] ERROR: Insufficient funds.`); this.audio.play('error'); }
+                    } else log(`[GPM] ERROR: Package not found.`); 
+                } else log('Usage: gpm install [app.app]'); 
             }
             else log(`Unknown command: ${base}`);
         } catch(err) { log(`Error: ${err.message}`); }
@@ -337,51 +337,38 @@
 
     initRealityBridge() { document.body.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); }); document.body.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); let file = e.dataTransfer.files[0]; if (!file) return; let reader = new FileReader(); reader.onload = async (event) => { if(file.name.endsWith('.gemos')) { try { let dump = JSON.parse(event.target.result); for(let p in dump) { await this.VFS.saveNode(p, dump[p]); } this.notify("GemiSync", "Snapshot Imported. Rebooting..."); setTimeout(()=>location.reload(), 1500); } catch(e) { this.notify("GemiSync Error", "Invalid backup.", false); } return; } if(await this.VFS.write('C:/Users/' + this.user + '/Downloads', file.name, event.target.result)) { this.notify("Reality Bridge", `Imported ${file.name}`); for(let pid in this.driveStates) { this.renderDrive(pid); } } }; if(file.name.endsWith('.txt') || file.name.endsWith('.rtf') || file.name.endsWith('.gbs') || file.name.endsWith('.gemos')) { reader.readAsText(file); } else { reader.readAsDataURL(file); } }); }
 
+    // V51: GRID RENDERER
     async renderDesktopIcons(){ 
         const deskEl = document.getElementById('desktop-icons'); deskEl.innerHTML = ''; 
         const deskData = await this.VFS.getDir('C:/Users/' + this.user + '/Desktop') || {}; 
-        const layoutData = await this.VFS.read('C:/Users/' + this.user + '/Desktop', '.layout') || "{}"; 
-        const layout = JSON.parse(layoutData); let html = ''; let i = 0; 
+        let html = ''; let i = 0; 
         for(let file in deskData) { 
             if(file.endsWith('.app') || file.endsWith('.gbs') || file.endsWith('.gzip') || file.endsWith('.txt')) { 
-                let top = layout[file] ? layout[file].top : (20 + Math.floor(i / 10) * 100) + 'px'; 
-                let left = layout[file] ? layout[file].left : (20 + (i % 10) * 90) + 'px'; 
                 let safeFile = file.replace(/'/g, "\\'"); 
                 if(file.endsWith('.app')) { 
                     let appId = deskData[file]; let app = window.GemiRegistry ? window.GemiRegistry[appId] : null; 
-                    if(app) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.pm.launch('${appId}')"><div>${app.icon}</div>${file.replace('.app','')}</div>`; } 
+                    if(app) { html += `<div class="icon" id="icon-${i}" ondblclick="GemiOS.pm.launch('${appId}')"><div>${app.icon}</div>${file.replace('.app','')}</div>`; } 
                 } 
-                else if (file.endsWith('.gbs')) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>📜</div>${file}</div>`; } 
-                else if (file.endsWith('.gzip')) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>🗜️</div>${file}</div>`; } 
-                else if (file.endsWith('.txt')) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>📝</div>${file}</div>`; } 
+                else if (file.endsWith('.gbs')) { html += `<div class="icon" id="icon-${i}" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>📜</div>${file}</div>`; } 
+                else if (file.endsWith('.gzip')) { html += `<div class="icon" id="icon-${i}" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>🗜️</div>${file}</div>`; } 
+                else if (file.endsWith('.txt')) { html += `<div class="icon" id="icon-${i}" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>📝</div>${file}</div>`; } 
                 i++; 
             } 
         } 
         deskEl.innerHTML = html; 
     }
 
-    dragIcon(e, id, filename) { let el = document.getElementById(id); let ox = e.clientX - el.offsetLeft; let oy = e.clientY - el.offsetTop; document.onmousemove = (ev) => { el.style.left = (ev.clientX - ox) + 'px'; el.style.top = (ev.clientY - oy) + 'px'; }; document.onmouseup = async () => { document.onmousemove = null; document.onmouseup = null; let layoutData = await this.VFS.read('C:/Users/' + this.user + '/Desktop', '.layout') || "{}"; let layout = JSON.parse(layoutData); layout[filename] = { top: el.style.top, left: el.style.left }; await this.VFS.write('C:/Users/' + this.user + '/Desktop', '.layout', JSON.stringify(layout)); }; }
-
-    // --- CARTRIDGES AND STORE ---
     async importCartridge(b64String) {
         try {
             let decoded = decodeURIComponent(escape(window.atob(b64String)));
             let appData = JSON.parse(decoded);
             if(!appData.title || !appData.htmlString) throw new Error();
-            
-            // Heuristic Intercept for DOMPurify escapees
-            if(!Sanitizer.isSafeCartridge(appData)) {
-                this.notify("THREAT BLOCKED", "GemiDefender blocked a Malicious Payload!", false);
-                this.audio.play('error'); return; 
-            }
-
+            if(!Sanitizer.isSafeCartridge(appData)) { this.notify("THREAT BLOCKED", "GemiDefender blocked a Malicious Payload!", false); this.audio.play('error'); return; }
             let safeId = 'app_cart_' + Date.now(); let fileName = appData.title.replace(/\s/g, '') + '.app'; appData.id = safeId;
             let customApps = JSON.parse(localStorage.getItem('GemiOS_CustomApps') || '{}'); customApps[fileName] = appData; localStorage.setItem('GemiOS_CustomApps', JSON.stringify(customApps));
-            
             await this.loadDependencies();
-            if(await this.VFS.write('C:/Users/' + this.user + '/Desktop', fileName, safeId)) {
-                this.renderDesktopIcons(); this.notify("GemiShare", `${appData.title} redeemed!`, true); this.audio.play('buy');
-            } else { this.notify("Install Failed", "NVRAM Storage is full.", false); }
+            if(await this.VFS.write('C:/Users/' + this.user + '/Desktop', fileName, safeId)) { this.renderDesktopIcons(); this.notify("GemiShare", `${appData.title} redeemed!`, true); this.audio.play('buy'); } 
+            else { this.notify("Install Failed", "NVRAM Storage is full.", false); }
         } catch(e) { this.notify("Redemption Error", "Invalid Cartridge Code.", false); this.audio.play('error'); }
     }
 
@@ -389,13 +376,7 @@
         if(localStorage.getItem('GemiOS_Driver_Net') === 'false') return this.notify("Network Offline", "TCP/IP adapter not installed.", false);
         let title = document.getElementById(`dev-title-${pid}`).value.trim(); let icon = document.getElementById(`dev-icon-${pid}`).value.trim() || '📦'; let price = parseInt(document.getElementById(`dev-price-${pid}`).value) || 0; let htmlStr = document.getElementById(`dev-html-${pid}`).value.trim();
         if(!title || !htmlStr) return this.notify("Publish Error", "Title and HTML required.", false);
-        
-        if(htmlStr.includes('GemiOS.pm.kill') || htmlStr.includes('GemiOS.VFS.delete')) {
-            if(!localStorage.getItem('GemiOS_Bounty_Claimed')) {
-                this.wallet += 500; this._saveWallet(); this.notify("White Hat Bounty! 🏆", "You earned 500 🪙 for contributing security software!", true); this.audio.play('success'); localStorage.setItem('GemiOS_Bounty_Claimed', 'true');
-            }
-        }
-
+        if(htmlStr.includes('GemiOS.pm.kill') || htmlStr.includes('GemiOS.VFS.delete')) { if(!localStorage.getItem('GemiOS_Bounty_Claimed')) { this.wallet += 500; this._saveWallet(); this.notify("White Hat Bounty! 🏆", "You earned 500 🪙!", true); this.audio.play('success'); localStorage.setItem('GemiOS_Bounty_Claimed', 'true'); } }
         let safeId = 'app_net_' + Date.now(); let appObj = { id: safeId, title: title, icon: icon, price: price, desc: 'Global Network App', htmlString: htmlStr };
         let net = JSON.parse(localStorage.getItem('GemiOS_GlobalNetwork') || '[]'); net.push(appObj); localStorage.setItem('GemiOS_GlobalNetwork', JSON.stringify(net));
         this.notify("Global Network", `${title} uploaded to Server!`, true); this.audio.play('buy'); await this.loadDependencies();
@@ -404,37 +385,24 @@
     async publishApp(pid) {
         let title = document.getElementById(`dev-title-${pid}`).value.trim(); let icon = document.getElementById(`dev-icon-${pid}`).value.trim() || '📦'; let price = parseInt(document.getElementById(`dev-price-${pid}`).value) || 0; let htmlStr = document.getElementById(`dev-html-${pid}`).value.trim();
         if(!title || !htmlStr) return this.notify("Publish Error", "Required fields missing.", false);
-        
         let safeId = 'app_custom_' + Date.now(); let fileName = title.replace(/\s/g, '') + '.app';
         let appObj = { id: safeId, title: title, icon: icon, price: price, desc: 'Local Custom App.', htmlString: htmlStr };
         let customApps = JSON.parse(localStorage.getItem('GemiOS_CustomApps') || '{}'); customApps[fileName] = appObj; localStorage.setItem('GemiOS_CustomApps', JSON.stringify(customApps));
-        await this.loadDependencies(); this.notify("GemiDev Studio", `${title} published Locally!`, true); this.audio.play('buy');
+        await this.loadDependencies(); this.notify("GemiDev Studio", `${title} published Locally!`, true); this.audio.play('buy'); this.renderDesktopIcons();
     }
 
     async buyApp(filename, appId, pid, btnId, price, isNetwork = false) { 
         if(this.wallet < price) { this.notify("Transaction Failed", `Insufficient funds. Needs 🪙 ${price}`, false); this.audio.play('error'); return; }
-        
         let executeInstall = async () => {
             this.wallet -= price; this._saveWallet();
-            if(window.GemiRegistry[filename] && window.GemiRegistry[filename].isCustom) {
-                let devCut = Math.floor(price * 0.90); setTimeout(()=> { this.notify("App Sold!", `Someone bought your app! +🪙${devCut}`); this.wallet += devCut; this._saveWallet(); }, 5000);
-            }
-            if(await this.VFS.write('C:/Users/' + this.user + '/Desktop', filename, appId)) { 
-                this.notify("Purchase Successful", `Downloaded ${filename}!`); this.renderDesktopIcons(); 
-                let btn = document.getElementById(btnId); if(btn) { btn.className = 'btn-sec'; btn.innerText = 'Installed'; btn.disabled = true; } 
-                this.audio.play('buy');
-            } else { this.notify("Install Failed", "NVRAM Full.", false); }
+            if(window.GemiRegistry[filename] && window.GemiRegistry[filename].isCustom) { let devCut = Math.floor(price * 0.90); setTimeout(()=> { this.notify("App Sold!", `Someone bought your app! +🪙${devCut}`); this.wallet += devCut; this._saveWallet(); }, 5000); }
+            if(await this.VFS.write('C:/Users/' + this.user + '/Desktop', filename, appId)) { this.notify("Purchase Successful", `Downloaded ${filename}!`); this.renderDesktopIcons(); let btn = document.getElementById(btnId); if(btn) { btn.className = 'btn-sec'; btn.innerText = 'Installed'; btn.disabled = true; } this.audio.play('buy'); } 
+            else { this.notify("Install Failed", "NVRAM Full.", false); }
         };
-
         if(isNetwork && window.GemiRegistry[filename]) {
             let htmlCode = window.GemiRegistry[filename].htmlString || "";
             this.notify("GemiDefender Active", "Scanning Global Package...");
-            setTimeout(() => {
-                if(!Sanitizer.isSafeCartridge({htmlString: htmlCode})) {
-                    this.notify("THREAT BLOCKED", "GemiDefender blocked a malicious payload!", false); this.audio.play('error');
-                    let btn = document.getElementById(btnId); if(btn) { btn.className = 'btn-danger'; btn.innerText = 'BLOCKED BY AV'; btn.disabled = true; }
-                } else { this.notify("GemiDefender", "Scan clear. Installing..."); executeInstall(); }
-            }, 1500);
+            setTimeout(() => { if(!Sanitizer.isSafeCartridge({htmlString: htmlCode})) { this.notify("THREAT BLOCKED", "GemiDefender blocked a malicious payload!", false); this.audio.play('error'); let btn = document.getElementById(btnId); if(btn) { btn.className = 'btn-danger'; btn.innerText = 'BLOCKED BY AV'; btn.disabled = true; } } else { this.notify("GemiDefender", "Scan clear. Installing..."); executeInstall(); } }, 1500);
         } else { executeInstall(); }
     }
 
@@ -468,27 +436,64 @@
         }
     }
 
+    async triggerOTA(btn) {
+        btn.innerText = 'Pinging Cloud Server...'; btn.style.background = '#444'; let st = document.getElementById('upd-stat'); st.innerText = 'Fetching version.json...';
+        try {
+            let cb = "?t=" + new Date().getTime(); let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/version.json" + cb); if (!r.ok) throw new Error("GitHub server unreachable."); let d = await r.json();
+            let currentVer = localStorage.getItem('GemiOS_Cache_Ver') || "51.0.0-DESKTOP";
+            if (d.version !== currentVer) {
+                st.innerHTML = `<span style="color:#ffeb3b">New Version Found: ${d.version}</span><br><i>${d.notes}</i>`; btn.innerText = 'Download & Install'; btn.style.background = '#ff00cc'; 
+                btn.onclick = async () => {
+                    document.getElementById('ota-overlay').style.display = 'flex'; let fill = document.getElementById('ota-fill'); let text = document.getElementById('ota-text');
+                    try { text.innerText = "Downloading Kernel..."; fill.style.width = "30%"; let kRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/kernel.js" + cb); if(!kRes.ok) throw new Error("Kernel download failed."); let kCode = await kRes.text(); text.innerText = "Downloading Registry..."; fill.style.width = "60%"; let regRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/registry.js" + cb); if(!regRes.ok) throw new Error("Registry download failed."); let regCode = await regRes.text(); text.innerText = "Writing to NVRAM..."; fill.style.width = "90%"; localStorage.setItem('GemiOS_Cache_Kernel', kCode); localStorage.setItem('GemiOS_Cache_Registry', regCode); localStorage.setItem('GemiOS_Cache_Ver', d.version); fill.style.width = "100%"; document.getElementById('ota-title').innerText = "System Patched"; document.getElementById('ota-restart-prompt').style.display = 'flex'; this.notify("Update Complete", "System requires restart.", true); } catch(e) { text.innerText = "UPDATE FAILED: " + e.message; fill.style.background = "red"; }
+                };
+            } else { st.innerHTML = `<span style="color:#38ef7d">System is up to date!</span>`; btn.innerText = 'Latest OS Installed'; btn.style.background = '#38ef7d'; btn.style.color = 'black'; btn.onclick = null; }
+        } catch (err) { st.innerHTML = `<span style="color:#ff4d4d">Error: ${err.message}</span>`; btn.innerText = 'Retry'; btn.style.background = '#0078d7'; }
+    }
+
     _buildUI() {
         const root = document.createElement('div'); root.id='os-root'; root.style.cssText='width:100vw;height:100vh;position:absolute;top:0;left:0';
-        root.innerHTML = `<div id="desktop-bg"></div><div id="widget-notes"><div style="font-weight:bold;margin-bottom:5px;">📌 Sticky Note</div><textarea id="sticky-text" placeholder="Jot a quick note..." style="width:100%;height:100%;border:none;background:transparent;color:#333;"></textarea></div><div id="desktop-icons"></div><div id="window-layer"></div>
-        <div id="start-menu"><div class="start-header"><div style="font-size:35px;background:rgba(255,255,255,0.1);border-radius:50%;width:60px;height:60px;display:flex;align-items:center;justify-content:center;margin-right:10px;">${this.user==='Admin'?'👑':'👤'}</div><div><div style="font-size:20px;font-weight:600;">${this.user}</div><div style="font-size:12px;opacity:0.7;">GemiOS 50.0 / <span style="color:var(--accent)">${(this.edition||'HOME').toUpperCase()}</span></div></div></div>
-        <input type="text" placeholder="🔍 Search…" oninput="GemiOS.runSearch(this.value)" style="width:100%;padding:8px;margin:10px 0;border:none;background:rgba(0,0,0,0.3);color:#fff; box-sizing:border-box;">
-        <div id="start-menu-items"><div class="start-cat">System</div>
-        ${this.edition==='Pro'?`<div class="start-item" onclick="GemiOS.pm.launch('app_dev')"><span>🛠️</span> GemiDev Studio</div>`:''}
-        <div class="start-item" onclick="GemiOS.pm.launch('app_maker')"><span>🧩</span> GemiMaker Studio</div>
-        <div class="start-item" onclick="GemiOS.pm.launch('sys_store')"><span>🛍️</span> Store</div>
-        <div class="start-item" onclick="GemiOS.pm.launch('sys_drive')"><span>🗂️</span> Explorer</div>
-        <div class="start-item" onclick="GemiOS.pm.launch('sys_term')"><span>⌨️</span> Terminal</div>
-        <div class="start-item" onclick="GemiOS.pm.launch('sys_set')"><span>⚙️</span> Settings</div>
+        root.innerHTML = `
+        <div id="desktop-bg"></div>
+        <div id="widget-notes"><div style="font-weight:bold;margin-bottom:5px;">📌 Sticky Note</div><textarea id="sticky-text" placeholder="Jot a quick note..." style="width:100%;height:100%;border:none;background:transparent;color:#333;"></textarea></div>
+        <div id="desktop-icons"></div><div id="window-layer"></div>
         
-        <div class="start-item" onclick="GemiOS.pm.launch('sys_update')"><span>☁️</span> Cloud Updater</div>
-        </div></div>
+        <div id="start-menu">
+            <div class="start-header"><div style="font-size:35px;background:rgba(255,255,255,0.1);border-radius:50%;width:60px;height:60px;display:flex;align-items:center;justify-content:center;margin-right:10px;">${this.user==='Admin'?'👑':'👤'}</div><div><div style="font-size:20px;font-weight:600;">${this.user}</div><div style="font-size:12px;opacity:0.7;">GemiOS 51.0 / <span style="color:var(--accent)">${(this.edition||'HOME').toUpperCase()}</span></div></div></div>
+            <input type="text" placeholder="🔍 Search…" oninput="GemiOS.runSearch(this.value)" style="width:100%;padding:8px;margin:10px 0;border:none;background:rgba(0,0,0,0.3);color:#fff; box-sizing:border-box;">
+            <div id="start-menu-items">
+                <div class="start-cat">System Apps</div>
+                ${this.edition==='Pro'?`<div class="start-item" onclick="GemiOS.pm.launch('app_dev')"><span>🛠️</span> GemiDev Studio</div>`:''}
+                <div class="start-item" onclick="GemiOS.pm.launch('app_maker')"><span>🧩</span> GemiMaker Studio</div>
+                <div class="start-item" onclick="GemiOS.pm.launch('sys_store')"><span>🛍️</span> GemiStore</div>
+                <div class="start-item" onclick="GemiOS.pm.launch('sys_drive')"><span>🗂️</span> Explorer</div>
+                <div class="start-item" onclick="GemiOS.pm.launch('sys_term')"><span>⌨️</span> Terminal</div>
+                <div class="start-item" onclick="GemiOS.pm.launch('sys_set')"><span>⚙️</span> Settings</div>
+                <div class="start-item" onclick="GemiOS.pm.launch('sys_update')"><span>☁️</span> Cloud Updater</div>
+            </div>
+        </div>
+
+        <div id="taskbar-container">
+            <div id="taskbar">
+                <div class="start" onclick="document.getElementById('start-menu').classList.toggle('open')">G</div>
+                <div id="dock-apps"></div>
+                <div style="display:flex;align-items:center;gap:15px;margin-left:15px;padding-left:15px;border-left:1px solid rgba(255,255,255,0.1);">
+                    <div id="os-wallet-display" style="font-weight:bold;background:rgba(0,0,0,0.3);padding:4px 8px;border-radius:4px;">🪙 ${this.wallet}</div>
+                    <div onclick="GemiOS.toggleTheme()" style="cursor:pointer;font-size:20px;" title="Toggle Theme">🌓</div>
+                    <div id="clock" style="font-weight:600;font-size:14px;letter-spacing:1px;">--:--</div>
+                    <div onclick="GemiOS.lockSystem()" style="cursor:pointer;font-size:18px;color:#ff4d4d;" title="Power Off">⏻</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="notif-container"></div>
+        
         <div id="ota-overlay" style="display:none; position:absolute; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); z-index:9999999; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Segoe UI', sans-serif;"><div style="font-size:60px; margin-bottom:20px; filter:drop-shadow(0 0 20px #38ef7d);">☁️</div><h2 id="ota-title" style="margin:0 0 20px 0;">Installing OTA Firmware...</h2><div style="width:400px; height:25px; background:#222; border-radius:15px; overflow:hidden; border:2px solid #555;"><div id="ota-fill" style="width:0%; height:100%; background:linear-gradient(90deg, #38ef7d, #0078d7); transition:width 0.3s ease;"></div></div><p id="ota-text" style="margin-top:15px; font-family:monospace; color:#38ef7d; font-size:16px; font-weight:bold;">0%</p><div id="ota-restart-prompt" style="display:none; flex-direction:column; align-items:center; margin-top:20px;"><p style="color:#ffeb3b; font-weight:bold; margin-bottom:15px;">FIRMWARE FLASHED. A restart is required.</p><button onclick="location.reload()" style="padding:12px 25px; background:#ff4d4d; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; font-size:16px;">Restart Now</button></div></div>
-        <div id="taskbar-container"><div id="taskbar"><div class="start" onclick="document.getElementById('start-menu').classList.toggle('open')">G</div><div style="display:flex;gap:8px;margin-left:15px;padding-right:15px;border-right:1px solid rgba(255,255,255,0.1);"><div class="ql-icon" onclick="GemiOS.pm.launch('sys_drive')" title="Explorer">🗂️</div><div class="ql-icon" onclick="GemiOS.pm.launch('sys_store')" title="Store">🛍️</div><div class="ql-icon" onclick="GemiOS.pm.launch('sys_term')" title="Terminal">⌨️</div></div><div id="taskbar-apps"></div><div style="display:flex;align-items:center;gap:15px;margin-left:auto;padding-left:15px;border-left:1px solid rgba(255,255,255,0.1);"><div id="os-wallet-display" style="font-weight:bold;background:rgba(0,0,0,0.3);padding:4px 8px;border-radius:4px;">🪙 ${this.wallet}</div><div onclick="GemiOS.toggleTheme()" style="cursor:pointer;font-size:20px;">🌓</div><div id="clock" style="font-weight:600;font-size:14px;letter-spacing:1px;">--:--</div><div onclick="GemiOS.lockSystem()" style="cursor:pointer;font-size:18px;color:#ff4d4d;">⏻</div></div></div></div><div id="notif-container"></div>`;
+        <div id="io-indicator" class="io-indicator">💾</div>
+        `;
         document.body.appendChild(root);
         const sticky = document.getElementById('sticky-text'); sticky.value = localStorage.getItem('GemiOS_Sticky') || ''; sticky.oninput = () => localStorage.setItem('GemiOS_Sticky', sticky.value);
         setInterval(()=>{ document.getElementById('clock').innerText = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); },1000);
-        this.bus.on('notify', ({title,msg,success})=>{ const container = document.getElementById('notif-container'); const note = document.createElement('div'); note.className='gemi-notif'; note.innerHTML = `<div style="font-size:20px;">${success?'✅':'🔔'}</div><div><div style="font-weight:bold;">${title}</div><div style="font-size:12px;">${msg}</div></div>`; container.appendChild(note); void note.offsetWidth; note.style.transform='translateX(0)'; note.style.opacity='1'; setTimeout(()=>{ note.style.transform='translateX(120%)'; note.style.opacity='0'; setTimeout(()=>note.remove(),300); },3500); this.audio.play(success?'success':'error'); });
     }
   }
 
