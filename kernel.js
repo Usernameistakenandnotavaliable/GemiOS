@@ -1,19 +1,19 @@
 // =========================================================================
-// GemiOS CLOUD HYPERVISOR - v46.0 (THE OPEN SOURCE BOUNTY UPDATE)
+// GemiOS CLOUD HYPERVISOR - v47.0 (THE SETUP UPDATE)
 // =========================================================================
 
-const bootVersion = localStorage.getItem('GemiOS_TargetVersion') || 'v46';
+const bootVersion = localStorage.getItem('GemiOS_TargetVersion') || 'v47';
 console.log("[BOOT] Hypervisor targeting state: " + bootVersion);
 
-if (bootVersion !== 'v46' && bootVersion !== 'v45') { 
-    document.open(); document.write('<body style="background:#000;color:#0f0;font-family:monospace;padding:50px;"><h2>Legacy OS Archived.</h2><button onclick="localStorage.setItem(\'GemiOS_TargetVersion\',\'v46\');location.reload()" style="padding:10px;background:#0f0;color:#000;font-weight:bold;cursor:pointer;border:none;">Reboot to V46</button></body>'); document.close(); 
+if (bootVersion !== 'v47' && bootVersion !== 'v46') { 
+    document.open(); document.write('<body style="background:#000;color:#0f0;font-family:monospace;padding:50px;"><h2>Legacy OS Archived.</h2><button onclick="localStorage.setItem(\'GemiOS_TargetVersion\',\'v47\');location.reload()" style="padding:10px;background:#0f0;color:#000;font-weight:bold;cursor:pointer;border:none;">Reboot to V47</button></body>'); document.close(); 
 } else {
     class VirtualFileSystem {
         constructor() {
             this.MAX_STORAGE = 10485760;
             let drive = localStorage.getItem('GemiOS_TreeFS');
             if(!drive) {
-                this.root = { "C:": { "System": { "boot.log": "GemiOS V46.0 Initialized.", "sys_mail.json": "[]" }, "Users": { "Admin": { "Documents": {}, "Pictures": {}, "Desktop": {}, "Downloads": {} }, "Guest": { "Documents": {}, "Pictures": {}, "Desktop": {}, "Downloads": {} } } } };
+                this.root = { "C:": { "System": { "boot.log": "GemiOS V47.0 Initialized.", "sys_mail.json": "[]" }, "Users": { "Admin": { "Documents": {}, "Pictures": {}, "Desktop": {}, "Downloads": {} }, "Guest": { "Documents": {}, "Pictures": {}, "Desktop": {}, "Downloads": {} } } } };
                 this.forceSave();
             } else { this.root = JSON.parse(drive); }
         }
@@ -37,12 +37,13 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
     }
 
     class WindowManager {
-        constructor() { this.zIndex = 100; this.windows = {}; }
+        constructor() { this.zIndex = 100; this.windows = {}; this.hasAnim = localStorage.getItem('GemiOS_Driver_Anim') !== 'false'; }
         createWindow(pid, title, content, width) {
             let wid = 'win_' + pid;
             let watermark = `<div style="position:absolute; bottom:4px; right:8px; font-size:9px; color:inherit; opacity:0.3; pointer-events:none; font-weight:bold; font-family:sans-serif; z-index:9999;">© 2026 GemiOS Open Source</div>`;
+            let animClass = this.hasAnim ? 'win-animated' : 'win-static';
             let html = `
-                <div class="win" id="${wid}" data-maximized="false" style="top:${Math.random()*40+60}px; left:${Math.random()*60+120}px; width:${width}px; z-index:${++this.zIndex};" onmousedown="GemiOS.WM.focus('${wid}')">
+                <div class="win ${animClass}" id="${wid}" data-maximized="false" style="top:${Math.random()*40+60}px; left:${Math.random()*60+120}px; width:${width}px; z-index:${++this.zIndex};" onmousedown="GemiOS.WM.focus('${wid}')">
                     <div class="title-bar" ondblclick="GemiOS.WM.maximize('${wid}')" onmousedown="GemiOS.WM.drag(event, '${wid}')">
                         <span>${title}</span> 
                         <div>
@@ -63,9 +64,13 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
         focus(wid) { let el = document.getElementById(wid); if(el) el.style.zIndex = ++this.zIndex; }
         drag(e, wid) {
             let w = document.getElementById(wid); if(!w || w.dataset.maximized === "true") return;
-            let ox = e.clientX - w.offsetLeft; let oy = e.clientY - w.offsetTop; this.focus(wid); w.style.transition = 'none';
+            let ox = e.clientX - w.offsetLeft; let oy = e.clientY - w.offsetTop; this.focus(wid); 
+            if(this.hasAnim) w.style.transition = 'none';
             document.onmousemove = (ev) => { w.style.left = (ev.clientX - ox) + 'px'; w.style.top = Math.max(0, ev.clientY - oy) + 'px'; };
-            document.onmouseup = () => { document.onmousemove = null; w.style.transition = 'width 0.3s, height 0.3s, top 0.3s, left 0.3s, background 0.3s, color 0.3s, transform 0.3s'; document.onmouseup = null; };
+            document.onmouseup = () => { 
+                document.onmousemove = null; document.onmouseup = null; 
+                if(this.hasAnim) w.style.transition = 'width 0.3s, height 0.3s, top 0.3s, left 0.3s, background 0.3s, color 0.3s, transform 0.3s'; 
+            };
         }
         maximize(wid) {
             let w = document.getElementById(wid); if(!w) return;
@@ -107,13 +112,12 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
         }
     }
 
-    // CORE SYSTEM APPS ONLY
     const AppRegistry = {
         'sys_term': { tag: 'sys', icon: '⌨️', title: 'Bash Terminal', width: 500, html: (pid) => `<div id="t-out-${pid}" style="flex-grow:1; background:#0a0a0a; color:#38ef7d; padding:10px; font-family:monospace; overflow-y:auto; border-radius:6px;">GemiOS Shell Active. Type 'help' to see commands.</div><div style="display:flex; background:#111; padding:8px; border-radius:6px; margin-top:5px;"><span id="t-path-${pid}" style="color:#0078d7; margin-right:8px; font-weight:bold;">C:/Users/${GemiOS.user}></span><input type="text" id="t-in-${pid}" style="flex-grow:1; background:transparent; color:#38ef7d; border:none; outline:none; font-family:monospace; font-size:14px;" onkeydown="GemiOS.handleTerm(event, ${pid}, this)"></div>`, onLaunch: (pid) => { GemiOS.termStates[pid] = 'C:/Users/' + GemiOS.user; setTimeout(()=>document.getElementById('t-in-'+pid).focus(),100); } },
         'sys_drive': { tag: 'sys', icon: '🗂️', title: 'Explorer 2.0', width: 520, html: (pid) => `<div class="sys-card" style="display:flex; gap:10px; align-items:center; background:rgba(0,120,215,0.2);"><button onclick="GemiOS.navDrive(${pid}, 'UP')" class="btn-sec" style="width:auto; margin:0; padding:5px 10px;">⬆️ Up</button><input type="text" id="d-path-${pid}" value="C:/" disabled style="flex-grow:1; background:transparent; color:inherit; border:none; font-weight:bold; font-size:14px; outline:none;"></div><div id="d-list-${pid}" style="flex-grow:1; min-height:200px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:10px;"></div><div style="margin-top:10px; padding:5px; background:rgba(0,0,0,0.3); border-radius:4px;"><div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:3px;"><span id="d-bar-text-${pid}">Calculating NVRAM...</span><span>10MB MAX</span></div><div style="height:6px; background:#222; border-radius:3px; overflow:hidden;"><div id="d-bar-${pid}" style="height:100%; background:var(--accent); width:0%; transition: width 0.3s ease;"></div></div></div>`, onLaunch: (pid) => { GemiOS.driveStates[pid] = 'C:/Users/' + GemiOS.user; GemiOS.renderDrive(pid); GemiOS.driveItvs = GemiOS.driveItvs || {}; GemiOS.driveItvs[pid] = setInterval(() => { let u = GemiOS.VFS.getUsage(); let pct = Math.max((u.used / u.max) * 100, 0.5); let bar = document.getElementById(`d-bar-${pid}`); let txt = document.getElementById(`d-bar-text-${pid}`); if(bar) { bar.style.width = Math.min(pct, 100) + '%'; bar.style.background = pct > 90 ? '#ff4d4d' : 'var(--accent)'; } if(txt) txt.innerText = `${(u.used/1024).toFixed(2)} KB Used`; }, 500); }, onKill: (pid) => { if(GemiOS.driveItvs && GemiOS.driveItvs[pid]) clearInterval(GemiOS.driveItvs[pid]); } },
         'sys_set': { tag: 'sys', icon: '⚙️', title: 'System Settings', width: 420, html: () => `<div class="sys-card"><b style="font-size:14px;">Wallpaper Engine</b><br><input type="text" id="wp-in" style="width:100%; margin:8px 0; padding:8px; border-radius:4px; border:none; outline:none; background:rgba(255,255,255,0.9); color:black;" placeholder="Image URL..."><button onclick="localStorage.setItem('GemiOS_Wall', document.getElementById('wp-in').value); location.reload();" class="btn-primary">Apply Wallpaper</button></div><div class="sys-card"><b style="font-size:14px;">Accent Color</b><br><div style="display:flex; gap:10px; margin-top:10px;"><div onclick="localStorage.setItem('GemiOS_Accent', '#0078d7'); location.reload();" style="width:30px; height:30px; border-radius:50%; background:#0078d7; cursor:pointer;"></div><div onclick="localStorage.setItem('GemiOS_Accent', '#ff00cc'); location.reload();" style="width:30px; height:30px; border-radius:50%; background:#ff00cc; cursor:pointer;"></div><div onclick="localStorage.setItem('GemiOS_Accent', '#38ef7d'); location.reload();" style="width:30px; height:30px; border-radius:50%; background:#38ef7d; cursor:pointer;"></div><div onclick="localStorage.setItem('GemiOS_Accent', '#ff4d4d'); location.reload();" style="width:30px; height:30px; border-radius:50%; background:#ff4d4d; cursor:pointer;"></div><div onclick="localStorage.setItem('GemiOS_Accent', '#ffb400'); location.reload();" style="width:30px; height:30px; border-radius:50%; background:#ffb400; cursor:pointer;"></div></div></div><div class="sys-card" style="border-left:4px solid var(--accent);"><b style="font-size:14px;">GemiSync (Export OS)</b><br><button onclick="GemiOS.exportNVRAM()" class="btn-primary" style="margin-top:5px;">Export .gemos Backup</button></div><button onclick="alert('Please restart and use F2 BIOS menu for Secure Erase.')" class="btn-danger">Format System (Moved to BIOS)</button>` },
-        'sys_update': { tag: 'sys', icon: '☁️', title: 'Cloud Updater', width: 380, html: () => `<div class="sys-card" style="text-align:center; flex-grow:1;"><div style="font-size:40px;">☁️</div><h3 style="margin:5px 0;">Dual-OTA Updater</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v46.0.0-BOUNTY</b></p><div id="upd-stat" style="font-size:12px; min-height:15px; margin-bottom:10px;">Ready to scan Cloud Network.</div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary">Check for Updates</button></div>` },
-        'sys_log': { tag: 'sys', icon: '📋', title: 'Chronicles', width: 500, html: () => `<div style="flex-grow:1; overflow-y: auto; padding-right: 5px;"><div class="sys-card" style="border-left:4px solid #38ef7d;"><b>v46.0.0 (The Bounty Update)</b> - Launched GemiGov Relief Fund for malware victims. Integrated 500🪙 White Hat Bug Bounty program into GemiDev. Added BountyBoard app.</div><div class="sys-card"><b>v45.0.0 (Zero-Trust)</b> - Massive GemiDefender update (Active Memory Scanning).</div><div class="sys-card"><b>v44.0.0 (Multimedia)</b> - V44 Expanded System Sound Profiles. Added PixelPro and GemiBeat.</div></div>` },
+        'sys_update': { tag: 'sys', icon: '☁️', title: 'Cloud Updater', width: 380, html: () => `<div class="sys-card" style="text-align:center; flex-grow:1;"><div style="font-size:40px;">☁️</div><h3 style="margin:5px 0;">Dual-OTA Updater</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v47.0.0-SETUP</b></p><div id="upd-stat" style="font-size:12px; min-height:15px; margin-bottom:10px;">Ready to scan Cloud Network.</div><button id="upd-btn" onclick="GemiOS.triggerOTA(this)" class="btn-primary">Check for Updates</button></div>` },
+        'sys_log': { tag: 'sys', icon: '📋', title: 'Chronicles', width: 500, html: () => `<div style="flex-grow:1; overflow-y: auto; padding-right: 5px;"><div class="sys-card" style="border-left:4px solid #38ef7d;"><b>v47.0.0 (The Setup Update)</b> - Introduced Multi-Stage Setup Wizard. OS now natively formats NVRAM, installs Registry to disk, and configures hardware drivers via Loading Bar.</div><div class="sys-card"><b>v46.0.0 (Bounty)</b> - Launched GemiGov Relief Fund. Integrated 500🪙 Bug Bounty program.</div><div class="sys-card"><b>v45.0.0 (Zero-Trust)</b> - GemiDefender Active Memory Scanning.</div><div class="sys-card"><b>v44.1.0 (Heuristic Patch)</b> - Re-engineered Antivirus.</div></div>` },
         'sys_store': { tag: 'sys', icon: '🛍️', title: 'GemiStore Market', width: 700, html: (pid) => `
             <div class="sys-card" style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg, var(--accent), #000); border:none; margin-bottom:10px;">
                 <div style="font-size:24px; font-weight:bold;">GemiStore</div><div style="font-size:40px;">🛍️</div>
@@ -147,16 +151,17 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
             this.injectStyles(); 
             window.addEventListener('storage', (e) => { if(e.key === 'GemiChat_Log') { if(this.chatPid) this.updateChatBox(this.chatPid); } }); 
             
-            if(!this.edition) { this.showInstaller(); return; }
+            // V47 SETUP INTERCEPT
+            if(!this.edition) {
+                this.showInstallerStep1();
+                return;
+            }
 
-            // V46 GEMIGOV BAILOUT RELIEF FUND
             if(this.wallet <= 10 && !localStorage.getItem('GemiOS_Relief_Claimed')) {
                 setTimeout(() => {
-                    this.wallet += 150;
-                    this.saveWallet(); this.updateWalletUI();
+                    this.wallet += 150; this.saveWallet(); this.updateWalletUI();
                     this.notify("GemiGov Relief Fund 🏦", "150 🪙 deposited to help you recover from malware attacks!");
-                    this.playSysSound('success');
-                    localStorage.setItem('GemiOS_Relief_Claimed', 'true');
+                    this.playSysSound('success'); localStorage.setItem('GemiOS_Relief_Claimed', 'true');
                 }, 4000);
             }
 
@@ -170,24 +175,25 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
             } 
         }
 
-        showInstaller() {
+        // --- V47 MULTI-STAGE INSTALLER ---
+        showInstallerStep1() {
             document.body.innerHTML = `
                 <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:linear-gradient(135deg, #0f2027, #203a43, #2c5364); color:white; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:9999999; font-family:'Inter', sans-serif;">
                     <div style="font-size:80px; margin-bottom:10px; filter:drop-shadow(0 0 20px var(--accent));">💿</div>
-                    <h1 style="margin:0 0 10px 0; font-weight:600; letter-spacing:3px;">GemiOS Setup</h1>
-                    <p style="color:#aaa; margin-bottom:40px;">Select your operating environment configuration.</p>
+                    <h1 style="margin:0 0 10px 0; font-weight:600; letter-spacing:3px;">GemiOS Setup Utility</h1>
+                    <p style="color:#aaa; margin-bottom:40px;">Step 1: Select your operating environment.</p>
                     <div style="display:flex; gap:20px;">
-                        <div onclick="GemiOS.installOS('Home')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:30px; border-radius:12px; width:200px; text-align:center; cursor:pointer; transition:0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.transform='translateY(-5px)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.transform='translateY(0)'">
+                        <div onclick="GemiOS.showInstallerStep2('Home')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:30px; border-radius:12px; width:200px; text-align:center; cursor:pointer; transition:0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.transform='translateY(-5px)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.transform='translateY(0)'">
                             <div style="font-size:40px; margin-bottom:15px;">🏠</div>
                             <h3 style="margin:0 0 10px 0;">Home</h3>
                             <p style="font-size:12px; color:#888; margin:0;">Standard access. 0% Discount. Pro apps cost GemiCoins.</p>
                         </div>
-                        <div onclick="GemiOS.installOS('Pro')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:30px; border-radius:12px; width:200px; text-align:center; cursor:pointer; transition:0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.transform='translateY(-5px)'; this.style.borderColor='var(--accent)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.transform='translateY(0)'; this.style.borderColor='rgba(255,255,255,0.1)'">
+                        <div onclick="GemiOS.showInstallerStep2('Pro')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:30px; border-radius:12px; width:200px; text-align:center; cursor:pointer; transition:0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.transform='translateY(-5px)'; this.style.borderColor='var(--accent)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.transform='translateY(0)'; this.style.borderColor='rgba(255,255,255,0.1)'">
                             <div style="font-size:40px; margin-bottom:15px;">💼</div>
                             <h3 style="margin:0 0 10px 0; color:var(--accent);">Professional</h3>
                             <p style="font-size:12px; color:#888; margin:0;">Permanent 5% Global Discount. GemiDev Studio Pre-Installed.</p>
                         </div>
-                        <div onclick="GemiOS.installOS('Education')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:30px; border-radius:12px; width:200px; text-align:center; cursor:pointer; transition:0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.transform='translateY(-5px)'; this.style.borderColor='#38ef7d'" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.transform='translateY(0)'; this.style.borderColor='rgba(255,255,255,0.1)'">
+                        <div onclick="GemiOS.showInstallerStep2('Education')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:30px; border-radius:12px; width:200px; text-align:center; cursor:pointer; transition:0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.transform='translateY(-5px)'; this.style.borderColor='#38ef7d'" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.transform='translateY(0)'; this.style.borderColor='rgba(255,255,255,0.1)'">
                             <div style="font-size:40px; margin-bottom:15px;">🎓</div>
                             <h3 style="margin:0 0 10px 0; color:#38ef7d;">Education</h3>
                             <p style="font-size:12px; color:#888; margin:0;">Permanent 15% discount on all Educational apps.</p>
@@ -197,11 +203,80 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
             `;
         }
 
-        installOS(ver) {
-            localStorage.setItem('GemiOS_Edition', ver);
-            this.edition = ver;
-            document.body.innerHTML = `<div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; color:white; display:flex; justify-content:center; align-items:center; font-family:monospace; font-size:18px;">Configuring NVRAM for ${ver} Edition...</div>`;
-            setTimeout(() => { location.reload(); }, 1500);
+        showInstallerStep2(edition) {
+            document.body.innerHTML = `
+                <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:linear-gradient(135deg, #0f2027, #203a43, #2c5364); color:white; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:9999999; font-family:'Inter', sans-serif;">
+                    <h1 style="margin:0 0 10px 0; font-weight:600; letter-spacing:3px;">Hardware Configuration</h1>
+                    <p style="color:#aaa; margin-bottom:30px;">Step 2: Select virtual drivers to install.</p>
+                    <div style="background:rgba(0,0,0,0.5); padding:30px; border-radius:12px; width:450px; border:1px solid rgba(255,255,255,0.1);">
+                        <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; font-size:16px; cursor:pointer; color:#fff;">
+                            <input type="checkbox" id="drv-audio" checked style="width:20px; height:20px; cursor:pointer;"> Haptic Audio Engine (HD Sound)
+                        </label>
+                        <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; font-size:16px; cursor:pointer; color:#fff;">
+                            <input type="checkbox" id="drv-anim" checked style="width:20px; height:20px; cursor:pointer;"> WebGL Window Compositor (Animations)
+                        </label>
+                        <label style="display:flex; align-items:center; gap:10px; margin-bottom:30px; font-size:16px; cursor:pointer; color:#fff;">
+                            <input type="checkbox" id="drv-net" checked style="width:20px; height:20px; cursor:pointer;"> TCP/IP Global Network Adapter
+                        </label>
+                        <button onclick="GemiOS.startInstallation('${edition}')" class="btn-primary" style="font-size:16px; padding:15px; width:100%; box-shadow:0 5px 15px rgba(0,0,0,0.5);">Install GemiOS</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async startInstallation(edition) {
+            let drvAudio = document.getElementById('drv-audio').checked;
+            let drvAnim = document.getElementById('drv-anim').checked;
+            let drvNet = document.getElementById('drv-net').checked;
+
+            document.body.innerHTML = `
+                <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:linear-gradient(135deg, #0f2027, #203a43, #2c5364); color:white; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:9999999; font-family:'Inter', sans-serif;">
+                    <div style="font-size:60px; margin-bottom:20px; animation: spin 2s linear infinite;">⚙️</div>
+                    <h2 id="inst-title" style="margin:0 0 20px 0;">Installing GemiOS to NVRAM...</h2>
+                    <div style="width:500px; height:30px; background:#111; border-radius:15px; overflow:hidden; border:2px solid #555; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);">
+                        <div id="inst-bar" style="width:0%; height:100%; background:linear-gradient(90deg, #38ef7d, #0078d7); transition:width 0.5s ease;"></div>
+                    </div>
+                    <p id="inst-log" style="margin-top:15px; font-family:monospace; color:#38ef7d; font-size:14px; font-weight:bold;">Initializing...</p>
+                </div>
+            `;
+
+            let bar = document.getElementById('inst-bar');
+            let log = document.getElementById('inst-log');
+            const delay = ms => new Promise(res => setTimeout(res, ms));
+
+            // Format
+            await delay(800); bar.style.width = '15%'; log.innerText = 'Formatting Virtual Disk (NVRAM)...';
+            localStorage.clear();
+            
+            // Save settings
+            localStorage.setItem('GemiOS_Edition', edition);
+            localStorage.setItem('GemiOS_Driver_Audio', drvAudio);
+            localStorage.setItem('GemiOS_Driver_Anim', drvAnim);
+            localStorage.setItem('GemiOS_Driver_Net', drvNet);
+
+            // Build FS
+            await delay(1200); bar.style.width = '45%'; log.innerText = 'Building File System Hierarchy...';
+            this.VFS = new VirtualFileSystem(); 
+
+            // Download Registry
+            await delay(1500); bar.style.width = '75%'; log.innerText = 'Downloading Global App Registry...';
+            try {
+                let cb = "?t=" + new Date().getTime();
+                let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/registry.js" + cb);
+                if(r.ok) { let code = await r.text(); localStorage.setItem('GemiOS_Cache_Registry', code); log.innerText = 'Registry successfully written to disk.'; } 
+                else throw new Error();
+            } catch(e) { log.innerText = 'Network Offline: Using built-in Core Apps.'; }
+
+            // Config
+            await delay(1200); bar.style.width = '90%'; log.innerText = 'Configuring Economy & Target OS...';
+            localStorage.setItem('GemiOS_Wallet', 500);
+            localStorage.setItem('GemiOS_TargetVersion', 'v47');
+
+            // Finish
+            await delay(1500); bar.style.width = '100%'; log.innerText = 'INSTALLATION COMPLETE. Restarting system...';
+            document.getElementById('inst-title').innerText = 'Setup Successful';
+            
+            await delay(1500); location.reload();
         }
 
         saveWallet() { localStorage.setItem('GemiOS_Wallet', this.wallet); }
@@ -243,13 +318,14 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
         }
 
         startOTADaemon() { 
+            if(localStorage.getItem('GemiOS_Driver_Net') === 'false') return; // Driver check
             let alerted = false; 
             setInterval(async () => { 
                 if(alerted) return; 
                 try { 
                     let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/version.json?t=" + new Date().getTime()); 
                     if(r.ok) { 
-                        let d = await r.json(); let currentVer = localStorage.getItem('GemiOS_Cache_Ver') || "46.0.0-BOUNTY"; 
+                        let d = await r.json(); let currentVer = localStorage.getItem('GemiOS_Cache_Ver') || "47.0.0-SETUP"; 
                         if(d.version !== currentVer) { this.notify("🚀 Update Available!", `Version ${d.version} is ready.`); alerted = true; } 
                     } 
                 } catch(e) {} 
@@ -282,11 +358,12 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
             for(let a in appsToLoad) { if(!desk[a]) this.VFS.write('C:/Users/' + this.user + '/Desktop', a, appsToLoad[a]); } 
         }
         
-        runBootSequence() { document.body.innerHTML = `<div id="gui-boot" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#050505;display:flex;flex-direction:column;justify-content:center;align-items:center;color:white;z-index:999999;transition:opacity 0.5s ease;"><div style="font-size:90px; animation: float 3s ease-in-out infinite; filter:drop-shadow(0 0 25px var(--accent));">🌌</div><h1 style="font-family:'Inter',sans-serif; font-weight:600; letter-spacing:6px; margin-top:20px; font-size:32px;">GemiOS<span style="color:var(--accent);">46.0</span></h1><div style="margin-top:5px; font-family:monospace; font-size:12px; color:#666; letter-spacing:2px;">BOUNTY BOARD ACTIVE...</div><div class="spinner" style="margin-top:40px;"></div></div>`; setTimeout(() => { let bs = document.getElementById('gui-boot'); bs.style.opacity = '0'; setTimeout(() => this.showLoginScreen(), 500); }, 1000); }
+        runBootSequence() { document.body.innerHTML = `<div id="gui-boot" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#050505;display:flex;flex-direction:column;justify-content:center;align-items:center;color:white;z-index:999999;transition:opacity 0.5s ease;"><div style="font-size:90px; animation: float 3s ease-in-out infinite; filter:drop-shadow(0 0 25px var(--accent));">🌌</div><h1 style="font-family:'Inter',sans-serif; font-weight:600; letter-spacing:6px; margin-top:20px; font-size:32px;">GemiOS<span style="color:var(--accent);">47.0</span></h1><div style="margin-top:5px; font-family:monospace; font-size:12px; color:#666; letter-spacing:2px;">MOUNTING NVRAM...</div><div class="spinner" style="margin-top:40px;"></div></div>`; setTimeout(() => { let bs = document.getElementById('gui-boot'); bs.style.opacity = '0'; setTimeout(() => this.showLoginScreen(), 500); }, 1000); }
         
         showLoginScreen() { this.loadWallpaper(); document.body.innerHTML = `<div id="desktop-bg" style="filter:blur(15px) brightness(0.6); transform:scale(1.05);"></div><div id="login-ui" style="position:absolute; top:0; left:0; width:100vw; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; z-index:999; animation: fadeIn 0.5s ease forwards;"><div style="font-size:70px; background:rgba(255,255,255,0.1); border-radius:50%; width:120px; height:120px; display:flex; justify-content:center; align-items:center; margin-bottom:20px; border:2px solid rgba(255,255,255,0.2); box-shadow:0 10px 30px rgba(0,0,0,0.5); backdrop-filter:blur(10px);">👥</div><h2 style="margin:0 0 30px 0; font-size:28px; font-weight:500; letter-spacing:2px;">Select User</h2><div style="display:flex; gap:25px; margin-bottom:20px;"><div onclick="GemiOS.authenticate('Admin')" style="cursor:pointer; text-align:center; padding:20px 40px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); border-radius:16px; transition:0.3s; backdrop-filter:blur(10px);" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='var(--accent)';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(255,255,255,0.1)';"><div style="font-size:35px; margin-bottom:10px;">👑</div><b style="font-size:16px;">Admin</b></div></div><div style="margin-top:20px; color:#aaa; font-family:monospace; padding:5px 15px; background:rgba(0,0,0,0.5); border-radius:20px;">Edition: ${this.edition}</div></div>`; }
         
         playSysSound(type) {
+            if(localStorage.getItem('GemiOS_Driver_Audio') === 'false') return; // V47 Driver Check
             if(!this.actx) this.actx = new (window.AudioContext || window.webkitAudioContext)();
             if(this.actx.state === 'suspended') this.actx.resume();
             let t = this.actx.currentTime;
@@ -302,8 +379,8 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
             else if (type === 'success') { osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, t); osc.frequency.setValueAtTime(659.25, t+0.1); osc.frequency.setValueAtTime(783.99, t+0.2); gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.1, t + 0.1); gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.6); osc.start(t); osc.stop(t + 0.6); }
         }
 
-        playStartupChime() { if(!this.actx) this.actx = new (window.AudioContext || window.webkitAudioContext)(); if(this.actx.state === 'suspended') this.actx.resume(); const t = this.actx.currentTime; const freqs = [261.63, 329.63, 392.00, 493.88, 587.33]; freqs.forEach((f, i) => { let osc = this.actx.createOscillator(); let gain = this.actx.createGain(); osc.type = 'sine'; osc.frequency.value = f; osc.connect(gain); gain.connect(this.actx.destination); osc.start(t + i * 0.1); gain.gain.setValueAtTime(0, t + i * 0.1); gain.gain.linearRampToValueAtTime(0.2, t + i * 0.1 + 0.5); gain.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.1 + 3.0); osc.stop(t + i * 0.1 + 3.0); }); }
-        playShutdownChime() { if(!this.actx) this.actx = new (window.AudioContext || window.webkitAudioContext)(); if(this.actx.state === 'suspended') this.actx.resume(); const t = this.actx.currentTime; const freqs = [261.63, 329.63, 392.00, 493.88]; freqs.forEach((f) => { let osc = this.actx.createOscillator(); let gain = this.actx.createGain(); osc.type = 'sine'; osc.frequency.value = f; osc.connect(gain); gain.connect(this.actx.destination); osc.start(t); gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.15, t + 0.5); gain.gain.exponentialRampToValueAtTime(0.0001, t + 3.0); osc.stop(t + 3.0); }); }
+        playStartupChime() { if(localStorage.getItem('GemiOS_Driver_Audio') === 'false') return; if(!this.actx) this.actx = new (window.AudioContext || window.webkitAudioContext)(); if(this.actx.state === 'suspended') this.actx.resume(); const t = this.actx.currentTime; const freqs = [261.63, 329.63, 392.00, 493.88, 587.33]; freqs.forEach((f, i) => { let osc = this.actx.createOscillator(); let gain = this.actx.createGain(); osc.type = 'sine'; osc.frequency.value = f; osc.connect(gain); gain.connect(this.actx.destination); osc.start(t + i * 0.1); gain.gain.setValueAtTime(0, t + i * 0.1); gain.gain.linearRampToValueAtTime(0.2, t + i * 0.1 + 0.5); gain.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.1 + 3.0); osc.stop(t + i * 0.1 + 3.0); }); }
+        playShutdownChime() { if(localStorage.getItem('GemiOS_Driver_Audio') === 'false') return; if(!this.actx) this.actx = new (window.AudioContext || window.webkitAudioContext)(); if(this.actx.state === 'suspended') this.actx.resume(); const t = this.actx.currentTime; const freqs = [261.63, 329.63, 392.00, 493.88]; freqs.forEach((f) => { let osc = this.actx.createOscillator(); let gain = this.actx.createGain(); osc.type = 'sine'; osc.frequency.value = f; osc.connect(gain); gain.connect(this.actx.destination); osc.start(t); gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.15, t + 0.5); gain.gain.exponentialRampToValueAtTime(0.0001, t + 3.0); osc.stop(t + 3.0); }); }
         
         authenticate(username) { let ui = document.getElementById('login-ui'); if(ui) { ui.style.transition = 'opacity 0.3s ease, transform 0.3s ease'; ui.style.opacity = '0'; ui.style.transform = 'scale(1.1)'; } this.user = username; this.patchDesktopData(); this.playStartupChime(); sessionStorage.setItem('GemiOS_Session', 'active'); sessionStorage.setItem('GemiOS_User', username); setTimeout(() => { this.launchDesktop(); this.startEconomyDaemon(); }, 300); }
         lockSystem() { this.playShutdownChime(); let bg = document.getElementById('desktop-bg'); if(bg) bg.style.filter = "blur(20px) grayscale(100%) brightness(0.2)"; let overlay = document.createElement('div'); overlay.style.cssText = 'position:absolute;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);z-index:9999999;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 0.8s ease;pointer-events:none;color:white;font-family:sans-serif;'; overlay.innerHTML = `<div class="spinner" style="margin-bottom:20px;"></div><div style="font-size:18px; letter-spacing:2px; font-weight:300;">Shutting down peacefully...</div>`; document.body.appendChild(overlay); setTimeout(() => { overlay.style.opacity = '1'; }, 50); setTimeout(() => { sessionStorage.removeItem('GemiOS_Session'); location.reload(); }, 2500); }
@@ -355,42 +432,34 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
                 appData.id = safeId;
                 
                 let customApps = JSON.parse(localStorage.getItem('GemiOS_CustomApps') || '{}');
-                customApps[fileName] = appData;
-                localStorage.setItem('GemiOS_CustomApps', JSON.stringify(customApps));
+                customApps[fileName] = appData; localStorage.setItem('GemiOS_CustomApps', JSON.stringify(customApps));
                 
                 this.loadDynamicRegistry().then(() => {
-                    if(this.VFS.write('C:/Users/' + this.user + '/Desktop', fileName, safeId)) {
-                        this.renderDesktopIcons(); this.notify("GemiShare", `${appData.title} redeemed!`, true); this.playSysSound('buy');
-                    } else { this.notify("Install Failed", "NVRAM Storage is full.", false); }
+                    if(this.VFS.write('C:/Users/' + this.user + '/Desktop', fileName, safeId)) { this.renderDesktopIcons(); this.notify("GemiShare", `${appData.title} redeemed!`, true); this.playSysSound('buy'); } 
+                    else { this.notify("Install Failed", "NVRAM Storage is full.", false); }
                 });
             } catch(e) { this.notify("Redemption Error", "Invalid Cartridge Code.", false); this.playSysSound('error'); }
         }
 
         uploadToNetwork(pid) {
+            if(localStorage.getItem('GemiOS_Driver_Net') === 'false') return this.notify("Network Offline", "TCP/IP adapter not installed.", false);
             let title = document.getElementById(`dev-title-${pid}`).value.trim();
             let icon = document.getElementById(`dev-icon-${pid}`).value.trim() || '📦';
             let price = parseInt(document.getElementById(`dev-price-${pid}`).value) || 0;
             let htmlStr = document.getElementById(`dev-html-${pid}`).value.trim();
             if(!title || !htmlStr) return this.notify("Publish Error", "Title and HTML required.", false);
             
-            // V46 WHITE HAT BOUNTY CHECK
             if(htmlStr.includes('GemiOS.PM.kill') || htmlStr.includes('GemiOS.VFS.delete')) {
                 if(!localStorage.getItem('GemiOS_Bounty_Claimed')) {
                     this.wallet += 500; this.saveWallet(); this.updateWalletUI();
-                    this.notify("White Hat Bounty! 🏆", "You earned 500 🪙 for contributing security software to the Open Source project!", true);
-                    this.playSysSound('success');
-                    localStorage.setItem('GemiOS_Bounty_Claimed', 'true');
+                    this.notify("White Hat Bounty! 🏆", "You earned 500 🪙 for contributing security software to the OS!", true);
+                    this.playSysSound('success'); localStorage.setItem('GemiOS_Bounty_Claimed', 'true');
                 }
             }
 
-            let safeId = 'app_net_' + Date.now();
-            let appObj = { id: safeId, title: title, icon: icon, price: price, desc: 'Global Network App', htmlString: htmlStr };
-            
-            let net = JSON.parse(localStorage.getItem('GemiOS_GlobalNetwork') || '[]');
-            net.push(appObj); localStorage.setItem('GemiOS_GlobalNetwork', JSON.stringify(net));
-            
-            this.notify("Global Network", `${title} uploaded to GemiStore Server!`, true);
-            this.playSysSound('buy'); this.loadDynamicRegistry();
+            let safeId = 'app_net_' + Date.now(); let appObj = { id: safeId, title: title, icon: icon, price: price, desc: 'Global Network App', htmlString: htmlStr };
+            let net = JSON.parse(localStorage.getItem('GemiOS_GlobalNetwork') || '[]'); net.push(appObj); localStorage.setItem('GemiOS_GlobalNetwork', JSON.stringify(net));
+            this.notify("Global Network", `${title} uploaded to GemiStore Server!`, true); this.playSysSound('buy'); this.loadDynamicRegistry();
         }
 
         publishApp(pid) {
@@ -399,17 +468,6 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
             let price = parseInt(document.getElementById(`dev-price-${pid}`).value) || 0;
             let htmlStr = document.getElementById(`dev-html-${pid}`).value.trim();
             if(!title || !htmlStr) return this.notify("Publish Error", "Title and HTML are required.", false);
-
-            // V46 WHITE HAT BOUNTY CHECK
-            if(htmlStr.includes('GemiOS.PM.kill') || htmlStr.includes('GemiOS.VFS.delete')) {
-                if(!localStorage.getItem('GemiOS_Bounty_Claimed')) {
-                    this.wallet += 500; this.saveWallet(); this.updateWalletUI();
-                    this.notify("White Hat Bounty! 🏆", "You earned 500 🪙 for contributing security software to the Open Source project!", true);
-                    this.playSysSound('success');
-                    localStorage.setItem('GemiOS_Bounty_Claimed', 'true');
-                }
-            }
-
             let safeId = 'app_custom_' + Date.now(); let fileName = title.replace(/\s/g, '') + '.app';
             let appObj = { id: safeId, title: title, icon: icon, price: price, desc: 'Local Custom App.', htmlString: htmlStr };
             let customApps = JSON.parse(localStorage.getItem('GemiOS_CustomApps') || '{}');
@@ -422,8 +480,7 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
             let executeInstall = () => {
                 this.wallet -= price; this.saveWallet(); this.updateWalletUI();
                 if(window.GemiRegistry[filename] && window.GemiRegistry[filename].isCustom) {
-                    let devCut = Math.floor(price * 0.90);
-                    setTimeout(()=> { this.notify("App Sold!", `Someone bought your app! +🪙${devCut}`); this.wallet += devCut; this.saveWallet(); this.updateWalletUI(); }, 5000);
+                    let devCut = Math.floor(price * 0.90); setTimeout(()=> { this.notify("App Sold!", `Someone bought your app! +🪙${devCut}`); this.wallet += devCut; this.saveWallet(); this.updateWalletUI(); }, 5000);
                 }
                 if(this.VFS.write('C:/Users/' + this.user + '/Desktop', filename, appId)) { 
                     this.notify("Purchase Successful", `Downloaded ${filename}!`); this.renderDesktopIcons(); 
@@ -436,8 +493,7 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
                 this.notify("GemiDefender Active", "Scanning Global Package...");
                 setTimeout(() => {
                     if(htmlCode.includes("VFS.format") || htmlCode.includes("localStorage.clear") || htmlCode.includes("GemiOS.wallet -= ")) {
-                        this.notify("THREAT BLOCKED", "GemiDefender blocked a malicious payload!", false);
-                        this.playSysSound('error');
+                        this.notify("THREAT BLOCKED", "GemiDefender blocked a malicious payload!", false); this.playSysSound('error');
                         let btn = document.getElementById(btnId); if(btn) { btn.className = 'btn-danger'; btn.innerText = 'BLOCKED BY AV'; btn.disabled = true; }
                     } else { this.notify("GemiDefender", "Scan clear. Installing..."); executeInstall(); }
                 }, 1500);
@@ -445,19 +501,16 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
         }
 
         renderStore(pid) { 
+            if(localStorage.getItem('GemiOS_Driver_Net') === 'false') { document.getElementById(`store-list-${pid}`).innerHTML = "<div style='grid-column:span 2; text-align:center; padding:20px; color:#ff4d4d;'>Network Offline. TCP/IP Driver missing.</div>"; return; }
             let desk = this.VFS.getDir('C:/Users/' + this.user + '/Desktop'); let h = ''; 
             if(!window.GemiRegistry) { document.getElementById(`store-list-${pid}`).innerHTML = "<div style='grid-column:span 2; text-align:center; padding:20px;'>Registry Offline.</div>"; return; }
             for(let f in window.GemiRegistry) { 
                 let a = window.GemiRegistry[f]; if(!a.desc) continue;
                 let isInst = desk[f] !== undefined; let bId = `st-btn-${a.id}-${pid}`; 
-                
                 let price = a.price || 0; let tagHtml = '';
                 if(this.edition === 'Education' && a.tag === 'edu') { price = Math.floor(price * 0.85); tagHtml += '<span style="background:#38ef7d; color:black; padding:2px 5px; border-radius:3px; font-size:9px; margin-left:5px;">15% EDU OFF</span>'; } 
                 else if (this.edition === 'Pro' && price > 0) { price = Math.floor(price * 0.95); tagHtml += '<span style="background:var(--accent); color:white; padding:2px 5px; border-radius:3px; font-size:9px; margin-left:5px;">5% PRO OFF</span>'; }
-                
-                if(a.isNetwork) tagHtml += '<span style="background:#4db8ff; color:black; padding:2px 5px; border-radius:3px; font-size:9px; margin-left:5px; font-weight:bold;">🌐 GLOBAL</span>';
-                else if(a.isCustom) tagHtml += '<span style="background:#ff00cc; color:white; padding:2px 5px; border-radius:3px; font-size:9px; margin-left:5px;">LOCAL DEV</span>';
-
+                if(a.isNetwork) tagHtml += '<span style="background:#4db8ff; color:black; padding:2px 5px; border-radius:3px; font-size:9px; margin-left:5px; font-weight:bold;">🌐 GLOBAL</span>'; else if(a.isCustom) tagHtml += '<span style="background:#ff00cc; color:white; padding:2px 5px; border-radius:3px; font-size:9px; margin-left:5px;">LOCAL DEV</span>';
                 let btnHtml = isInst ? `<button id="${bId}" class="btn-sec" style="width:100%; margin-top:10px;" disabled>Installed</button>` : `<button id="${bId}" class="btn-primary" style="width:100%; margin-top:10px; background:#ffb400; color:black;" onclick="GemiOS.buyApp('${f}', '${a.id}', ${pid}, '${bId}', ${price}, ${a.isNetwork ? 'true' : 'false'})">${price === 0 ? 'Free' : `Buy (🪙 ${price})`}</button>`; 
                 h += `<div class="sys-card" style="display:flex; flex-direction:column; justify-content:space-between; margin-bottom:0;"><div style="display:flex; align-items:center; gap:15px;"><div style="font-size:35px;">${a.icon}</div><div><div style="font-weight:bold; font-size:16px;">${a.title} ${tagHtml}</div><div style="font-size:11px; opacity:0.7;">${a.desc}</div></div></div>${btnHtml}</div>`; 
             } 
@@ -494,10 +547,7 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
                                 out.innerHTML += `<br>[GPM] Downloading from Global Network...`;
                                 if(appData.htmlString && (appData.htmlString.includes("VFS.format") || appData.htmlString.includes("localStorage.clear"))) { out.innerHTML += `<br><span style="color:red">[GPM ERR] GemiDefender blocked Malicious Network Payload!</span>`; return; }
                             }
-                            if(this.wallet >= price) {
-                                this.wallet -= price; this.saveWallet(); this.updateWalletUI(); out.innerHTML += `<br>[GPM] Transaction... -🪙${price}`; 
-                                if(this.VFS.write('C:/Users/' + this.user + '/Desktop', appName, appData.id)) { out.innerHTML += `<br>[GPM] SUCCESS: Installed.`; this.renderDesktopIcons(); this.playSysSound('buy'); } else out.innerHTML += `<br>[GPM] ERROR: NVRAM Full.`; 
-                            } else { out.innerHTML += `<br>[GPM] ERROR: Insufficient funds. Needs 🪙${price}.`; this.playSysSound('error'); }
+                            if(this.wallet >= price) { this.wallet -= price; this.saveWallet(); this.updateWalletUI(); out.innerHTML += `<br>[GPM] Transaction... -🪙${price}`; if(this.VFS.write('C:/Users/' + this.user + '/Desktop', appName, appData.id)) { out.innerHTML += `<br>[GPM] SUCCESS: Installed.`; this.renderDesktopIcons(); this.playSysSound('buy'); } else out.innerHTML += `<br>[GPM] ERROR: NVRAM Full.`; } else { out.innerHTML += `<br>[GPM] ERROR: Insufficient funds. Needs 🪙${price}.`; this.playSysSound('error'); }
                         } else out.innerHTML += `<br>[GPM] ERROR: Package ${appName} not found.`; 
                     } else out.innerHTML += '<br>Usage: gpm install [app_name.app]'; 
                 }
@@ -510,8 +560,39 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
         openFile(path, filename) { let data = this.VFS.read(path, filename); let ext = filename.split('.').pop().toLowerCase(); if(ext === 'app') { this.PM.launch(data); } else if (['png', 'jpg', 'jpeg', 'gif'].includes(ext)) { this.PM.launch('app_view', data); } else if (['mp3', 'wav', 'ogg'].includes(ext)) { this.PM.launch('app_amp', data); } else if (['mp4', 'webm'].includes(ext)) { this.PM.launch('app_video', data); } else if (ext === 'gbs') { try { eval(data); this.notify("GemiScript", "Macro executed."); } catch(e) { this.notify("GemiScript Error", e.message, false); } } else if (ext === 'gzip') { try { let archive = JSON.parse(data); for(let f in archive) { this.VFS.write('C:/Users/' + this.user + '/Downloads', f, archive[f]); } this.notify("GemiZip", "Extracted to Downloads."); for(let pid in this.driveStates) { this.renderDrive(pid); } } catch(e) { this.notify("GemiZip", "Corrupted archive.", false); } } else { this.PM.launch('app_note', data); } }
         renderDrive(pid) { let path = this.driveStates[pid]; document.getElementById(`d-path-${pid}`).value = path; let list = document.getElementById(`d-list-${pid}`); let dir = this.VFS.getDir(path); let html = ''; for(let k in dir) { if(typeof dir[k] === 'object') { html += `<div style="text-align:center; cursor:pointer; padding:10px; background:rgba(0,0,0,0.2); border-radius:6px; position:relative;" onmouseover="this.style.background='rgba(0,120,215,0.4)'" onmouseout="this.style.background='rgba(0,0,0,0.2)'" onclick="GemiOS.navDrive(${pid}, '${k}')"><div style="font-size:30px;">📁</div><div style="font-size:12px; overflow:hidden; text-overflow:ellipsis;">${k}</div></div>`; } else { let i = '📄'; if(k.endsWith('.app')) i = '🚀'; else if(k.endsWith('.gbs')) i = '📜'; else if(k.endsWith('.gzip')) i = '🗜️'; else if(k.endsWith('.gemos')) i = '💾'; html += `<div style="text-align:center; padding:10px; background:rgba(255,255,255,0.1); border-radius:6px; position:relative;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'"><div style="font-size:30px; cursor:pointer;" onclick="GemiOS.openFile('${path}', '${k}')">${i}</div><div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" onclick="GemiOS.openFile('${path}', '${k}')">${k}</div><button onclick="GemiOS.exportFile('${path}', '${k}')" style="position:absolute; top:4px; right:4px; background:var(--accent); border:none; color:white; border-radius:3px; cursor:pointer; font-size:10px; padding:2px 5px;" title="Export File">↓</button></div>`; } } if(html === '') html = '<div style="grid-column: span 4; text-align:center; opacity:0.5; padding:20px;">Folder is empty</div>'; list.innerHTML = html; }
         navDrive(pid, target) { let curr = this.driveStates[pid]; if(target === 'UP') { let parts = curr.split('/'); if(parts.length > 1) parts.pop(); this.driveStates[pid] = parts.join('/') || 'C:'; } else { this.driveStates[pid] = curr + '/' + target; } this.renderDrive(pid); }
-        renderDesktopIcons() { let desk = this.VFS.getDir('C:/Users/' + this.user + '/Desktop'); let layoutData = this.VFS.read('C:/Users/' + this.user + '/Desktop', '.layout') || "{}"; let layout = JSON.parse(layoutData); let html = ''; let i = 0; for(let file in desk) { if(file.endsWith('.app') || file.endsWith('.gbs') || file.endsWith('.gzip') || file.endsWith('.txt')) { let top = layout[file] ? layout[file].top : (20 + Math.floor(i / 10) * 100) + 'px'; let left = layout[file] ? layout[file].left : (20 + (i % 10) * 90) + 'px'; let safeFile = file.replace(/'/g, "\\'"); if(file.endsWith('.app')) { let appId = desk[file]; let app = this.Registry[appId] || (window.GemiRegistry ? window.GemiRegistry[appId] : null); if(app) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.PM.launch('${appId}')"><div>${app.icon}</div>${file.replace('.app','')}</div>`; } } else if (file.endsWith('.gbs')) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>📜</div>${file}</div>`; } else if (file.endsWith('.gzip')) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>🗜️</div>${file}</div>`; } else if (file.endsWith('.txt')) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>📝</div>${file}</div>`; } i++; } } document.getElementById('desktop-icons').innerHTML = html; }
+
+        renderDesktopIcons() {
+            let desk = this.VFS.getDir('C:/Users/' + this.user + '/Desktop'); let layoutData = this.VFS.read('C:/Users/' + this.user + '/Desktop', '.layout') || "{}"; let layout = JSON.parse(layoutData); let html = ''; let i = 0;
+            for(let file in desk) {
+                if(file.endsWith('.app') || file.endsWith('.gbs') || file.endsWith('.gzip') || file.endsWith('.txt')) {
+                    let top = layout[file] ? layout[file].top : (20 + Math.floor(i / 10) * 100) + 'px'; let left = layout[file] ? layout[file].left : (20 + (i % 10) * 90) + 'px'; let safeFile = file.replace(/'/g, "\\'"); 
+                    if(file.endsWith('.app')) { let appId = desk[file]; let app = this.Registry[appId] || (window.GemiRegistry ? window.GemiRegistry[appId] : null); if(app) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.PM.launch('${appId}')"><div>${app.icon}</div>${file.replace('.app','')}</div>`; } } 
+                    else if (file.endsWith('.gbs')) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>📜</div>${file}</div>`; } 
+                    else if (file.endsWith('.gzip')) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>🗜️</div>${file}</div>`; }
+                    else if (file.endsWith('.txt')) { html += `<div class="icon" id="icon-${i}" style="top:${top}; left:${left};" onmousedown="GemiOS.dragIcon(event, this.id, '${safeFile}')" ondblclick="GemiOS.openFile('C:/Users/${this.user}/Desktop', '${safeFile}')"><div>📝</div>${file}</div>`; }
+                    i++;
+                }
+            }
+            document.getElementById('desktop-icons').innerHTML = html;
+        }
+
         dragIcon(e, id, filename) { let el = document.getElementById(id); let ox = e.clientX - el.offsetLeft; let oy = e.clientY - el.offsetTop; document.onmousemove = (ev) => { el.style.left = (ev.clientX - ox) + 'px'; el.style.top = (ev.clientY - oy) + 'px'; }; document.onmouseup = () => { document.onmousemove = null; document.onmouseup = null; let layoutData = this.VFS.read('C:/Users/' + this.user + '/Desktop', '.layout') || "{}"; let layout = JSON.parse(layoutData); layout[filename] = { top: el.style.top, left: el.style.left }; this.VFS.write('C:/Users/' + this.user + '/Desktop', '.layout', JSON.stringify(layout)); }; }
+        exportNVRAM() { let data = localStorage.getItem('GemiOS_TreeFS'); if(!data) return this.notify("Error", "No NVRAM state found.", false); let blob = new Blob([data], {type: 'text/plain'}); let url = URL.createObjectURL(blob); let a = document.createElement('a'); a.href = url; a.download = `GemiOS_Backup_${this.user}.gemos`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); this.notify("GemiSync", "Exported Successfully!"); }
+
+        async triggerOTA(btn) {
+            btn.innerText = 'Pinging Cloud Server...'; btn.style.background = '#444'; let st = document.getElementById('upd-stat'); st.innerText = 'Fetching version.json...';
+            try {
+                let cb = "?t=" + new Date().getTime(); let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/version.json" + cb); if (!r.ok) throw new Error("GitHub server unreachable."); let d = await r.json();
+                let currentVer = localStorage.getItem('GemiOS_Cache_Ver') || "47.0.0-SETUP";
+                if (d.version !== currentVer) {
+                    st.innerHTML = `<span style="color:#ffeb3b">New Version Found: ${d.version}</span><br><i>${d.notes}</i>`; btn.innerText = 'Download & Install'; btn.style.background = '#ff00cc'; 
+                    btn.onclick = async () => {
+                        document.getElementById('ota-overlay').style.display = 'flex'; let fill = document.getElementById('ota-fill'); let text = document.getElementById('ota-text');
+                        try { text.innerText = "Downloading Kernel..."; fill.style.width = "30%"; let kRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/kernel.js" + cb); if(!kRes.ok) throw new Error("Kernel download failed."); let kCode = await kRes.text(); text.innerText = "Downloading Registry..."; fill.style.width = "60%"; let regRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/registry.js" + cb); if(!regRes.ok) throw new Error("Registry download failed."); let regCode = await regRes.text(); text.innerText = "Writing to NVRAM..."; fill.style.width = "90%"; localStorage.setItem('GemiOS_Cache_Kernel', kCode); localStorage.setItem('GemiOS_Cache_Registry', regCode); localStorage.setItem('GemiOS_Cache_Ver', d.version); fill.style.width = "100%"; document.getElementById('ota-title').innerText = "System Patched"; document.getElementById('ota-restart-prompt').style.display = 'flex'; this.notify("Update Complete", "System requires restart.", true); } catch(e) { text.innerText = "UPDATE FAILED: " + e.message; fill.style.background = "red"; }
+                    };
+                } else { st.innerHTML = `<span style="color:#38ef7d">System is up to date!</span>`; btn.innerText = 'Latest OS Installed'; btn.style.background = '#38ef7d'; btn.style.color = 'black'; btn.onclick = null; }
+            } catch (err) { st.innerHTML = `<span style="color:#ff4d4d">Error: ${err.message}</span>`; btn.innerText = 'Retry'; btn.style.background = '#0078d7'; }
+        }
 
         applyTheme() { let isL = localStorage.getItem('GemiOS_Theme') === 'light'; if(isL) document.body.classList.add('light-mode'); else document.body.classList.remove('light-mode'); let accent = localStorage.getItem('GemiOS_Accent'); if(accent) { document.documentElement.style.setProperty('--accent', accent); } else { document.documentElement.style.setProperty('--accent', '#0078d7'); } }
         toggleTheme() { let isL = localStorage.getItem('GemiOS_Theme') === 'light'; localStorage.setItem('GemiOS_Theme', !isL ? 'light' : 'dark'); this.applyTheme(); }
@@ -541,7 +622,9 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
                 @keyframes popIn { 0% { opacity: 0; transform: scale(0.9) translateY(20px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
                 @keyframes blink { 0%, 100% { opacity:1; } 50% { opacity:0.2; } }
                 .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-                .win { position:absolute; background:rgba(20, 30, 40, 0.7); backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%); color:white; border-radius:12px; box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; transition: width 0.3s, height 0.3s, top 0.3s, left 0.3s; pointer-events:auto; resize:both; overflow:hidden;}
+                .win { position:absolute; background:rgba(20, 30, 40, 0.7); backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%); color:white; border-radius:12px; box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; overflow:hidden;}
+                .win-animated { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; transition: width 0.3s, height 0.3s, top 0.3s, left 0.3s; }
+                .win-static { animation: none; transition: none; opacity:1; }
                 body.light-mode .win { background: rgba(255,255,255,0.85); border: 1px solid var(--accent); color: #222; box-shadow: 0 30px 60px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.8); }
                 .resize-handle { position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: nwse-resize; z-index: 10000; background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.2) 50%); }
                 .title-bar { padding:12px 18px; font-weight:600; font-size: 14px; display:flex; justify-content:space-between; align-items: center; border-bottom:1px solid rgba(255,255,255,0.05); cursor:grab; }
@@ -595,6 +678,7 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
                 .cm-item { padding:10px 15px; cursor:pointer; font-size:13px; font-weight:500; border-radius:6px; display:flex; align-items:center; gap:10px; transition:0.2s; }
                 .cm-item:hover { background:var(--accent); color:white; padding-left:20px;}
                 
+                /* Action Center */
                 .gemi-notif { background: rgba(20, 30, 40, 0.85); backdrop-filter: blur(25px) saturate(200%); border: 1px solid var(--accent); border-radius: 12px; padding: 15px 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease; opacity: 0; color: white; width: 320px; pointer-events:auto; }
                 body.light-mode .gemi-notif { background: rgba(255,255,255,0.95); border: 1px solid var(--accent); color: black; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
                 #notif-panel { position:absolute; top:0; right:-320px; width:320px; height:calc(100vh - 75px); background:rgba(10, 15, 20, 0.85); backdrop-filter:blur(30px) saturate(180%); border-left:1px solid rgba(255,255,255,0.1); z-index:99998; transition:right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display:flex; flex-direction:column; box-shadow:-10px 0 30px rgba(0,0,0,0.5); }
@@ -622,7 +706,7 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
                             <div style="font-size:35px; background:rgba(255,255,255,0.1); border-radius:50%; width:60px; height:60px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2);">${this.user === 'Admin' ? '👑' : '👤'}</div>
                             <div>
                                 <div style="font-size:20px; font-weight:600;">${this.user}</div>
-                                <div style="font-size:12px; opacity:0.7; font-family:monospace;">GemiOS 46.0 / <span style="color:var(--accent); font-weight:bold;">${this.edition.toUpperCase()}</span></div>
+                                <div style="font-size:12px; opacity:0.7; font-family:monospace;">GemiOS 47.0 / <span style="color:var(--accent); font-weight:bold;">${this.edition.toUpperCase()}</span></div>
                             </div>
                         </div>
                         
@@ -664,7 +748,7 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
                                 
                                 <div onclick="GemiOS.listen()" style="cursor:pointer; font-size:20px; transition:0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Voice Commands">🎙️</div>
                                 <div onclick="GemiOS.toggleTheme()" style="cursor:pointer; font-size:20px; transition:0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Toggle Theme">🌓</div>
-                                <div style="font-weight:600; font-size:12px; background:rgba(255, 255, 255, 0.2); color:white; padding:4px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.4);">v46.0</div>
+                                <div style="font-weight:600; font-size:12px; background:rgba(255, 255, 255, 0.2); color:white; padding:4px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.4);">v47.0</div>
                                 <div id="clock" style="font-weight:600; font-size:14px; letter-spacing:1px;">12:00</div>
                                 <div onclick="GemiOS.lockSystem()" style="cursor:pointer; font-size:18px; color:#ff4d4d; background:rgba(255,77,77,0.1); padding:5px; border-radius:50%; transition:0.2s;" onmouseover="this.style.background='rgba(255,77,77,0.3)'" onmouseout="this.style.background='rgba(255,77,77,0.1)'" title="Power Off">⏻</div>
                             </div>
@@ -685,19 +769,6 @@ if (bootVersion !== 'v46' && bootVersion !== 'v45') {
                         <div class="cm-item" onclick="GemiOS.lockSystem();" style="color:#ff4d4d;">⏻ Shut Down</div>
                     </div>
                     <div id="notif-container" style="position:absolute; top:20px; right:20px; z-index:999999; display:flex; flex-direction:column; gap:10px; pointer-events:none;"></div>
-                    
-                    <div id="ota-overlay" style="display:none; position:absolute; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); z-index:9999999; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Segoe UI', sans-serif;">
-                        <div style="font-size:60px; margin-bottom:20px; filter:drop-shadow(0 0 20px #38ef7d);">☁️</div>
-                        <h2 id="ota-title" style="margin:0 0 20px 0;">Installing OTA Firmware...</h2>
-                        <div style="width:400px; height:25px; background:#222; border-radius:15px; overflow:hidden; border:2px solid #555;">
-                            <div id="ota-fill" style="width:0%; height:100%; background:linear-gradient(90deg, #38ef7d, #0078d7); transition:width 0.3s ease;"></div>
-                        </div>
-                        <p id="ota-text" style="margin-top:15px; font-family:monospace; color:#38ef7d; font-size:16px; font-weight:bold;">0%</p>
-                        <div id="ota-restart-prompt" style="display:none; flex-direction:column; align-items:center; margin-top:20px;">
-                            <p style="color:#ffeb3b; font-weight:bold; margin-bottom:15px;">FIRMWARE FLASHED. A restart is required to mount the new kernel.</p>
-                            <button onclick="location.reload()" style="padding:12px 25px; background:#ff4d4d; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; font-size:16px; box-shadow:0 5px 15px rgba(255,77,77,0.4); pointer-events:auto;">Restart Now</button>
-                        </div>
-                    </div>
                 </div>
             `;
             document.body.innerHTML = ''; document.body.insertAdjacentHTML('afterbegin', html);
