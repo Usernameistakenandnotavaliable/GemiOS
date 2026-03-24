@@ -2,7 +2,7 @@
    GemiOS CLOUD HYPERVISOR - v50.0 (THE MASTER BUILD)
 =====================================================================*/
 (() => {
-  // NUKE THE BIOS SCREEN INSTANTLY!
+  // NUKE THE BIOS SCREEN INSTANTLY
   document.body.innerHTML = '';
 
   class EventBus { constructor() { this.handlers = new Map(); } on(ev, fn) { if (!this.handlers.has(ev)) this.handlers.set(ev, []); this.handlers.get(ev).push(fn); } off(ev, fn) { const arr = this.handlers.get(ev); if (!arr) return; this.handlers.set(ev, arr.filter(f => f !== fn)); } emit(ev, data) { const arr = this.handlers.get(ev); if (!arr) return; arr.forEach(fn => fn(data)); } }
@@ -134,8 +134,8 @@
     }
 
     async init(){
-      this._buildUI(); 
       this.injectStyles(); 
+      this._buildUI(); 
       await this.VFS.ensureRoot(); 
       await this.theme.applyFromStorage(); 
       await this.loadDependencies();
@@ -160,11 +160,12 @@
 
     injectStyles() {
         const s = document.createElement('style');
+        // CSS Overrides to nuke the BIOS formatting!
         s.textContent = `
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
             :root { --accent: #0078d7; }
-            body { margin:0; padding:0; display:block; overflow:hidden; background:linear-gradient(135deg, #0f2027, #203a43, #2c5364); font-family:'Inter', sans-serif; color:white; user-select:none; transition: background 0.6s ease, color 0.6s ease;}
-            body.light-mode { background: linear-gradient(135deg, #e0eafc, #cfdef3); color: #222; }
+            body { margin:0 !important; padding:0 !important; display:block !important; overflow:hidden !important; background:linear-gradient(135deg, #0f2027, #203a43, #2c5364); font-family:'Inter', sans-serif !important; color:white !important; user-select:none; transition: background 0.6s ease, color 0.6s ease;}
+            body.light-mode { background: linear-gradient(135deg, #e0eafc, #cfdef3); color: #222 !important; }
             ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; } body.light-mode ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); }
             @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
             @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
@@ -232,13 +233,20 @@
     }
 
     async loadDependencies() {
-        window.GemiRegistry = {};
+        window.GemiRegistry = window.GemiRegistry || {};
+        
+        // V50 CORE FAILSAFE: Ensure basic apps exist BEFORE network fetch!
+        window.GemiRegistry['sys_term'] = { tag: 'sys', icon: '⌨️', title: 'Bash Terminal', width: 500, htmlString: `<div id="t-out-999" style="flex-grow:1; background:#0a0a0a; color:#38ef7d; padding:10px; font-family:monospace; overflow-y:auto; border-radius:6px;">GemiOS Local Shell Active.</div><div style="display:flex; background:#111; padding:8px; border-radius:6px; margin-top:5px;"><span style="color:#0078d7; margin-right:8px; font-weight:bold;">C:/Users/Admin></span><input type="text" style="flex-grow:1; background:transparent; color:#38ef7d; border:none; outline:none; font-family:monospace; font-size:14px;"></div>` };
+        window.GemiRegistry['sys_drive'] = { tag: 'sys', icon: '🗂️', title: 'Explorer', width: 520, htmlString: `<div style="padding:20px; text-align:center;">Explorer Offline. Check Network.</div>` };
+        window.GemiRegistry['sys_set'] = { tag: 'sys', icon: '⚙️', title: 'Settings', width: 420, htmlString: `<div style="padding:20px; text-align:center;">Settings Offline.</div>` };
+        window.GemiRegistry['sys_store'] = { tag: 'sys', icon: '🛍️', title: 'GemiStore', width: 700, htmlString: `<div style="padding:20px; text-align:center;">Store Offline. Check Network.</div>` };
+
         try {
-            // V50 FIX: Using /refs/heads/main/ to bypass GitHub's 5-minute CDN cache!
-            let r1 = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/registry.js?t=" + Date.now());
+            // V50 LOCAL FIX: Fetches using relative path! Works beautifully on VS Code Live Server.
+            let r1 = await fetch("./registry.js?t=" + Date.now());
             if(r1.ok) { let code1 = await r1.text(); try { eval(code1); localStorage.setItem('GemiOS_Cache_Registry', code1); } catch(e) { console.error(e); } }
             
-            let r2 = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/engine.js?t=" + Date.now());
+            let r2 = await fetch("./engine.js?t=" + Date.now());
             if(r2.ok) { let code2 = await r2.text(); try { eval(code2); } catch(e) {} }
 
             let customApps = JSON.parse(localStorage.getItem('GemiOS_CustomApps') || '{}');
@@ -252,7 +260,7 @@
                 let fileName = gApp.title.replace(/\s/g, '') + '_net.app';
                 window.GemiRegistry[fileName] = { price: gApp.price, id: gApp.id, icon: gApp.icon, desc: gApp.desc, title: gApp.title, width: 500, htmlString: gApp.htmlString, isNetwork: true };
             });
-        } catch(e) { console.warn("Network Error."); }
+        } catch(e) { console.warn("Network Error. Running entirely on local cache."); }
     }
 
     _setupIdleTimer(){ const reset = () => { this.idleTime = 0; this.WM.hideScreensaver(); }; document.onmousemove = document.onkeydown = document.onclick = reset; setInterval(()=> { this.idleTime++; if (this.idleTime >= 60) this.WM.showScreensaver(); },1000); }
@@ -484,7 +492,6 @@
         </div>
 
         <div id="notif-container"></div>
-        
         <div id="ota-overlay" style="display:none; position:absolute; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); z-index:9999999; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Segoe UI', sans-serif;"><div style="font-size:60px; margin-bottom:20px; filter:drop-shadow(0 0 20px #38ef7d);">☁️</div><h2 id="ota-title" style="margin:0 0 20px 0;">Installing OTA Firmware...</h2><div style="width:400px; height:25px; background:#222; border-radius:15px; overflow:hidden; border:2px solid #555;"><div id="ota-fill" style="width:0%; height:100%; background:linear-gradient(90deg, #38ef7d, #0078d7); transition:width 0.3s ease;"></div></div><p id="ota-text" style="margin-top:15px; font-family:monospace; color:#38ef7d; font-size:16px; font-weight:bold;">0%</p><div id="ota-restart-prompt" style="display:none; flex-direction:column; align-items:center; margin-top:20px;"><p style="color:#ffeb3b; font-weight:bold; margin-bottom:15px;">FIRMWARE FLASHED. A restart is required.</p><button onclick="location.reload()" style="padding:12px 25px; background:#ff4d4d; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; font-size:16px;">Restart Now</button></div></div>
         <div id="io-indicator" class="io-indicator">💾</div>
         `;
