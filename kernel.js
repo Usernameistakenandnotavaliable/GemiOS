@@ -2,8 +2,9 @@
    GemiOS CLOUD HYPERVISOR - v50.0 (THE MASTER BUILD)
 =====================================================================*/
 (() => {
-  // NUKE THE BIOS SCREEN INSTANTLY
-  document.body.innerHTML = '';
+  // Safely wipe the BIOS screen
+  let biosScreen = document.getElementById('post-screen');
+  if(biosScreen) biosScreen.remove();
 
   class EventBus { constructor() { this.handlers = new Map(); } on(ev, fn) { if (!this.handlers.has(ev)) this.handlers.set(ev, []); this.handlers.get(ev).push(fn); } off(ev, fn) { const arr = this.handlers.get(ev); if (!arr) return; this.handlers.set(ev, arr.filter(f => f !== fn)); } emit(ev, data) { const arr = this.handlers.get(ev); if (!arr) return; arr.forEach(fn => fn(data)); } }
 
@@ -160,7 +161,6 @@
 
     injectStyles() {
         const s = document.createElement('style');
-        // CSS Overrides to nuke the BIOS formatting!
         s.textContent = `
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
             :root { --accent: #0078d7; }
@@ -234,19 +234,12 @@
 
     async loadDependencies() {
         window.GemiRegistry = window.GemiRegistry || {};
-        
-        // V50 CORE FAILSAFE: Ensure basic apps exist BEFORE network fetch!
-        window.GemiRegistry['sys_term'] = { tag: 'sys', icon: '⌨️', title: 'Bash Terminal', width: 500, htmlString: `<div id="t-out-999" style="flex-grow:1; background:#0a0a0a; color:#38ef7d; padding:10px; font-family:monospace; overflow-y:auto; border-radius:6px;">GemiOS Local Shell Active.</div><div style="display:flex; background:#111; padding:8px; border-radius:6px; margin-top:5px;"><span style="color:#0078d7; margin-right:8px; font-weight:bold;">C:/Users/Admin></span><input type="text" style="flex-grow:1; background:transparent; color:#38ef7d; border:none; outline:none; font-family:monospace; font-size:14px;"></div>` };
-        window.GemiRegistry['sys_drive'] = { tag: 'sys', icon: '🗂️', title: 'Explorer', width: 520, htmlString: `<div style="padding:20px; text-align:center;">Explorer Offline. Check Network.</div>` };
-        window.GemiRegistry['sys_set'] = { tag: 'sys', icon: '⚙️', title: 'Settings', width: 420, htmlString: `<div style="padding:20px; text-align:center;">Settings Offline.</div>` };
-        window.GemiRegistry['sys_store'] = { tag: 'sys', icon: '🛍️', title: 'GemiStore', width: 700, htmlString: `<div style="padding:20px; text-align:center;">Store Offline. Check Network.</div>` };
-
         try {
-            // V50 LOCAL FIX: Fetches using relative path! Works beautifully on VS Code Live Server.
-            let r1 = await fetch("./registry.js?t=" + Date.now());
+            // Absolute paths to bypass Local VS Code 404s
+            let r1 = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/registry.js?t=" + Date.now());
             if(r1.ok) { let code1 = await r1.text(); try { eval(code1); localStorage.setItem('GemiOS_Cache_Registry', code1); } catch(e) { console.error(e); } }
             
-            let r2 = await fetch("./engine.js?t=" + Date.now());
+            let r2 = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/engine.js?t=" + Date.now());
             if(r2.ok) { let code2 = await r2.text(); try { eval(code2); } catch(e) {} }
 
             let customApps = JSON.parse(localStorage.getItem('GemiOS_CustomApps') || '{}');
@@ -260,11 +253,11 @@
                 let fileName = gApp.title.replace(/\s/g, '') + '_net.app';
                 window.GemiRegistry[fileName] = { price: gApp.price, id: gApp.id, icon: gApp.icon, desc: gApp.desc, title: gApp.title, width: 500, htmlString: gApp.htmlString, isNetwork: true };
             });
-        } catch(e) { console.warn("Network Error. Running entirely on local cache."); }
+        } catch(e) { console.warn("Network Error."); }
     }
 
     _setupIdleTimer(){ const reset = () => { this.idleTime = 0; this.WM.hideScreensaver(); }; document.onmousemove = document.onkeydown = document.onclick = reset; setInterval(()=> { this.idleTime++; if (this.idleTime >= 60) this.WM.showScreensaver(); },1000); }
-    _startOTADaemon(){ if (localStorage.getItem('GemiOS_Driver_Net')==='false') return; setInterval(async ()=>{ try { const resp = await fetch('https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/version.json?t=' + Date.now()); if (resp.ok) { const d = await resp.json(); const cur = localStorage.getItem('GemiOS_Cache_Ver') || '50.0.0-GOLD'; if (d.version !== cur) { this.notify('🚀 Update Detected!', `Version ${d.version} found.`, true); setTimeout(()=>this.pm.launch('sys_update'),2000); } } } catch (_) {} },15000); }
+    _startOTADaemon(){ if (localStorage.getItem('GemiOS_Driver_Net')==='false') return; setInterval(async ()=>{ try { const resp = await fetch('https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/version.json?t=' + Date.now()); if (resp.ok) { const d = await resp.json(); const cur = localStorage.getItem('GemiOS_Cache_Ver') || '50.0.0-GOLD'; if (d.version !== cur) { this.notify('🚀 Update Detected!', `Version ${d.version} found.`, true); setTimeout(()=>this.pm.launch('sys_update'),2000); } } } catch (_) {} },15000); }
     _startEconomyDaemon(){ setInterval(()=>{ const customStr = localStorage.getItem('GemiOS_CustomApps') || '{}'; const custom = JSON.parse(customStr); const keys = Object.keys(custom); if (keys.length && Math.random()<0.4){ const app = custom[keys[Math.floor(Math.random()*keys.length)]]; const price = Number(app.price)||0; if (price>0){ const profit = Math.floor(price*0.9); this.wallet+=profit; this._saveWallet(); this.notify('App Sale! 💸',`Someone bought ${app.title}. +🪙${profit}`,true); this.audio.play('buy'); } } },20000); }
     _saveWallet(){ localStorage.setItem('GemiOS_Wallet',String(this.wallet)); let wd = document.getElementById('os-wallet-display'); if(wd) wd.innerText = `🪙 ${Math.floor(this.wallet)}`; }
     
@@ -444,13 +437,13 @@
     async triggerOTA(btn) {
         btn.innerText = 'Pinging Cloud Server...'; btn.style.background = '#444'; let st = document.getElementById('upd-stat'); st.innerText = 'Fetching version.json...';
         try {
-            let cb = "?t=" + new Date().getTime(); let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/version.json" + cb); if (!r.ok) throw new Error("GitHub server unreachable."); let d = await r.json();
+            let cb = "?t=" + new Date().getTime(); let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/version.json" + cb); if (!r.ok) throw new Error("GitHub server unreachable."); let d = await r.json();
             let currentVer = localStorage.getItem('GemiOS_Cache_Ver') || "50.0.0-GOLD";
             if (d.version !== currentVer) {
                 st.innerHTML = `<span style="color:#ffeb3b">New Version Found: ${d.version}</span><br><i>${d.notes}</i>`; btn.innerText = 'Download & Install'; btn.style.background = '#ff00cc'; 
                 btn.onclick = async () => {
                     document.getElementById('ota-overlay').style.display = 'flex'; let fill = document.getElementById('ota-fill'); let text = document.getElementById('ota-text');
-                    try { text.innerText = "Downloading Kernel..."; fill.style.width = "30%"; let kRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/kernel.js" + cb); if(!kRes.ok) throw new Error("Kernel download failed."); let kCode = await kRes.text(); text.innerText = "Downloading Registry..."; fill.style.width = "60%"; let regRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/registry.js" + cb); if(!regRes.ok) throw new Error("Registry download failed."); let regCode = await regRes.text(); text.innerText = "Writing to NVRAM..."; fill.style.width = "90%"; localStorage.setItem('GemiOS_Cache_Kernel', kCode); localStorage.setItem('GemiOS_Cache_Registry', regCode); localStorage.setItem('GemiOS_Cache_Ver', d.version); fill.style.width = "100%"; document.getElementById('ota-title').innerText = "System Patched"; document.getElementById('ota-restart-prompt').style.display = 'flex'; this.notify("Update Complete", "System requires restart.", true); } catch(e) { text.innerText = "UPDATE FAILED: " + e.message; fill.style.background = "red"; }
+                    try { text.innerText = "Downloading Kernel..."; fill.style.width = "30%"; let kRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/kernel.js" + cb); if(!kRes.ok) throw new Error("Kernel download failed."); let kCode = await kRes.text(); text.innerText = "Downloading Registry..."; fill.style.width = "60%"; let regRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/registry.js" + cb); if(!regRes.ok) throw new Error("Registry download failed."); let regCode = await regRes.text(); text.innerText = "Writing to NVRAM..."; fill.style.width = "90%"; localStorage.setItem('GemiOS_Cache_Kernel', kCode); localStorage.setItem('GemiOS_Cache_Registry', regCode); localStorage.setItem('GemiOS_Cache_Ver', d.version); fill.style.width = "100%"; document.getElementById('ota-title').innerText = "System Patched"; document.getElementById('ota-restart-prompt').style.display = 'flex'; this.notify("Update Complete", "System requires restart.", true); } catch(e) { text.innerText = "UPDATE FAILED: " + e.message; fill.style.background = "red"; }
                 };
             } else { st.innerHTML = `<span style="color:#38ef7d">System is up to date!</span>`; btn.innerText = 'Latest OS Installed'; btn.style.background = '#38ef7d'; btn.style.color = 'black'; btn.onclick = null; }
         } catch (err) { st.innerHTML = `<span style="color:#ff4d4d">Error: ${err.message}</span>`; btn.innerText = 'Retry'; btn.style.background = '#0078d7'; }
