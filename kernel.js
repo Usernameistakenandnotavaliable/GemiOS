@@ -2,9 +2,7 @@
    GemiOS CLOUD HYPERVISOR - v50.0 (THE MASTER BUILD)
 =====================================================================*/
 (() => {
-  // Safely wipe the BIOS screen
-  let biosScreen = document.getElementById('post-screen');
-  if(biosScreen) biosScreen.remove();
+  document.body.innerHTML = ''; // Wipe BIOS screen
 
   class EventBus { constructor() { this.handlers = new Map(); } on(ev, fn) { if (!this.handlers.has(ev)) this.handlers.set(ev, []); this.handlers.get(ev).push(fn); } off(ev, fn) { const arr = this.handlers.get(ev); if (!arr) return; this.handlers.set(ev, arr.filter(f => f !== fn)); } emit(ev, data) { const arr = this.handlers.get(ev); if (!arr) return; arr.forEach(fn => fn(data)); } }
 
@@ -143,7 +141,6 @@
       
       if(this.wallet <= 10 && !localStorage.getItem('GemiOS_Relief_Claimed')) { setTimeout(() => { this.wallet += 150; this._saveWallet(); this.notify("GemiGov Relief Fund 🏦", "150 🪙 deposited!"); localStorage.setItem('GemiOS_Relief_Claimed', 'true'); }, 4000); }
       
-      // 🎉 V50 GOLDEN CELEBRATION BLOCK 🎉
       if(!localStorage.getItem('GemiOS_V50_Celebrated')) {
           setTimeout(() => {
               this.notify("🏆 V50.0 MILESTONE REACHED!", "Half a century of updates! Welcome to the Modular Core.", true);
@@ -234,13 +231,27 @@
 
     async loadDependencies() {
         window.GemiRegistry = window.GemiRegistry || {};
-        try {
-            // Absolute paths to bypass Local VS Code 404s
-            let r1 = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/registry.js?t=" + Date.now());
-            if(r1.ok) { let code1 = await r1.text(); try { eval(code1); localStorage.setItem('GemiOS_Cache_Registry', code1); } catch(e) { console.error(e); } }
+        
+        // V50 SMART FETCH: Tries local file first. If it fails, downloads from GitHub.
+        async function smartFetch(filename) {
+            try { 
+                let res = await fetch("./" + filename + "?t=" + Date.now()); 
+                if (res.ok) return await res.text(); 
+            } catch (e) {} 
             
-            let r2 = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/engine.js?t=" + Date.now());
-            if(r2.ok) { let code2 = await r2.text(); try { eval(code2); } catch(e) {} }
+            console.log("[LINKER] Local " + filename + " not found. Fetching from GitHub...");
+            let resCloud = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/main/" + filename + "?t=" + Date.now());
+            if (resCloud.ok) return await resCloud.text();
+            throw new Error(filename + " missing on Local and Cloud.");
+        }
+
+        try {
+            let regCode = await smartFetch("registry.js");
+            try { eval(regCode); localStorage.setItem('GemiOS_Cache_Registry', regCode); } 
+            catch(e) { console.error("Registry Eval Error:", e); try { eval(localStorage.getItem('GemiOS_Cache_Registry') || ''); } catch(e2){} }
+            
+            let engCode = await smartFetch("engine.js");
+            try { eval(engCode); } catch(e) {}
 
             let customApps = JSON.parse(localStorage.getItem('GemiOS_CustomApps') || '{}');
             let globalNetwork = JSON.parse(localStorage.getItem('GemiOS_GlobalNetwork') || '[]');
@@ -253,7 +264,7 @@
                 let fileName = gApp.title.replace(/\s/g, '') + '_net.app';
                 window.GemiRegistry[fileName] = { price: gApp.price, id: gApp.id, icon: gApp.icon, desc: gApp.desc, title: gApp.title, width: 500, htmlString: gApp.htmlString, isNetwork: true };
             });
-        } catch(e) { console.warn("Network Error."); }
+        } catch(e) { console.warn("Dependency load failed. Ensure you have network access."); }
     }
 
     _setupIdleTimer(){ const reset = () => { this.idleTime = 0; this.WM.hideScreensaver(); }; document.onmousemove = document.onkeydown = document.onclick = reset; setInterval(()=> { this.idleTime++; if (this.idleTime >= 60) this.WM.showScreensaver(); },1000); }
