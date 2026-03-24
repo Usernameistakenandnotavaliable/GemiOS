@@ -1,4 +1,4 @@
 {
-  "version": "44.1.0-HEURISTIC",
-  "notes": "The Heuristic Hotfix. GemiDefender AV upgraded to perform Deep String Heuristics to catch dynamic Cartridge Exploits. Added Active Firewall intercept to Cartridge Sideloading bay."
+  "version": "45.0.0-ZEROTRUST",
+  "notes": "The Zero-Trust Update. GemiDefender Ultimate deployed with Active Memory Scanning and Process Assassination. New CoinDrainer trojan discovered in the Store. Exposed Process Manager to AV heuristics."
 }
