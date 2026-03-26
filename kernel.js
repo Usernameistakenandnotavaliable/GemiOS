@@ -1,5 +1,6 @@
 /*=====================================================================
-   GemiOS CLOUD HYPERVISOR - v50.1-BETA2 (THE ACOUSTICS UPDATE)
+   GemiOS CLOUD HYPERVISOR - v50.1-Beta.2 (THE FINAL POLISH)
+   Beautiful Shutdowns, Lighter Audio, & Bug Fixes.
 =====================================================================*/
 
 if (window.__GEMIOS_BOOTED__) {
@@ -8,6 +9,7 @@ if (window.__GEMIOS_BOOTED__) {
     window.__GEMIOS_BOOTED__ = true;
 
     (() => {
+        // 1. Instantly wipe the BIOS text from the screen
         document.body.innerHTML = ''; 
         document.body.style.padding = '0';
 
@@ -19,6 +21,7 @@ if (window.__GEMIOS_BOOTED__) {
                 return `
                 <style>.engine-block{padding:8px;border:none;border-radius:4px;color:white;font-weight:bold;cursor:pointer;text-align:left;font-size:12px;transition:0.2s;margin-bottom:5px;width:100%;} .engine-block:hover{filter:brightness(1.2);transform:translateY(-1px);} .px-cell{background:transparent; border:1px solid #333; cursor:pointer;} .px-cell:hover{border-color:#fff;}</style>
                 <div style="display:flex; flex-grow:1; gap:10px; height:100%;">
+                    
                     <div style="width:160px; background:rgba(0,0,0,0.3); border-radius:6px; padding:10px; overflow-y:auto;">
                         <div style="font-weight:bold; font-size:11px; color:#ffb400; margin-bottom:5px; letter-spacing:1px;">MOTION</div>
                         <button class="engine-block" style="background:#4db8ff;" onclick="GemiEngine.addBlock(${pid}, 'moveX', 'Move Right (10)')">Move Right</button>
@@ -203,14 +206,13 @@ if (window.__GEMIOS_BOOTED__) {
             }
         }
 
-        // --- NEW ACOUSTICS ENGINE ---
         class AudioEngine {
             constructor() { 
                 this.actx = null; 
                 this.sounds = { 
                     open: (t)=> this._tone(440,880,t,0.05,0,0.2), 
                     close: (t)=> this._tone(880,440,t,0.05,0,0.2), 
-                    click: (t)=> this._tone(1000,1000,t,0.02,0,0.05), 
+                    click: (t)=> this._tone(1200,1200,t,0.02,0,0.05), 
                     success: (t)=> this._chord([523.25,659.25,783.99],t, 1), 
                     error: (t)=> this._tone(150,150,t,0.1,0.2),
                     startup: (t)=> this._startupChime(t),
@@ -223,7 +225,7 @@ if (window.__GEMIOS_BOOTED__) {
             
             _chord(freqs,t, len=3){ this._init(); if(!t) t=this.actx.currentTime; freqs.forEach((f,i)=>{ const osc=this.actx.createOscillator(); const gain=this.actx.createGain(); osc.type='sine'; osc.frequency.setValueAtTime(f,t+(i*0.1)); gain.gain.setValueAtTime(0,t+(i*0.1)); gain.gain.linearRampToValueAtTime(0.15,t+(i*0.1)+0.5); gain.gain.exponentialRampToValueAtTime(0.0001,t+(i*0.1)+len); osc.connect(gain); gain.connect(this.actx.destination); osc.start(t+(i*0.1)); osc.stop(t+(i*0.1)+len); }); }
             
-            // Beautiful ambient startup chord with shimmer
+            // Lighter, majestic startup chord
             _startupChime(t) {
                 this._init(); if(!t) t=this.actx.currentTime;
                 const freqs = [261.63, 392.00, 523.25, 587.33]; 
@@ -231,8 +233,8 @@ if (window.__GEMIOS_BOOTED__) {
                     const osc = this.actx.createOscillator(); const gain = this.actx.createGain();
                     osc.type = i % 2 === 0 ? 'sine' : 'triangle'; 
                     osc.frequency.setValueAtTime(f, t); osc.detune.setValueAtTime(i * 2, t);
-                    gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.1, t + 0.1 + (i * 0.1)); 
-                    gain.gain.linearRampToValueAtTime(0.05, t + 0.8); gain.gain.exponentialRampToValueAtTime(0.0001, t + 3.5);
+                    gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.08, t + 0.1 + (i * 0.1)); 
+                    gain.gain.linearRampToValueAtTime(0.04, t + 0.8); gain.gain.exponentialRampToValueAtTime(0.0001, t + 3.5);
                     osc.connect(gain); gain.connect(this.actx.destination);
                     osc.start(t); osc.stop(t + 4);
                 });
@@ -242,16 +244,19 @@ if (window.__GEMIOS_BOOTED__) {
                 swp.connect(swpGain); swpGain.connect(this.actx.destination); swp.start(t + 0.5); swp.stop(t + 3);
             }
 
-            // Melancholy spinning down chord
+            // Beautiful, soft, descending shutdown sigh
             _shutdownChime(t) {
                 this._init(); if(!t) t=this.actx.currentTime;
-                const freqs = [392.00, 311.13, 261.63, 196.00]; 
+                const freqs = [1046.50, 880.00, 783.99, 659.25]; 
                 freqs.forEach((f, i) => {
                     const osc = this.actx.createOscillator(); const gain = this.actx.createGain();
                     osc.type = 'sine'; osc.frequency.setValueAtTime(f, t + (i * 0.15));
-                    osc.frequency.exponentialRampToValueAtTime(f * 0.95, t + 2); 
-                    gain.gain.setValueAtTime(0, t + (i * 0.15)); gain.gain.linearRampToValueAtTime(0.1, t + (i * 0.15) + 0.1); gain.gain.exponentialRampToValueAtTime(0.0001, t + 2.5);
-                    osc.connect(gain); gain.connect(this.actx.destination); osc.start(t + (i * 0.15)); osc.stop(t + 3);
+                    osc.frequency.exponentialRampToValueAtTime(f * 0.90, t + 2); // Soft pitch bend down
+                    gain.gain.setValueAtTime(0, t + (i * 0.15)); 
+                    gain.gain.linearRampToValueAtTime(0.08, t + (i * 0.15) + 0.1); 
+                    gain.gain.exponentialRampToValueAtTime(0.0001, t + 2);
+                    osc.connect(gain); gain.connect(this.actx.destination); 
+                    osc.start(t + (i * 0.15)); osc.stop(t + 2.5);
                 });
             }
             
@@ -328,7 +333,7 @@ if (window.__GEMIOS_BOOTED__) {
         }
 
         window.GemiCoreApps = {
-            'sys_term': { id: 'sys_term', tag: 'sys', icon: '💻', title: 'Terminal', width: 500, html: (pid) => `<div id="t-out-${pid}" style="flex-grow:1; background:#0a0a0a; color:#38ef7d; padding:10px; font-family:monospace; overflow-y:auto; border-radius:6px; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);">GemiOS v50.1 Beta Shell.<br>Type 'help' for commands.</div><div style="display:flex; background:#111; padding:8px; border-radius:6px; margin-top:5px; border:1px solid #333;"><span id="t-path-${pid}" style="color:#0078d7; margin-right:8px; font-weight:bold;">C:/Users/${GemiOS.user}></span><input type="text" id="t-in-${pid}" style="flex-grow:1; background:transparent; color:#38ef7d; border:none; outline:none; font-family:monospace; font-size:14px;" onkeydown="GemiOS.handleTerm(event, ${pid}, this)"></div>`, onLaunch: (pid) => { let p = `C:/Users/${GemiOS.user}`; GemiOS.termStates[pid] = p; document.getElementById(`t-path-${pid}`).innerText = p + '>'; setTimeout(()=>document.getElementById('t-in-'+pid).focus(),100); } },
+            'sys_term': { id: 'sys_term', tag: 'sys', icon: '💻', title: 'Terminal', width: 500, html: (pid) => `<div id="t-out-${pid}" style="flex-grow:1; background:#0a0a0a; color:#38ef7d; padding:10px; font-family:monospace; overflow-y:auto; border-radius:6px; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);">GemiOS v50.1-Beta Shell.<br>Type 'help' for commands.</div><div style="display:flex; background:#111; padding:8px; border-radius:6px; margin-top:5px; border:1px solid #333;"><span id="t-path-${pid}" style="color:#0078d7; margin-right:8px; font-weight:bold;">C:/Users/${GemiOS.user}></span><input type="text" id="t-in-${pid}" style="flex-grow:1; background:transparent; color:#38ef7d; border:none; outline:none; font-family:monospace; font-size:14px;" onkeydown="GemiOS.handleTerm(event, ${pid}, this)"></div>`, onLaunch: (pid) => { let p = `C:/Users/${GemiOS.user}`; GemiOS.termStates[pid] = p; document.getElementById(`t-path-${pid}`).innerText = p + '>'; setTimeout(()=>document.getElementById('t-in-'+pid).focus(),100); } },
             'sys_drive': { id: 'sys_drive', tag: 'sys', icon: '📁', title: 'Explorer', width: 520, html: (pid) => `<div class="sys-card" style="display:flex; gap:10px; align-items:center; background:rgba(0,120,215,0.2);"><button onclick="GemiOS.navDrive(${pid}, 'UP')" class="btn-sec" style="width:auto; margin:0; padding:5px 10px;">⬆️ Up</button><input type="text" id="d-path-${pid}" value="C:/" disabled style="flex-grow:1; background:transparent; color:inherit; border:none; font-weight:bold; font-size:14px; outline:none;"></div><div id="d-list-${pid}" style="flex-grow:1; min-height:200px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:10px; padding:5px;"></div>`, onLaunch: (pid) => { GemiOS.driveStates[pid] = `C:/Users/${GemiOS.user}`; GemiOS.renderDrive(pid); } },
             'sys_set': { id: 'sys_set', tag: 'sys', icon: '⚙️', title: 'Settings', width: 450, html: () => `
                 <div class="sys-card"><h3 style="margin:0 0 10px 0; color:var(--accent);">🎨 Appearance</h3>
@@ -368,7 +373,7 @@ if (window.__GEMIOS_BOOTED__) {
                     </div>
                 </div>
             ` },
-            'sys_update': { id: 'sys_update', tag: 'sys', icon: '☁️', title: 'Updater', width: 380, html: () => `<div class="sys-card" style="text-align:center; flex-grow:1;"><div style="font-size:40px;">☁️</div><h3 style="margin:5px 0;">OTA Updater</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v50.1.0-BETA</b></p><div id="upd-stat" style="font-size:12px; min-height:15px; margin-bottom:10px;">Ready to fetch Cloud Update.</div><button onclick="GemiOS.triggerOTA(this)" class="btn-primary">Check for Updates</button></div>` },
+            'sys_update': { id: 'sys_update', tag: 'sys', icon: '☁️', title: 'Updater', width: 380, html: () => `<div class="sys-card" style="text-align:center; flex-grow:1;"><div style="font-size:40px;">☁️</div><h3 style="margin:5px 0;">OTA Updater</h3><p style="font-size:13px; opacity:0.8;">Kernel: <b id="kern-ver">v50.1-Beta.2</b></p><div id="upd-stat" style="font-size:12px; min-height:15px; margin-bottom:10px;">Ready to fetch Cloud Update.</div><button onclick="GemiOS.triggerOTA(this)" class="btn-primary">Check for Updates</button></div>` },
             'sys_store': { id: 'sys_store', tag: 'sys', icon: '🛒', title: 'GemiStore', width: 700, html: (pid) => `<div class="sys-card" style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg, var(--accent), #000); margin-bottom:10px;"><div style="font-size:24px; font-weight:bold;">GemiStore Hub</div><div style="font-size:40px;">🛒</div></div><div id="store-list-${pid}" style="flex-grow:1; overflow-y:auto; display:grid; grid-template-columns:1fr 1fr; gap:10px; padding-right:5px;"></div>`, onLaunch: (pid) => { GemiOS.renderStore(pid); } },
             
             'app_calc': { id: 'app_calc', tag: 'sys', icon: '🧮', title: 'Calculator', width: 260, html: (pid) => `<div style="background:rgba(255,255,255,0.9); color:black; padding:15px; font-size:28px; text-align:right; margin-bottom:10px; border-radius:6px; font-family:monospace; box-shadow:inset 0 2px 5px rgba(0,0,0,0.2);" id="cd-${pid}">0</div><div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px; flex-grow:1;">${['7','8','9','/','4','5','6','*','1','2','3','-','C','0','=','+'].map(b=>`<button style="padding:15px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.1); cursor:pointer; font-weight:bold; border-radius:6px; color:white; font-size:16px; transition:0.1s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="let d=document.getElementById('cd-${pid}'); if('${b}'==='C') d.innerText='0'; else if('${b}'==='=') { try { d.innerText=new Function('return ' + d.innerText)(); } catch(e){ d.innerText='Err'; } } else { if(d.innerText==='0') d.innerText='${b}'; else d.innerText+='${b}'; }">${b}</button>`).join('')}</div>` },
@@ -409,17 +414,40 @@ if (window.__GEMIOS_BOOTED__) {
                 this.audio.play('startup'); 
                 document.getElementById('login-screen').style.opacity = '0';
                 setTimeout(() => document.getElementById('login-screen').remove(), 500);
+                
+                if(!localStorage.getItem('GemiOS_V50_1_BETA2_Celebrated')) {
+                    setTimeout(() => {
+                        this.bus.emit('notify', {title: "🏆 V50.1-Beta.2 UPDATE", msg: "Acoustics engine & shutdown polished.", success: true});
+                        let c = document.createElement('canvas'); c.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999999;pointer-events:none;'; document.body.appendChild(c);
+                        let ctx = c.getContext('2d'); c.width = window.innerWidth; c.height = window.innerHeight;
+                        let pieces = Array.from({length: 150}, () => ({ x: Math.random() * c.width, y: -20, vx: (Math.random()-0.5)*5, vy: Math.random()*5+2, color: ['#ffb400','#ff00cc','#38ef7d','#4db8ff'][Math.floor(Math.random()*4)] }));
+                        let anim = setInterval(() => { ctx.clearRect(0,0,c.width,c.height); pieces.forEach(p => { p.x += p.vx; p.y += p.vy; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 8, 8); }); if(pieces.every(p => p.y > c.height)) { clearInterval(anim); c.remove(); } }, 16);
+                        localStorage.setItem('GemiOS_V50_1_BETA2_Celebrated', 'true');
+                    }, 1000);
+                }
             }
-            
+
             shutdown() {
                 this.audio.play('shutdown');
                 const overlay = document.createElement('div');
-                overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:black;z-index:999999999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;font-family:sans-serif;opacity:0;transition:opacity 0.5s;';
-                overlay.innerHTML = '<div style="font-size:40px; margin-bottom:20px;">GemiOS</div><div style="font-size:16px; color:#888;">Shutting down...</div>';
+                overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.8);backdrop-filter:blur(20px);z-index:999999999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;font-family:sans-serif;opacity:0;transition:opacity 0.5s, background 1s;';
+                overlay.innerHTML = `
+                    <style>
+                        .shutdown-spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--accent, #38ef7d); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+                        @keyframes spin { 100% { transform: rotate(360deg); } }
+                    </style>
+                    <div class="shutdown-spinner" id="sd-spin"></div>
+                    <div id="sd-text" style="font-size:24px; font-weight:600; letter-spacing:1px;">Shutting down...</div>
+                `;
                 document.body.appendChild(overlay);
                 
                 setTimeout(() => overlay.style.opacity = '1', 50);
-                setTimeout(() => location.reload(), 2500);
+                setTimeout(() => {
+                    overlay.style.background = 'black';
+                    document.getElementById('sd-spin').style.display = 'none';
+                    document.getElementById('sd-text').style.display = 'none';
+                }, 2000);
+                setTimeout(() => location.reload(), 2800);
             }
 
             injectStyles() {
@@ -483,7 +511,8 @@ if (window.__GEMIOS_BOOTED__) {
                     .btn-primary:hover { transform:translateY(-2px); filter:brightness(1.1); }
                     .btn-sec { width:100%; padding:12px; background:rgba(255,255,255,0.1); color:inherit; border:1px solid rgba(255,255,255,0.2); border-radius:8px; margin-bottom:10px; cursor:pointer; transition:0.2s;}
                     .btn-sec:hover { background:rgba(255,255,255,0.2); }
-                    .btn-danger { width:100%; padding:12px; background:rgba(255,77,77,0.8); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
+                    .btn-danger { width:100%; padding:12px; background:rgba(255,77,77,0.8); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; transition:0.2s;}
+                    .btn-danger:hover { transform:translateY(-2px); filter:brightness(1.1); }
 
                     #widget-notes { position:absolute; top:30px; right:30px; width:220px; height:220px; background:linear-gradient(135deg, #fff9c4, #fbc02d); color:#333; box-shadow:5px 10px 20px rgba(0,0,0,0.4); padding:15px; z-index:5; font-family:'Segoe Print', 'Comic Sans MS', cursive; transform: rotate(2deg); transition: transform 0.2s, box-shadow 0.2s; cursor:grab; pointer-events:auto; border-radius:2px 2px 15px 2px;}
                     #widget-notes:active { cursor:grabbing; transform: rotate(0deg) scale(1.05); z-index:9999; box-shadow:10px 20px 30px rgba(0,0,0,0.5);}
@@ -520,7 +549,7 @@ if (window.__GEMIOS_BOOTED__) {
                 <div id="window-layer"></div>
                 
                 <div id="start-menu">
-                    <div class="start-header"><div style="font-size:35px;">👑</div><div><div style="font-size:20px;font-weight:600;">${this.user}</div><div style="font-size:12px;opacity:0.7;">GemiOS 50.1-BETA / PRO</div></div></div>
+                    <div class="start-header"><div style="font-size:35px;">👑</div><div><div style="font-size:20px;font-weight:600;">${this.user}</div><div style="font-size:12px;opacity:0.7;">GemiOS 50.1-Beta.2 / PRO</div></div></div>
                     <div id="start-menu-items" style="padding:10px; max-height:400px; overflow-y:auto;">
                         <div style="font-size:11px; color:#888; margin:10px; letter-spacing:1px; font-weight:bold;">SYSTEM APPS</div>
                         <div class="start-item" onclick="GemiOS.pm.launch('sys_store')"><span>🛒</span> GemiStore</div>
@@ -550,7 +579,7 @@ if (window.__GEMIOS_BOOTED__) {
                             <div style="font-weight:bold;background:rgba(0,0,0,0.3);padding:4px 8px;border-radius:4px;">🪙 <span id="wallet-text">${this.wallet}</span></div>
                             <div onclick="GemiOS.theme.toggleTheme()" style="cursor:pointer;font-size:20px;">🌙</div>
                             <div id="clock" style="font-weight:600;font-size:14px;letter-spacing:1px;">--:--</div>
-                            <div onclick="GemiOS.shutdown()" style="cursor:pointer;font-size:18px;color:#ff4d4d;">🔴</div>
+                            <div onclick="GemiOS.shutdown()" style="cursor:pointer;font-size:18px;color:#ff4d4d;" title="Power Off">🔴</div>
                         </div>
                     </div>
                 </div>
@@ -713,7 +742,7 @@ if (window.__GEMIOS_BOOTED__) {
         async createSnapshot(auto = false) {
             let k = localStorage.getItem('GemiOS_Cache_Kernel') || "";
             let r = localStorage.getItem('GemiOS_Cache_Registry') || "";
-            let v = localStorage.getItem('GemiOS_Cache_Ver') || "50.1.0-BETA2";
+            let v = localStorage.getItem('GemiOS_Cache_Ver') || "50.1.0-Beta.2";
             let date = new Date().toLocaleString().replace(/[\/:]/g, '-');
             let snapName = `Snapshot_v${v}_${date}.sys`;
             let payload = JSON.stringify({kernel: k, registry: r, version: v});
@@ -727,7 +756,7 @@ if (window.__GEMIOS_BOOTED__) {
                 let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/version.json?t=" + Date.now(), {cache: "no-store"});
                 if (!r.ok) throw new Error();
                 let d = await r.json();
-                let currentVer = "50.1.0-BETA2";
+                let currentVer = "50.1.0-Beta.2";
                 if (d.version !== currentVer) {
                     document.getElementById('upd-stat').innerHTML = `<span style="color:#ffeb3b">New Version: ${d.version}</span>`;
                     btn.innerText = 'Download & Install'; btn.style.background = '#ff00cc'; 
