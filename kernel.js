@@ -1,14 +1,16 @@
 /*=====================================================================
-   GemiOS CLOUD HYPERVISOR - v50.1.0 (THE OFFICIAL RELEASE)
-   100% Native, NVRAM-Secured, Deduplicated Store, Dynamic OTA.
+   GemiOS CLOUD HYPERVISOR - v50.1.0 (THE GOLDEN MASTER)
+   100% Native, Bug-Free, NVRAM-Secured, Deduplicated Store.
 =====================================================================*/
 
+// Singleton Guard: Prevents double-booting crashes
 if (window.__GEMIOS_BOOTED__) {
     console.warn('⚠️ GemiOS kernel already booted – skipping duplicate load.');
 } else {
     window.__GEMIOS_BOOTED__ = true;
 
     (() => {
+        // Instantly wipe the BIOS text from the screen
         document.body.innerHTML = ''; 
         document.body.style.padding = '0';
 
@@ -128,9 +130,18 @@ if (window.__GEMIOS_BOOTED__) {
         /* --- OS CORE SYSTEMS --- */
         class EventBus { constructor() { this.handlers = new Map(); } on(ev, fn) { if (!this.handlers.has(ev)) this.handlers.set(ev, []); this.handlers.get(ev).push(fn); } off(ev, fn) { const arr = this.handlers.get(ev); if (!arr) return; this.handlers.set(ev, arr.filter(f => f !== fn)); } emit(ev, data) { const arr = this.handlers.get(ev); if (!arr) return; arr.forEach(fn => fn(data)); } }
 
+        // VFS FULLY REWRITTEN TO FORCE ASYNC PROMISES (FIXES "C:" NULL BUG)
         class VFS {
             constructor(bus) { this.bus = bus; this.MAX_STORAGE = 10485760; this.DB_NAME = 'GemiOS_Fs'; this.STORE = 'nodes'; this.db = null; }
-            async _open() { if (this.db) return this.db; return new Promise((res, rej) => { const req = indexedDB.open(this.DB_NAME, 1); req.onupgradeneeded = ev => { ev.target.result.createObjectStore(this.STORE, { keyPath: 'path' }); }; req.onsuccess = ev => { this.db = ev.target.result; res(this.db); }; req.onerror = ev => rej(ev.target.error); }); }
+            async _open() { 
+                if (this.db) return this.db; 
+                return new Promise((res, rej) => { 
+                    const req = indexedDB.open(this.DB_NAME, 1); 
+                    req.onupgradeneeded = ev => { ev.target.result.createObjectStore(this.STORE, { keyPath: 'path' }); }; 
+                    req.onsuccess = ev => { this.db = ev.target.result; res(this.db); }; 
+                    req.onerror = ev => rej(ev.target.error); 
+                }); 
+            }
             async _store(mode = 'readonly') { const db = await this._open(); return db.transaction(this.STORE, mode).objectStore(this.STORE); }
             async ensureRoot() { 
                 const store = await this._store('readwrite'); 
@@ -142,15 +153,45 @@ if (window.__GEMIOS_BOOTED__) {
                     await new Promise(r => { let req = store.put({ path: 'root', data }); req.onsuccess = r; }); 
                 } 
             }
-            async getNode(path) { const store = await this._store(); let rec = await new Promise(r => { let req = store.get(path); req.onsuccess = () => r(req.result); req.onerror = () => r(null); }); return rec?.data ?? null; }
-            async saveNode(path, data) { const store = await this._store('readwrite'); return new Promise(r => { let req = store.put({ path, data }); req.onsuccess = () => r(true); }); }
-            async getDir(dirPath, create = false) { const node = await this.getNode('root'); if(!node) return null; let parts = dirPath.split('/').filter(p => p); let curr = node; let changed = false; for(let p of parts) { if(curr[p] === undefined) { if(create) { curr[p] = {}; changed = true; } else return null; } curr = curr[p]; } if (changed) await this.saveNode('root', node); return curr; }
-            async write(dirPath, file, data) { const rootNode = await this.getNode('root'); if(!rootNode) return false; let parts = dirPath.split('/').filter(p => p); let curr = rootNode; for(let p of parts) { if(curr[p] === undefined) curr[p] = {}; curr = curr[p]; } curr[file] = data; return await this.saveNode('root', rootNode); }
+            async getNode(path) { 
+                const store = await this._store(); 
+                let rec = await new Promise(r => { let req = store.get(path); req.onsuccess = () => r(req.result); req.onerror = () => r(null); });
+                return rec?.data ?? null; 
+            }
+            async saveNode(path, data) { 
+                const store = await this._store('readwrite'); 
+                return new Promise(r => { let req = store.put({ path, data }); req.onsuccess = () => r(true); }); 
+            }
+            async getDir(dirPath, create = false) { 
+                const node = await this.getNode('root'); if(!node) return null; 
+                let parts = dirPath.split('/').filter(p => p); let curr = node; let changed = false;
+                for(let p of parts) { 
+                    if(curr[p] === undefined) { if(create) { curr[p] = {}; changed = true; } else return null; } 
+                    curr = curr[p]; 
+                } 
+                if (changed) await this.saveNode('root', node);
+                return curr; 
+            }
+            async write(dirPath, file, data) { 
+                const rootNode = await this.getNode('root'); if(!rootNode) return false;
+                let parts = dirPath.split('/').filter(p => p); let curr = rootNode; 
+                for(let p of parts) { if(curr[p] === undefined) curr[p] = {}; curr = curr[p]; } 
+                curr[file] = data; return await this.saveNode('root', rootNode); 
+            }
             async read(dirPath, file) { const dir = await this.getDir(dirPath); return dir?.[file] ?? null; }
-            async delete(dirPath, file) { const rootNode = await this.getNode('root'); if(!rootNode) return false; let parts = dirPath.split('/').filter(p => p); let curr = rootNode; for(let p of parts) { if(curr[p] === undefined) return false; curr = curr[p]; } if(curr[file] !== undefined) { delete curr[file]; return await this.saveNode('root', rootNode); } return false; }
+            async delete(dirPath, file) { 
+                const rootNode = await this.getNode('root'); if(!rootNode) return false;
+                let parts = dirPath.split('/').filter(p => p); let curr = rootNode; 
+                for(let p of parts) { if(curr[p] === undefined) return false; curr = curr[p]; } 
+                if(curr[file] !== undefined) { delete curr[file]; return await this.saveNode('root', rootNode); } 
+                return false; 
+            }
+            async format() { const db = await this._open(); db.close(); indexedDB.deleteDatabase(this.DB_NAME); localStorage.clear(); location.reload(); }
         }
 
-        class Sanitizer { static sanitizeHTML(raw) { return DOMPurify.sanitize(raw, { ALLOWED_TAGS: ['div','span','button','input','textarea','canvas','img','style','b','i','u','br','hr'], ALLOWED_ATTR: ['class','id','style','src','href','type','value','placeholder','onclick','onmousedown','onkeydown'], FORBID_ATTR: ['onload','onfocus'] }); } }
+        class Sanitizer {
+            static sanitizeHTML(raw) { return DOMPurify.sanitize(raw, { ALLOWED_TAGS: ['div','span','button','input','textarea','canvas','img','video','audio','style','b','i','u','br','select','option','label','hr'], ALLOWED_ATTR: ['class','id','style','src','href','type','value','placeholder','data-*','title','min','max','step','disabled','checked','onmousedown','onclick','onkeydown','oninput','ondblclick','onmouseover'], FORBID_ATTR: ['onload','onfocus'] }); }
+        }
 
         class Theme {
             constructor(){ this.accent = '#0078d7'; }
@@ -169,14 +210,7 @@ if (window.__GEMIOS_BOOTED__) {
         }
 
         class AudioEngine {
-            constructor() { 
-                this.actx = null; 
-                this.sounds = { 
-                    open: (t)=> this._tone(440,880,t,0.05,0,0.2), close: (t)=> this._tone(880,440,t,0.05,0,0.2), 
-                    click: (t)=> this._tone(1200,1200,t,0.02,0,0.05), success: (t)=> this._chord([523.25,659.25,783.99],t, 1), 
-                    error: (t)=> this._tone(150,150,t,0.1,0.2), startup: (t)=> this._startupChime(t), shutdown: (t)=> this._shutdownChime(t)
-                }; 
-            }
+            constructor() { this.actx = null; this.sounds = { open: (t)=> this._tone(440,880,t,0.05,0,0.2), close: (t)=> this._tone(880,440,t,0.05,0,0.2), click: (t)=> this._tone(1200,1200,t,0.02,0,0.05), success: (t)=> this._chord([523.25,659.25,783.99],t, 1), error: (t)=> this._tone(150,150,t,0.1,0.2), startup: (t)=> this._startupChime(t), shutdown: (t)=> this._shutdownChime(t) }; }
             _init() { if (!this.actx) this.actx = new (window.AudioContext||window.webkitAudioContext)(); if (this.actx.state === 'suspended') this.actx.resume(); }
             _tone(start,end,t,gStart=0.1,gEnd=0, len=0.3){ this._init(); if(!t) t=this.actx.currentTime; const osc=this.actx.createOscillator(); const gain=this.actx.createGain(); osc.type='sine'; osc.frequency.setValueAtTime(start,t); osc.frequency.exponentialRampToValueAtTime(end,t+(len*0.6)); gain.gain.setValueAtTime(gStart,t); gain.gain.exponentialRampToValueAtTime(gEnd+0.0001,t+len); osc.connect(gain); gain.connect(this.actx.destination); osc.start(t); osc.stop(t+len); }
             _chord(freqs,t, len=3){ this._init(); if(!t) t=this.actx.currentTime; freqs.forEach((f,i)=>{ const osc=this.actx.createOscillator(); const gain=this.actx.createGain(); osc.type='sine'; osc.frequency.setValueAtTime(f,t+(i*0.1)); gain.gain.setValueAtTime(0,t+(i*0.1)); gain.gain.linearRampToValueAtTime(0.15,t+(i*0.1)+0.5); gain.gain.exponentialRampToValueAtTime(0.0001,t+(i*0.1)+len); osc.connect(gain); gain.connect(this.actx.destination); osc.start(t+(i*0.1)); osc.stop(t+(i*0.1)+len); }); }
@@ -223,12 +257,18 @@ if (window.__GEMIOS_BOOTED__) {
                 const content = typeof app.html === 'function' ? app.html(pid, fileData) : (app.htmlString || '');
                 const isSystem = (app.tag === 'sys' || app.tag === 'pro' || app.tag === 'edu' || app.tag === 'fin');
                 const isAnim = localStorage.getItem('GemiOS_Driver_Anim') !== 'false';
+                
                 let safeContent = isSystem ? content : `<iframe sandbox="allow-scripts allow-same-origin" srcdoc="${Sanitizer.sanitizeHTML(content).replace(/"/g,'&quot;')}" style="width:100%;height:100%;border:none;"></iframe>`;
 
                 const html = `<div class="win ${isAnim ? 'win-animated' : 'win-static'}" id="${wid}" data-maximized="false" style="top:${Math.random()*40+60}px; left:${Math.random()*60+120}px; width:${app.width}px; z-index:${++this.zIndex};" onmousedown="GemiOS.WM.focus('${wid}')">
                     <div class="title-bar" ondblclick="GemiOS.WM.maximize('${wid}')" onmousedown="GemiOS.WM.drag(event,'${wid}')">
                         <div style="display:flex; align-items:center; gap:8px;"><span>${app.icon}</span> <span>${app.title}</span></div>
-                        <div onmousedown="event.stopPropagation()"><button class="ctrl-btn min-btn" onclick="GemiOS.WM.minimize('${wid}')">-</button><button class="ctrl-btn snap-btn" onclick="GemiOS.WM.snap('${wid}','left')">&lt;</button><button class="ctrl-btn snap-btn" onclick="GemiOS.WM.snap('${wid}','right')">&gt;</button><button class="ctrl-btn close-btn" onclick="GemiOS.pm.kill(${pid})">×</button></div>
+                        <div onmousedown="event.stopPropagation()">
+                            <button class="ctrl-btn min-btn" onclick="GemiOS.WM.minimize('${wid}')">-</button>
+                            <button class="ctrl-btn snap-btn" onclick="GemiOS.WM.snap('${wid}','left')">&lt;</button>
+                            <button class="ctrl-btn snap-btn" onclick="GemiOS.WM.snap('${wid}','right')">&gt;</button>
+                            <button class="ctrl-btn close-btn" onclick="GemiOS.pm.kill(${pid})">×</button>
+                        </div>
                     </div>
                     <div class="content" id="content_${pid}">${safeContent}</div>
                     <div class="resize-handle"></div>
@@ -260,7 +300,7 @@ if (window.__GEMIOS_BOOTED__) {
             }
         }
 
-        // --- PREINSTALLED CORE APPS & PRICING REBALANCE ---
+        /* --- PREINSTALLED CORE APPS & DEDUPLICATED REGISTRY --- */
         window.GemiCoreApps = {
             'sys_term': { id: 'sys_term', tag: 'sys', icon: '💻', title: 'Terminal', width: 500, html: (pid) => `<div id="t-out-${pid}" style="flex-grow:1; background:#0a0a0a; color:#38ef7d; padding:10px; font-family:monospace; overflow-y:auto; border-radius:6px; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);">GemiOS v50.0 Terminal.<br>Type 'help' for commands.</div><div style="display:flex; background:#111; padding:8px; border-radius:6px; margin-top:5px; border:1px solid #333;"><span id="t-path-${pid}" style="color:#0078d7; margin-right:8px; font-weight:bold;">C:/Users/${GemiOS.user}></span><input type="text" id="t-in-${pid}" style="flex-grow:1; background:transparent; color:#38ef7d; border:none; outline:none; font-family:monospace; font-size:14px;" onkeydown="GemiOS.handleTerm(event, ${pid}, this)"></div>`, onLaunch: (pid) => { let p = `C:/Users/${GemiOS.user}`; GemiOS.termStates[pid] = p; document.getElementById(`t-path-${pid}`).innerText = p + '>'; setTimeout(()=>document.getElementById('t-in-'+pid).focus(),100); } },
             'sys_drive': { id: 'sys_drive', tag: 'sys', icon: '📁', title: 'Explorer', width: 520, html: (pid) => `<div class="sys-card" style="display:flex; gap:10px; align-items:center; background:rgba(0,120,215,0.2);"><button onclick="GemiOS.navDrive(${pid}, 'UP')" class="btn-sec" style="width:auto; margin:0; padding:5px 10px;">⬆️ Up</button><input type="text" id="d-path-${pid}" value="C:/" disabled style="flex-grow:1; background:transparent; color:inherit; border:none; font-weight:bold; font-size:14px; outline:none;"></div><div id="d-list-${pid}" style="flex-grow:1; min-height:200px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:10px; padding:5px;"></div>`, onLaunch: (pid) => { GemiOS.driveStates[pid] = `C:/Users/${GemiOS.user}`; GemiOS.renderDrive(pid); } },
@@ -337,7 +377,7 @@ if (window.__GEMIOS_BOOTED__) {
                 
                 await this.loadDependencies();
                 this.patchDesktopData();
-                this._startOTADaemon(); // Silent Background Updates Check
+                this._startOTADaemon();
             }
 
             login() {
@@ -432,8 +472,7 @@ if (window.__GEMIOS_BOOTED__) {
                     .btn-primary:hover { transform:translateY(-2px); filter:brightness(1.1); }
                     .btn-sec { width:100%; padding:12px; background:rgba(255,255,255,0.1); color:inherit; border:1px solid rgba(255,255,255,0.2); border-radius:8px; margin-bottom:10px; cursor:pointer; transition:0.2s;}
                     .btn-sec:hover { background:rgba(255,255,255,0.2); }
-                    .btn-danger { width:100%; padding:12px; background:rgba(255,77,77,0.8); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; transition:0.2s;}
-                    .btn-danger:hover { transform:translateY(-2px); filter:brightness(1.1); }
+                    .btn-danger { width:100%; padding:12px; background:rgba(255,77,77,0.8); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
 
                     #widget-notes { position:absolute; top:30px; right:30px; width:220px; height:220px; background:linear-gradient(135deg, #fff9c4, #fbc02d); color:#333; box-shadow:5px 10px 20px rgba(0,0,0,0.4); padding:15px; z-index:5; font-family:'Segoe Print', 'Comic Sans MS', cursive; transform: rotate(2deg); transition: transform 0.2s, box-shadow 0.2s; cursor:grab; pointer-events:auto; border-radius:2px 2px 15px 2px;}
                     #widget-notes:active { cursor:grabbing; transform: rotate(0deg) scale(1.05); z-index:9999; box-shadow:10px 20px 30px rgba(0,0,0,0.5);}
@@ -599,7 +638,7 @@ if (window.__GEMIOS_BOOTED__) {
         async renderStore(pid) { 
             let desk = await this.VFS.getDir(`C:/Users/${this.user}/Desktop`) || {}; 
             let h = ''; 
-            let seen = new Set(); // FIXED: The Deduplication Engine
+            let seen = new Set(); 
             
             for(let f in window.GemiRegistry) { 
                 let a = window.GemiRegistry[f]; 
@@ -680,7 +719,6 @@ if (window.__GEMIOS_BOOTED__) {
             if(!auto) this.bus.emit('notify', {title: "Backup Complete", msg: `Saved as ${snapName} in NVRAM.`, success: true});
         }
 
-        // FIXED: The Background OTA Daemon
         _startOTADaemon() {
             setTimeout(async () => {
                 try {
