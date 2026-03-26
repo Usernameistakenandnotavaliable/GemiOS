@@ -1,4 +1,5 @@
 {
-  "version": "50.2-BETA.2-AUDIO",
-  "notes": "This update re adds the shutdown with a reformed startup and shutdown sound! this gives you time to get to the BIOS directly!."
+  "version": "50.1.0",
+  "codename": "Golden Master",
+  "release_notes": "Official Release! Includes Deduplicated Store, NVRAM Security, VFS memory leak patches, and fully native Core Apps."
 }
