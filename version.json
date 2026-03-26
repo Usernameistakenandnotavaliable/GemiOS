@@ -1,4 +1,4 @@
 {
-  "version": "50.0.0-GOLD",
-  "notes": "The Modular Core Update. Celebrating 50 major versions! Hard-split the BIOS Bootloader from the OS Kernel. Fully mitigated CSP dynamic eval execution bugs. Restored perfect UI rendering."
+  "version": "50-RC2-Recall",
+  "notes": "This update gives you back the freedom GemiOS had, recreating and reforming all the features that were removed! Not all features were refined though! will be working on them during the next few updates!."
 }
