@@ -1,6 +1,6 @@
 /*=====================================================================
-   GemiOS CLOUD HYPERVISOR - v50.3.0-BETA (THE ADVANCED ENGINE UPDATE)
-   GemiMaker v4.0: Custom JS Injection, Dynamic Args, Wrap Physics.
+   GemiOS CLOUD HYPERVISOR - v50.2.0 (OFFICIAL CREATOR RELEASE)
+   GemiDraw Saving, Native Image Viewer, Window Bounds, JS Safety.
 =====================================================================*/
 
 if (window.__GEMIOS_BOOTED__) {
@@ -12,7 +12,7 @@ if (window.__GEMIOS_BOOTED__) {
         document.body.innerHTML = ''; 
         document.body.style.padding = '0';
 
-        /* --- THE GEMIMAKER ENGINE v4.0 (CUSTOM JS + ARGS) --- */
+        /* --- THE GEMIMAKER ENGINE v4.1 (WITH JS SAFETY) --- */
         window.GemiEngine = {
             workspaces: {}, loops: {}, sprites: {}, 
             getHTML: function(pid) {
@@ -106,7 +106,7 @@ if (window.__GEMIOS_BOOTED__) {
                 }, 100);
             },
             showDocs: function() {
-                alert("🎮 GemiMaker v4.0 Docs:\n\n- CUSTOM JS: Inject raw code! Available variables: `state`, `mouse`, `keys`, `ctx`, `cvs`.\n  Example: state.x = mouse.x; \n\n- ARGUMENTS: Blocks like 'Say Text' and 'Set Opacity' will prompt you for values.\n- SPRITES: Draw on the 16x16 grid and click 'Save Frame'. Use 'Animate Sprite' to loop.\n- PHYSICS: 'Wrap Around' teleports you across the screen borders!");
+                alert("🎮 GemiMaker v4.1 Docs:\n\n- CUSTOM JS: Inject raw code! Available variables: `state`, `mouse`, `keys`, `ctx`, `cvs`.\n  Example: state.x = mouse.x; \n\n- ARGUMENTS: Blocks like 'Say Text' and 'Set Opacity' will prompt you for values.\n- SPRITES: Draw on the 16x16 grid and click 'Save Frame'. Use 'Animate Sprite' to loop.\n- PHYSICS: 'Wrap Around' teleports you across the screen borders!");
             },
             clearSprite: function(pid) { let g = document.getElementById(`sprite-grid-${pid}`); if(g) Array.from(g.children).forEach(c => c.style.background = 'transparent'); },
             saveSprite: function(pid) {
@@ -119,14 +119,13 @@ if (window.__GEMIOS_BOOTED__) {
                 }
             },
             
-            // DYNAMIC ADD BLOCK FUNCTION (Supports User Input)
             addBlock: function(pid, type, label, promptText = null) { 
                 let val = '';
                 if(promptText) {
                     val = prompt(promptText);
-                    if(val === null) return; // User clicked Cancel
+                    if(val === null) return; 
                     label += `: ${val}`;
-                    type += `|${val}`; // Append argument via pipe separator
+                    type += `|${val}`; 
                 }
                 
                 this.workspaces[pid].push(type); let ws = document.getElementById(`engine-workspace-${pid}`); 
@@ -135,7 +134,7 @@ if (window.__GEMIOS_BOOTED__) {
                 if(['cursor', 'wasd', 'customJS'].includes(type.split('|')[0])) color = "#e67e22"; 
                 if(['addScore', 'drawScore'].includes(type.split('|')[0])) color = "#2ecc71";
                 if(['sndClick'].includes(type.split('|')[0])) color = "#9b59b6";
-                if(['customJS'].includes(type.split('|')[0])) color = "#ff4d4d"; // Red for God Mode
+                if(['customJS'].includes(type.split('|')[0])) color = "#ff4d4d"; 
                 
                 let fontColor = ['addScore', 'drawScore'].includes(type.split('|')[0]) ? 'black' : 'white';
                 
@@ -149,8 +148,7 @@ if (window.__GEMIOS_BOOTED__) {
                 this.stopGame(pid); let cvs = document.getElementById(`engine-cvs-${pid}`); if(!cvs) return; 
                 cvs.width = cvs.offsetWidth; cvs.height = cvs.offsetHeight; let ctx = cvs.getContext('2d'); 
                 
-                // Giant State Object passed to everything
-                let state = { x: cvs.width/2, y: cvs.height/2, size: 40, color: '#38ef7d', opacity: 1.0, vx: 0, vy: 0, rot: 0, frame: 0, tick: 0, vars: { score: 0 }, text: null }; 
+                let state = { x: cvs.width/2, y: cvs.height/2, size: 40, color: '#38ef7d', opacity: 1.0, vx: 0, vy: 0, rot: 0, frame: 0, tick: 0, vars: { score: 0 }, text: null, jsError: false }; 
                 let mouse = { x: cvs.width/2, y: cvs.height/2, left: false, right: false }; 
                 let keys = {};
                 
@@ -168,49 +166,46 @@ if (window.__GEMIOS_BOOTED__) {
                 const gameLoop = () => { 
                     ctx.fillStyle = "rgba(0, 0, 0, 0.4)"; ctx.fillRect(0, 0, cvs.width, cvs.height); 
                     state.tick++;
-                    state.text = null; // Reset text every frame unless explicitly drawn
+                    state.text = null; 
                     
                     blocks.forEach(blockStr => { 
                         let parts = blockStr.split('|');
                         let type = parts[0];
-                        let val = parts.slice(1).join('|'); // Re-join in case Custom JS has pipes
+                        let val = parts.slice(1).join('|'); 
                         
-                        // Physics & Motion
                         if(type === 'moveX') state.x += 5; 
                         if(type === 'moveY') state.y += 5; 
                         if(type === 'turn') state.rot += 5;
                         if(type === 'bounce') { if(state.x < 0 || state.x > cvs.width) state.vx *= -1; if(state.y < 0 || state.y > cvs.height) state.vy *= -1; } 
                         if(type === 'wrap') { if(state.x < 0) state.x = cvs.width; if(state.x > cvs.width) state.x = 0; if(state.y < 0) state.y = cvs.height; if(state.y > cvs.height) state.y = 0; }
-                        
-                        // Controls
                         if(type === 'cursor') { state.x += (mouse.x - state.x) * 0.1; state.y += (mouse.y - state.y) * 0.1; } 
                         if(type === 'wasd') {
                             if(keys['w']) state.y -= 5; if(keys['s']) state.y += 5;
                             if(keys['a']) state.x -= 5; if(keys['d']) state.x += 5;
                         }
-                        
-                        // Looks, Sounds & Arguments
                         if(type === 'say') state.text = val;
                         if(type === 'opacity') { let o = parseFloat(val); if(!isNaN(o)) state.opacity = o; }
                         if(type === 'sndClick' && state.tick % 30 === 0) GemiOS.audio.play('click');
                         if(type === 'nextCostume' && savedSprites.length > 0 && state.tick % 15 === 0) { state.frame = (state.frame + 1) % savedSprites.length; }
                         if(type === 'grow') { state.size += 0.5; if(state.size > 200) state.size = 20; } 
-                        
-                        // Variables & Math
                         if(type === 'addScore' && state.tick % 30 === 0) { state.vars.score += 1; }
                         if(type === 'drawScore') { ctx.fillStyle = "#fff"; ctx.font = "14px monospace"; ctx.fillText(`Score: ${state.vars.score}`, 10, 20); }
 
-                        // 💥 THE GOD MODE BLOCK
+                        // JS SANDBOX SAFETY WRAPPER
                         if(type === 'customJS') {
                             try {
-                                // Execute user JS in a protected scope, giving them access to the game variables
                                 let customFunc = new Function('state', 'mouse', 'keys', 'ctx', 'cvs', val);
                                 customFunc(state, mouse, keys, ctx, cvs);
-                            } catch(err) { console.error("Custom JS Error: ", err); }
+                            } catch(err) { 
+                                if(!state.jsError) {
+                                    console.error("Custom JS Error: ", err);
+                                    if(window.GemiOS) GemiOS.bus.emit('notify', {title: 'JS Error', msg: 'Check console. Script halted.', success: false});
+                                    state.jsError = true;
+                                }
+                            }
                         }
                     }); 
                     
-                    // Main Sprite Renderer
                     ctx.save(); 
                     ctx.translate(state.x, state.y); 
                     ctx.rotate(state.rot * Math.PI / 180);
@@ -231,7 +226,6 @@ if (window.__GEMIOS_BOOTED__) {
                     }
                     ctx.restore();
                     
-                    // Text Overlay Renderer (Drawn on top of sprite, not rotated)
                     if(state.text) {
                         ctx.fillStyle = "#fff"; ctx.font = "12px sans-serif"; ctx.textAlign = "center";
                         ctx.fillText(state.text, state.x, state.y - (state.size/2) - 10);
@@ -317,7 +311,26 @@ if (window.__GEMIOS_BOOTED__) {
                 this.audio.play('open'); this._renderDock(); 
             }
             focus(wid){ const el = document.getElementById(wid); if (el) { el.style.zIndex = ++this.zIndex; el.style.boxShadow = "0 25px 60px rgba(0,0,0,0.8), 0 0 0 1px var(--accent)"; } }
-            drag(e,wid){ const win = document.getElementById(wid); if (!win || win.dataset.maximized==='true') return; const offsetX = e.clientX - win.offsetLeft; const offsetY = e.clientY - win.offsetTop; this.focus(wid); let iframes = document.querySelectorAll('iframe'); iframes.forEach(ifr => ifr.style.pointerEvents = 'none'); const isAnim = localStorage.getItem('GemiOS_Driver_Anim') !== 'false'; if(isAnim) win.style.transition = 'none'; const move = ev => { win.style.left = ev.clientX - offsetX + 'px'; win.style.top = Math.max(0, ev.clientY - offsetY) + 'px'; }; const up = () => { document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); if(isAnim) win.style.transition = 'width 0.3s, height 0.3s, top 0.3s, left 0.3s'; iframes.forEach(ifr => ifr.style.pointerEvents = 'auto'); win.style.boxShadow = "0 20px 50px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.2)"; }; document.addEventListener('mousemove',move); document.addEventListener('mouseup',up); }
+            drag(e,wid){ 
+                const win = document.getElementById(wid); if (!win || win.dataset.maximized==='true') return; 
+                const offsetX = e.clientX - win.offsetLeft; const offsetY = e.clientY - win.offsetTop; 
+                this.focus(wid); 
+                let iframes = document.querySelectorAll('iframe'); iframes.forEach(ifr => ifr.style.pointerEvents = 'none'); 
+                const isAnim = localStorage.getItem('GemiOS_Driver_Anim') !== 'false'; if(isAnim) win.style.transition = 'none'; 
+                
+                // FIXED WINDOW DRAG LOGIC
+                const move = ev => { 
+                    let newX = ev.clientX - offsetX;
+                    let newY = Math.max(0, ev.clientY - offsetY); 
+                    newX = Math.min(newX, window.innerWidth - 50);
+                    newX = Math.max(newX, -win.offsetWidth + 50);
+                    newY = Math.min(newY, window.innerHeight - 50);
+                    win.style.left = newX + 'px'; 
+                    win.style.top = newY + 'px'; 
+                }; 
+                const up = () => { document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); if(isAnim) win.style.transition = 'width 0.3s, height 0.3s, top 0.3s, left 0.3s'; iframes.forEach(ifr => ifr.style.pointerEvents = 'auto'); win.style.boxShadow = "0 20px 50px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.2)"; }; 
+                document.addEventListener('mousemove',move); document.addEventListener('mouseup',up); 
+            }
             maximize(wid){ const win = document.getElementById(wid); if (!win) return; if (win.dataset.maximized==='true'){ win.style.top = win.dataset.pT; win.style.left = win.dataset.pL; win.style.width = win.dataset.pW; win.style.height= win.dataset.pH; win.dataset.maximized='false'; win.style.borderRadius='12px'; } else { win.dataset.pT = win.style.top; win.dataset.pL = win.style.left; win.dataset.pW = win.style.width; win.dataset.pH = win.style.height; win.style.top = '0'; win.style.left = '0'; win.style.width = '100vw'; win.style.height = 'calc(100vh - 80px)'; win.dataset.maximized='true'; win.style.borderRadius='0'; } }
             snap(wid, side){ const win = document.getElementById(wid); if (!win) return; if(win.dataset.maximized === "false") { win.dataset.pT = win.style.top; win.dataset.pL = win.style.left; win.dataset.pW = win.style.width; win.dataset.pH = win.style.height; } win.style.top = '0'; win.style.height = 'calc(100vh - 80px)'; win.style.width = '50vw'; win.style.left = side==='left' ? '0' : '50vw'; win.dataset.maximized='true'; win.style.borderRadius='0'; this.focus(wid); }
             minimize(wid){ const win = document.getElementById(wid); if (!win) return; if (win.style.opacity === '0'){ win.style.opacity='1'; win.style.transform='scale(1) translateY(0)'; win.style.pointerEvents='auto'; } else { win.style.opacity='0'; win.style.transform='scale(0.9) translateY(40px)'; win.style.pointerEvents='none'; } }
@@ -341,7 +354,7 @@ if (window.__GEMIOS_BOOTED__) {
         }
 
         window.GemiCoreApps = {
-            'sys_term': { id: 'sys_term', tag: 'sys', icon: '💻', title: 'Terminal', width: 500, html: (pid) => `<div id="t-out-${pid}" style="flex-grow:1; background:#0a0a0a; color:#38ef7d; padding:10px; font-family:monospace; overflow-y:auto; border-radius:6px; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);">GemiOS v50.3-BETA Shell.<br>Type 'help' for commands.</div><div style="display:flex; background:#111; padding:8px; border-radius:6px; margin-top:5px; border:1px solid #333;"><span id="t-path-${pid}" style="color:#0078d7; margin-right:8px; font-weight:bold;">C:/Users/${GemiOS.user}></span><input type="text" id="t-in-${pid}" style="flex-grow:1; background:transparent; color:#38ef7d; border:none; outline:none; font-family:monospace; font-size:14px;" onkeydown="GemiOS.handleTerm(event, ${pid}, this)"></div>`, onLaunch: (pid) => { let p = `C:/Users/${GemiOS.user}`; GemiOS.termStates[pid] = p; document.getElementById(`t-path-${pid}`).innerText = p + '>'; setTimeout(()=>document.getElementById('t-in-'+pid).focus(),100); } },
+            'sys_term': { id: 'sys_term', tag: 'sys', icon: '💻', title: 'Terminal', width: 500, html: (pid) => `<div id="t-out-${pid}" style="flex-grow:1; background:#0a0a0a; color:#38ef7d; padding:10px; font-family:monospace; overflow-y:auto; border-radius:6px; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);">GemiOS v50.2.0 Terminal.<br>Type 'help' for commands.</div><div style="display:flex; background:#111; padding:8px; border-radius:6px; margin-top:5px; border:1px solid #333;"><span id="t-path-${pid}" style="color:#0078d7; margin-right:8px; font-weight:bold;">C:/Users/${GemiOS.user}></span><input type="text" id="t-in-${pid}" style="flex-grow:1; background:transparent; color:#38ef7d; border:none; outline:none; font-family:monospace; font-size:14px;" onkeydown="GemiOS.handleTerm(event, ${pid}, this)"></div>`, onLaunch: (pid) => { let p = `C:/Users/${GemiOS.user}`; GemiOS.termStates[pid] = p; document.getElementById(`t-path-${pid}`).innerText = p + '>'; setTimeout(()=>document.getElementById('t-in-'+pid).focus(),100); } },
             'sys_drive': { id: 'sys_drive', tag: 'sys', icon: '📁', title: 'Explorer', width: 520, html: (pid) => `<div class="sys-card" style="display:flex; gap:10px; align-items:center; background:rgba(0,120,215,0.2);"><button onclick="GemiOS.navDrive(${pid}, 'UP')" class="btn-sec" style="width:auto; margin:0; padding:5px 10px;">⬆️ Up</button><input type="text" id="d-path-${pid}" value="C:/" disabled style="flex-grow:1; background:transparent; color:inherit; border:none; font-weight:bold; font-size:14px; outline:none;"></div><div id="d-list-${pid}" style="flex-grow:1; min-height:200px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:10px; padding:5px;"></div>`, onLaunch: (pid) => { GemiOS.driveStates[pid] = `C:/Users/${GemiOS.user}`; GemiOS.renderDrive(pid); } },
             'sys_set': { id: 'sys_set', tag: 'sys', icon: '⚙️', title: 'Settings', width: 450, html: () => `
                 <div class="sys-card"><h3 style="margin:0 0 10px 0; color:var(--accent);">🎨 Appearance</h3>
@@ -381,13 +394,17 @@ if (window.__GEMIOS_BOOTED__) {
                     </div>
                 </div>
             ` },
-            'sys_update': { id: 'sys_update', tag: 'sys', icon: '☁️', title: 'Updater', width: 380, html: () => `<div class="sys-card" style="text-align:center; flex-grow:1;"><div style="font-size:40px;">☁️</div><h3 style="margin:5px 0;">OTA Updater</h3><p style="font-size:13px; opacity:0.8;">Current OS: <b id="kern-ver">v${localStorage.getItem('GemiOS_Cache_Ver') || '50.3.0-BETA'}</b></p><div id="upd-stat" style="font-size:12px; min-height:15px; margin-bottom:10px;">Ready to fetch Cloud Update.</div><button onclick="GemiOS.triggerOTA(this)" class="btn-primary">Check for Updates</button></div>` },
+            'sys_update': { id: 'sys_update', tag: 'sys', icon: '☁️', title: 'Updater', width: 380, html: () => `<div class="sys-card" style="text-align:center; flex-grow:1;"><div style="font-size:40px;">☁️</div><h3 style="margin:5px 0;">OTA Updater</h3><p style="font-size:13px; opacity:0.8;">Current OS: <b id="kern-ver">v${localStorage.getItem('GemiOS_Cache_Ver') || '50.2.0'}</b></p><div id="upd-stat" style="font-size:12px; min-height:15px; margin-bottom:10px;">Ready to fetch Cloud Update.</div><button onclick="GemiOS.triggerOTA(this)" class="btn-primary">Check for Updates</button></div>` },
             'sys_store': { id: 'sys_store', tag: 'sys', icon: '🛒', title: 'GemiStore', width: 700, html: (pid) => `<div class="sys-card" style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg, var(--accent), #000); margin-bottom:10px;"><div style="font-size:24px; font-weight:bold;">GemiStore Hub</div><div style="font-size:40px;">🛒</div></div><div id="store-list-${pid}" style="flex-grow:1; overflow-y:auto; display:grid; grid-template-columns:1fr 1fr; gap:10px; padding-right:5px;"></div>`, onLaunch: (pid) => { GemiOS.renderStore(pid); } },
+            // NEW: Image Viewer for Desktop Art
+            'sys_view': { id: 'sys_view', tag: 'sys', icon: '🖼️', title: 'Image Preview', width: 450, html: (pid, fileData) => `<div style="display:flex; justify-content:center; align-items:center; background:#000; padding:10px; border-radius:6px; height:100%;"><img src="${fileData || ''}" style="max-width:100%; max-height:400px; border-radius:4px; box-shadow:0 4px 10px rgba(0,0,0,0.5);" alt="Image"></div>` },
             
             'app_calc': { id: 'app_calc', price: 0, tag: 'sys', icon: '🧮', title: 'Calculator', width: 260, html: (pid) => `<div style="background:rgba(255,255,255,0.9); color:black; padding:15px; font-size:28px; text-align:right; margin-bottom:10px; border-radius:6px; font-family:monospace; box-shadow:inset 0 2px 5px rgba(0,0,0,0.2);" id="cd-${pid}">0</div><div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px; flex-grow:1;">${['7','8','9','/','4','5','6','*','1','2','3','-','C','0','=','+'].map(b=>`<button style="padding:15px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.1); cursor:pointer; font-weight:bold; border-radius:6px; color:white; font-size:16px; transition:0.1s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="let d=document.getElementById('cd-${pid}'); if('${b}'==='C') d.innerText='0'; else if('${b}'==='=') { try { d.innerText=new Function('return ' + d.innerText)(); } catch(e){ d.innerText='Err'; } } else { if(d.innerText==='0') d.innerText='${b}'; else d.innerText+='${b}'; }">${b}</button>`).join('')}</div>` },
             'app_note': { id: 'app_note', price: 0, tag: 'sys', icon: '📝', title: 'Notepad', width: 450, html: (pid, fileData) => `<div style="display:flex; gap:10px; margin-bottom:10px;"><input type="text" id="note-name-${pid}" placeholder="my_note.txt" style="flex:1; padding:8px; border-radius:4px; border:none; outline:none; background:rgba(0,0,0,0.5); color:white;"><button class="btn-primary" style="width:auto; margin:0; padding:8px 15px;" onclick="if(document.getElementById('note-name-${pid}').value) { GemiOS.VFS.write('C:/Users/'+GemiOS.user+'/Desktop', document.getElementById('note-name-${pid}').value, document.getElementById('note-val-${pid}').value).then(()=>{ GemiOS.renderDesktopIcons(); GemiOS.bus.emit('notify', {title:'Saved', msg:'File written to Desktop!', success:true}); }); }">Save to Desktop</button></div><textarea id="note-val-${pid}" style="flex-grow:1; background:#1e1e1e; color:#d4d4d4; font-family:monospace; padding:15px; border:none; border-radius:6px; resize:none; outline:none; box-shadow:inset 0 2px 10px rgba(0,0,0,0.5);" placeholder="Type your notes here..."></textarea>`, onLaunch: (pid, fileData) => { if(fileData) document.getElementById(`note-val-${pid}`).value = fileData; } },
-            'app_draw': { id: 'app_draw', price: 0, tag: 'art', icon: '🎨', title: 'GemiDraw Studio', width: 600, html: (pid) => `<div style="display:flex; flex-direction:column; height:100%; gap:10px;"><div class="sys-card" style="display:flex; gap:10px; margin:0; padding:10px; align-items:center;"><input type="color" id="draw-clr-${pid}" value="#ffffff" style="width:40px; height:30px; border:none; background:transparent; cursor:pointer;"><input type="range" id="draw-sz-${pid}" min="1" max="50" value="5" style="flex:1;"><button class="btn-sec" style="margin:0; width:auto; padding:5px 15px;" onclick="let cvs=document.getElementById('draw-cvs-${pid}'); let ctx=cvs.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,cvs.width,cvs.height);">Clear</button></div><canvas id="draw-cvs-${pid}" style="flex-grow:1; background:#111; border-radius:6px; cursor:crosshair; width:100%; box-shadow:inset 0 0 10px rgba(0,0,0,0.8); border:1px solid #333;"></canvas></div>`, onLaunch: (pid) => { setTimeout(() => { let cvs = document.getElementById(`draw-cvs-${pid}`); if(!cvs) return; cvs.width = cvs.offsetWidth; cvs.height = cvs.offsetHeight; let ctx = cvs.getContext('2d'); ctx.fillStyle = '#111'; ctx.fillRect(0,0,cvs.width,cvs.height); let isDrawing = false; let lastX=0; let lastY=0; cvs.onmousedown = (e) => { isDrawing = true; lastX = e.offsetX; lastY = e.offsetY; }; cvs.onmouseup = () => isDrawing = false; cvs.onmouseout = () => isDrawing = false; cvs.onmousemove = (e) => { if(!isDrawing) return; ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(e.offsetX, e.offsetY); ctx.strokeStyle = document.getElementById(`draw-clr-${pid}`).value; ctx.lineWidth = document.getElementById(`draw-sz-${pid}`).value; ctx.lineCap = 'round'; ctx.stroke(); lastX = e.offsetX; lastY = e.offsetY; }; }, 100); } },
-            'app_maker': { id: 'app_maker', price: 0, tag: 'pro', icon: '🎮', title: 'GemiMaker v4.0', desc: 'Game Engine with Custom JS.', width: 950, html: (pid) => `<div style="padding:20px; text-align:center;">Loading Engine...</div>`, onLaunch: (pid) => { setTimeout(() => { window.GemiEngine.init(pid); }, 300); }, onKill: (pid) => { window.GemiEngine.stopGame(pid); } },
+            
+            // DRAW APP REFORM: Can now Save Images!
+            'app_draw': { id: 'app_draw', price: 0, tag: 'art', icon: '🎨', title: 'GemiDraw Studio', width: 600, html: (pid) => `<div style="display:flex; flex-direction:column; height:100%; gap:10px;"><div class="sys-card" style="display:flex; gap:10px; margin:0; padding:10px; align-items:center;"><input type="color" id="draw-clr-${pid}" value="#ffffff" style="width:40px; height:30px; border:none; background:transparent; cursor:pointer;"><input type="range" id="draw-sz-${pid}" min="1" max="50" value="5" style="flex:1;"><button class="btn-sec" style="margin:0; width:auto; padding:5px 15px;" onclick="let cvs=document.getElementById('draw-cvs-${pid}'); let ctx=cvs.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,cvs.width,cvs.height);">Clear</button><button class="btn-primary" style="margin:0; width:auto; padding:5px 15px;" onclick="let cvs=document.getElementById('draw-cvs-${pid}'); GemiOS.VFS.write('C:/Users/'+GemiOS.user+'/Desktop', 'Art_'+Math.floor(Math.random()*1000)+'.png', cvs.toDataURL()).then(()=>{ GemiOS.renderDesktopIcons(); GemiOS.bus.emit('notify', {title:'Masterpiece Saved!', msg:'Image written to Desktop.', success:true}); });">💾 Save</button></div><canvas id="draw-cvs-${pid}" style="flex-grow:1; background:#111; border-radius:6px; cursor:crosshair; width:100%; box-shadow:inset 0 0 10px rgba(0,0,0,0.8); border:1px solid #333; min-height:300px;"></canvas></div>`, onLaunch: (pid) => { setTimeout(() => { let cvs = document.getElementById(`draw-cvs-${pid}`); if(!cvs) return; cvs.width = cvs.offsetWidth; cvs.height = cvs.offsetHeight; let ctx = cvs.getContext('2d'); ctx.fillStyle = '#111'; ctx.fillRect(0,0,cvs.width,cvs.height); let isDrawing = false; let lastX=0; let lastY=0; cvs.onmousedown = (e) => { isDrawing = true; lastX = e.offsetX; lastY = e.offsetY; }; cvs.onmouseup = () => isDrawing = false; cvs.onmouseout = () => isDrawing = false; cvs.onmousemove = (e) => { if(!isDrawing) return; ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(e.offsetX, e.offsetY); ctx.strokeStyle = document.getElementById(`draw-clr-${pid}`).value; ctx.lineWidth = document.getElementById(`draw-sz-${pid}`).value; ctx.lineCap = 'round'; ctx.stroke(); lastX = e.offsetX; lastY = e.offsetY; }; }, 100); } },
+            'app_maker': { id: 'app_maker', price: 0, tag: 'pro', icon: '🎮', title: 'GemiMaker v4.1', desc: 'Game Engine with Custom JS.', width: 950, html: (pid) => `<div style="padding:20px; text-align:center;">Loading Native Engine...</div>`, onLaunch: (pid) => { setTimeout(() => { window.GemiEngine.init(pid); }, 300); }, onKill: (pid) => { window.GemiEngine.stopGame(pid); } },
             'app_dev': { id: 'app_dev', price: 0, tag: 'pro', icon: '🛠️', title: 'GemiDev Studio', desc: 'Build and share custom apps.', width: 850, html: (pid) => `
                 <div style="display:flex; flex-grow:1; gap:15px;">
                     <div style="display:flex; flex-direction:column; flex:2; gap:10px;">
@@ -459,14 +476,14 @@ if (window.__GEMIOS_BOOTED__) {
                 document.getElementById('login-screen').style.opacity = '0';
                 setTimeout(() => document.getElementById('login-screen').remove(), 500);
                 
-                if(!localStorage.getItem('GemiOS_V50_3_BETA_Celebrated')) {
+                if(!localStorage.getItem('GemiOS_V50_2_Celebrated')) {
                     setTimeout(() => {
-                        this.bus.emit('notify', {title: "🚀 V50.3.0-BETA ENGINE UPDATE", msg: "GemiMaker v4.0 Custom JS Unlocked.", success: true});
+                        this.bus.emit('notify', {title: "🚀 V50.2.0 OFFICIAL", msg: "Welcome to the Creator Update.", success: true});
                         let c = document.createElement('canvas'); c.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999999;pointer-events:none;'; document.body.appendChild(c);
                         let ctx = c.getContext('2d'); c.width = window.innerWidth; c.height = window.innerHeight;
                         let pieces = Array.from({length: 150}, () => ({ x: Math.random() * c.width, y: -20, vx: (Math.random()-0.5)*5, vy: Math.random()*5+2, color: ['#ffb400','#ff00cc','#38ef7d','#4db8ff'][Math.floor(Math.random()*4)] }));
                         let anim = setInterval(() => { ctx.clearRect(0,0,c.width,c.height); pieces.forEach(p => { p.x += p.vx; p.y += p.vy; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 8, 8); }); if(pieces.every(p => p.y > c.height)) { clearInterval(anim); c.remove(); } }, 16);
-                        localStorage.setItem('GemiOS_V50_3_BETA_Celebrated', 'true');
+                        localStorage.setItem('GemiOS_V50_2_Celebrated', 'true');
                     }, 1000);
                 }
             }
@@ -576,7 +593,7 @@ if (window.__GEMIOS_BOOTED__) {
             }
 
             _buildUI() {
-                let currentVer = localStorage.getItem('GemiOS_Cache_Ver') || '50.3.0-BETA';
+                let currentVer = localStorage.getItem('GemiOS_Cache_Ver') || '50.2.0';
                 const root = document.createElement('div'); root.id='os-root'; root.style.cssText='width:100vw;height:100vh;position:absolute;top:0;left:0; overflow:hidden;';
                 root.innerHTML = `
                 <div id="desktop-bg"></div>
@@ -655,7 +672,7 @@ if (window.__GEMIOS_BOOTED__) {
             const desk = document.getElementById('desktop-icons'); desk.innerHTML = ''; 
             let deskData = await this.VFS.getDir(`C:/Users/${this.user}/Desktop`) || {};
             for(let file in deskData) {
-                if(file.endsWith('.app') || file.endsWith('.txt')) {
+                if(file.endsWith('.app') || file.endsWith('.txt') || file.endsWith('.png')) {
                     let appId = deskData[file];
                     let a = window.GemiRegistry[appId];
                     if(file.endsWith('.txt')) {
@@ -666,9 +683,18 @@ if (window.__GEMIOS_BOOTED__) {
                             this.pm.launch('app_note', content);
                         };
                         desk.appendChild(el);
+                    } else if(file.endsWith('.png')) {
+                        // NEW: Image Viewer execution!
+                        const el = document.createElement('div'); el.className = 'icon';
+                        el.innerHTML = `<div>🖼️</div><div style="font-size:11px;">${file}</div>`; 
+                        el.ondblclick = async () => {
+                            let content = await this.VFS.read(`C:/Users/${this.user}/Desktop`, file);
+                            this.pm.launch('sys_view', content);
+                        };
+                        desk.appendChild(el);
                     } else if (a) {
                         const el = document.createElement('div'); el.className = 'icon';
-                        el.innerHTML = `<div>${a.icon}</div><div style="font-size:11px;">${file.replace('.app','')}`; 
+                        el.innerHTML = `<div>${a.icon}</div><div style="font-size:11px;">${file.replace('.app','')}</div>`; 
                         el.ondblclick = () => this.pm.launch(appId);
                         desk.appendChild(el);
                     }
@@ -707,7 +733,10 @@ if (window.__GEMIOS_BOOTED__) {
                 } 
                 else { 
                     let fileAppId = dir[k];
-                    html += `<div style="text-align:center; padding:10px; background:rgba(255,255,255,0.1); border-radius:6px; position:relative;"><div style="font-size:30px; cursor:pointer;" onclick="if('${k}'.endsWith('.app')) GemiOS.pm.launch('${fileAppId}'); else GemiOS.pm.launch('app_note', '${fileAppId}');">📄</div><div style="font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${k}</div><button onclick="GemiOS.VFS.delete('${path}', '${k}').then(()=>{ GemiOS.renderDrive(${pid}); GemiOS.renderDesktopIcons(); })" style="position:absolute; top:2px; right:2px; background:#ff4d4d; color:white; border:none; border-radius:3px; cursor:pointer; font-size:10px; padding:2px 5px;">X</button></div>`; 
+                    // Dynamic launch logic based on file extension
+                    let launchCmd = `if('${k}'.endsWith('.app')) GemiOS.pm.launch('${fileAppId}'); else if('${k}'.endsWith('.png')) { GemiOS.VFS.read('${path}', '${k}').then(data => GemiOS.pm.launch('sys_view', data)); } else GemiOS.pm.launch('app_note', '${fileAppId}');`;
+                    
+                    html += `<div style="text-align:center; padding:10px; background:rgba(255,255,255,0.1); border-radius:6px; position:relative;"><div style="font-size:30px; cursor:pointer;" onclick="${launchCmd}">📄</div><div style="font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${k}</div><button onclick="GemiOS.VFS.delete('${path}', '${k}').then(()=>{ GemiOS.renderDrive(${pid}); GemiOS.renderDesktopIcons(); })" style="position:absolute; top:2px; right:2px; background:#ff4d4d; color:white; border:none; border-radius:3px; cursor:pointer; font-size:10px; padding:2px 5px;">X</button></div>`; 
                 } 
             } 
             if(html === '') html = '<div style="grid-column: span 4; text-align:center; opacity:0.5; padding:20px;">Folder is empty</div>'; 
@@ -782,7 +811,7 @@ if (window.__GEMIOS_BOOTED__) {
         async createSnapshot(auto = false) {
             let k = localStorage.getItem('GemiOS_Cache_Kernel') || "";
             let r = localStorage.getItem('GemiOS_Cache_Registry') || "";
-            let v = localStorage.getItem('GemiOS_Cache_Ver') || "50.3.0-BETA";
+            let v = localStorage.getItem('GemiOS_Cache_Ver') || "50.2.0";
             let date = new Date().toLocaleString().replace(/[\/:]/g, '-');
             let snapName = `Snapshot_v${v}_${date}.sys`;
             let payload = JSON.stringify({kernel: k, registry: r, version: v});
@@ -796,7 +825,7 @@ if (window.__GEMIOS_BOOTED__) {
                     let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/version.json?t=" + Date.now(), {cache: "no-store"});
                     if (r.ok) {
                         let d = await r.json();
-                        let currentVer = localStorage.getItem('GemiOS_Cache_Ver') || "50.3.0-BETA";
+                        let currentVer = localStorage.getItem('GemiOS_Cache_Ver') || "50.2.0";
                         if (d.version !== currentVer && !localStorage.getItem('GemiOS_Notified_' + d.version)) {
                             this.bus.emit('notify', {title: '🚀 Update Available!', msg: `Version ${d.version} is ready. Open Updater.`, success: true});
                             localStorage.setItem('GemiOS_Notified_' + d.version, 'true');
@@ -812,7 +841,7 @@ if (window.__GEMIOS_BOOTED__) {
                 let r = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/version.json?t=" + Date.now(), {cache: "no-store"});
                 if (!r.ok) throw new Error();
                 let d = await r.json();
-                let currentVer = localStorage.getItem('GemiOS_Cache_Ver') || "50.3.0-BETA";
+                let currentVer = localStorage.getItem('GemiOS_Cache_Ver') || "50.2.0";
                 
                 if (d.version !== currentVer) {
                     document.getElementById('upd-stat').innerHTML = `<span style="color:#ffeb3b">New Update: ${d.version}</span>`;
