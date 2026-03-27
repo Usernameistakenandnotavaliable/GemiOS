@@ -1,5 +1,5 @@
 /*=====================================================================
-   GemiOS CLOUD HYPERVISOR - v50.4.0-BETA (THE MULTI-ENTITY UPDATE)
+   GemiOS CLOUD HYPERVISOR - v50.3.0-BETA - Before release (THE MULTI-ENTITY UPDATE)
    GemiMaker v5.0, Task Manager, Synth, Multi-Sprite Collision.
 =====================================================================*/
 
