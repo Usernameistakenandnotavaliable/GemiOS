@@ -1,5 +1,5 @@
 {
-  "version": "50.3.0 - FIXES",
-  "codename": "POPCORN",
-  "release_notes": "Added more features to the OS more engine updates and also recreated the boot screen."
+  "version": "51.0.0-ALPHA",
+  "codename": "Modular Micro-Kernel",
+  "release_notes": "Alpha Release! Complete backend rewrite. Engine and Registry dynamically injected from cloud."
 }
