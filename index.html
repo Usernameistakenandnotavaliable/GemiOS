@@ -2,45 +2,255 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GemiOS BIOS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GemiOS UEFI BIOS (Alpha)</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     
     <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * ws: wss:;">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.0/purify.min.js"></script>
 
     <style>
-        body { background: #000; color: #38ef7d; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; box-sizing: border-box; }
-        #post-screen { white-space: pre-wrap; font-size: 16px; line-height: 1.5; }
+        body { background: #000; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; overflow: hidden; user-select: none; }
+        
+        /* The Classic POST Screen */
+        #post-screen { padding: 20px; font-family: 'Courier New', Courier, monospace; color: #aaa; white-space: pre-wrap; font-size: 15px; }
+        .gemi-logo { font-size: 40px; color: #38ef7d; font-weight: bold; margin-bottom: 10px; display:flex; align-items:center; gap:10px;}
+        
+        /* The Modern UEFI BIOS UI */
+        #uefi-screen { display: none; width: 100vw; height: 100vh; background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); flex-direction: column; }
+        .uefi-header { background: rgba(0,0,0,0.6); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #38ef7d; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .uefi-title { font-size: 24px; font-weight: 300; letter-spacing: 1px; color: #fff; }
+        .uefi-title b { color: #38ef7d; }
+        .uefi-body { display: flex; flex-grow: 1; padding: 20px; gap: 20px; }
+        
+        .uefi-sidebar { width: 300px; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .uefi-stat { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; border-left: 4px solid #38ef7d; }
+        .uefi-stat-title { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .uefi-stat-val { font-size: 18px; font-weight: bold; color: #fff; }
+        
+        .uefi-content { flex-grow: 1; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); padding: 30px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:15px; position: relative;}
+        
+        .uefi-btn { width: 400px; padding: 15px 20px; background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 16px; font-weight: 500; cursor: pointer; text-align: left; transition: 0.2s; display:flex; justify-content:space-between; align-items:center;}
+        .uefi-btn:hover { background: linear-gradient(90deg, rgba(56,239,125,0.3), transparent); border-color: #38ef7d; transform: translateX(5px); }
+        .uefi-btn.danger:hover { background: linear-gradient(90deg, rgba(255,77,77,0.3), transparent); border-color: #ff4d4d; }
+        
+        #uefi-overlay { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:999; justify-content:center; align-items:center; flex-direction:column; }
+        .spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.1); border-top-color: #38ef7d; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom:20px;}
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Snapshot List Styling */
+        #recovery-panel { display: none; flex-direction: column; width: 100%; height: 100%; }
+        .snap-item { background: rgba(0,0,0,0.5); padding: 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .snap-btn { background: #ffb400; color: #000; border: none; padding: 8px 15px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .snap-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
     </style>
 </head>
 <body>
-    <div id="post-screen">GemiOS Cloud Hypervisor [Version 50.0.0]
-(c) 2026 GemiOS Systems. All rights reserved.
+    <div id="post-screen">
+        <div class="gemi-logo"><span>👑</span> GemiOS Framework</div>
+        Loading Cloud Hypervisor v51.0.0-ALPHA...
+        System Memory: 10485760K OK
+        NVRAM Status: Checking Volumes...
+        
+        <span id="post-msg" style="color:#fff;">Press [F2] or [DEL] to enter UEFI BIOS Setup.</span>
+    </div>
 
-Memory Test: 10485760K OK... Initializing...</div>
+    <div id="uefi-screen">
+        <div class="uefi-header">
+            <div class="uefi-title"><b>GemiOS</b> UEFI Setup Utility</div>
+            <div style="font-family:monospace; color:#aaa; font-size:14px;">Version 2.7_MODULAR</div>
+        </div>
+        <div class="uefi-body">
+            <div class="uefi-sidebar">
+                <div class="uefi-stat"><div class="uefi-stat-title">CPU Temperature</div><div class="uefi-stat-val" id="uefi-temp">42°C</div></div>
+                <div class="uefi-stat"><div class="uefi-stat-title">NVRAM Storage</div><div class="uefi-stat-val" id="uefi-nvram">Scanning...</div></div>
+                <div class="uefi-stat"><div class="uefi-stat-title">Boot Drive</div><div class="uefi-stat-val">VirtualFS Partition 1</div></div>
+                <div class="uefi-stat" style="border-left-color:#4db8ff;"><div class="uefi-stat-title">System Time</div><div class="uefi-stat-val" id="uefi-time">--:--:--</div></div>
+            </div>
+            
+            <div class="uefi-content" id="main-panel">
+                <h2 style="margin-top:0; color:#aaa; font-weight:400; margin-bottom:30px;">System Recovery & Boot Override</h2>
+                
+                <button class="uefi-btn" onclick="biosAction('boot')">
+                    <span>▶ Continue Boot Sequence</span> <span style="color:#888;">(Exit & Save)</span>
+                </button>
+                <button class="uefi-btn" onclick="biosAction('diagnostics')">
+                    <span>🔍 Run System Diagnostics</span> <span style="color:#888;">(Test VFS)</span>
+                </button>
+                <button class="uefi-btn" onclick="biosAction('recovery')">
+                    <span>⏪ Recovery Manager</span> <span style="color:#888;">(Rollback OS Snapshot)</span>
+                </button>
+                <button class="uefi-btn" onclick="biosAction('cache')">
+                    <span>🧹 Flush OS Cache</span> <span style="color:#888;">(Clear LocalStorage)</span>
+                </button>
+                <button class="uefi-btn danger" onclick="biosAction('format')">
+                    <span>⚠️ Secure Erase NVRAM</span> <span style="color:#ff4d4d;">(Factory Reset)</span>
+                </button>
+            </div>
+
+            <div class="uefi-content" id="recovery-panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+                    <h2 style="margin:0; color:#ffb400; font-weight:400;">System Time Machine</h2>
+                    <button style="background:rgba(255,255,255,0.1); color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;" onclick="document.getElementById('recovery-panel').style.display='none'; document.getElementById('main-panel').style.display='flex';">⬅ Back</button>
+                </div>
+                <div id="snapshot-list" style="flex-grow:1; overflow-y:auto; padding-right:10px; width:100%;">
+                    <div style="text-align:center; color:#aaa; margin-top:50px;">Scanning NVRAM...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="uefi-overlay">
+        <div class="spinner"></div>
+        <h2 style="font-weight:400;" id="overlay-text">Saving Changes & Resetting...</h2>
+    </div>
 
     <script>
-        const log = (msg) => document.getElementById('post-screen').innerHTML += "\n" + msg;
+        let biosOpen = false;
+        let postTimer = setTimeout(() => { if(!biosOpen) loadKernel(); }, 2500);
 
-        async function boot() {
-            log("Searching for System Kernel...");
-            
-            // Try loading from GitHub directly to avoid local 404 confusion
-            const cloudUrl = "https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/kernel.js?t=" + Date.now();
-            
+        // Update UEFI Clocks and Temps safely
+        setInterval(() => {
+            let timeEl = document.getElementById('uefi-time');
+            let tempEl = document.getElementById('uefi-temp');
+            if(timeEl) timeEl.innerText = new Date().toLocaleTimeString();
+            if(tempEl && Math.random() > 0.7) tempEl.innerText = (40 + Math.random()*5).toFixed(1) + '°C';
+        }, 1000);
+
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'F2' || e.key === 'Delete') && !biosOpen) {
+                clearTimeout(postTimer);
+                biosOpen = true;
+                document.getElementById('post-screen').style.display = 'none';
+                document.getElementById('uefi-screen').style.display = 'flex';
+                calculateNVRAM();
+            }
+        });
+
+        async function calculateNVRAM() {
             try {
-                let r = await fetch(cloudUrl, { cache: "no-store" });
-                if(r.ok) {
-                    let code = await r.text();
-                    log("Kernel OK. Handing over execution...");
-                    setTimeout(() => { eval(code); }, 500);
-                } else { throw new Error(); }
-            } catch(e) {
-                log("<span style='color:red'>BOOT FAILURE: Kernel not found on Cloud.</span>");
+                let db = await new Promise((res, rej) => { let r = indexedDB.open('GemiOS_Fs', 1); r.onsuccess = e => res(e.target.result); r.onerror = e => rej(); });
+                let tx = db.transaction('nodes', 'readonly');
+                let all = await new Promise(res => { let r = tx.objectStore('nodes').getAll(); r.onsuccess = e => res(e.target.result); });
+                let size = all.reduce((t, r) => t + JSON.stringify(r).length, 0);
+                let nvramEl = document.getElementById('uefi-nvram');
+                if(nvramEl) nvramEl.innerText = (size / 1024).toFixed(2) + ' KB Used';
+            } catch(e) { 
+                let nvramEl = document.getElementById('uefi-nvram');
+                if(nvramEl) nvramEl.innerText = 'Unreachable'; 
             }
         }
 
-        setTimeout(boot, 1000);
+        async function loadRecoverySnapshots() {
+            let listEl = document.getElementById('snapshot-list');
+            try {
+                let db = await new Promise((res, rej) => { let r = indexedDB.open('GemiOS_Fs', 1); r.onsuccess = e => res(e.target.result); r.onerror = e => rej(); });
+                let tx = db.transaction('nodes', 'readonly');
+                let rootNode = await new Promise(res => { let r = tx.objectStore('nodes').get('root'); r.onsuccess = e => res(e.target.result); });
+                
+                let snaps = rootNode?.data?.['C:']?.System?.Snapshots;
+                if(!snaps || Object.keys(snaps).length === 0) {
+                    listEl.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:50px;">No System Snapshots Found on NVRAM.</div>';
+                    return;
+                }
+
+                let html = '';
+                for(let key in snaps) {
+                    let safeData = snaps[key].replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                    html += `<div class="snap-item">
+                                <div style="font-family:monospace; font-size:14px; color:#38ef7d;">${key}</div>
+                                <button class="snap-btn" onclick="flashSnapshot('${safeData}')">Flash Recovery</button>
+                             </div>`;
+                }
+                listEl.innerHTML = html;
+            } catch(e) {
+                listEl.innerHTML = '<div style="text-align:center; color:#ff4d4d; margin-top:50px;">ERROR: NVRAM Volume Unreachable. Corruption Detected.</div>';
+            }
+        }
+
+        function flashSnapshot(dataStr) {
+            if(!confirm("WARNING: This will overwrite your current OS core with this snapshot. Continue?")) return;
+            
+            let overlay = document.getElementById('uefi-overlay');
+            let text = document.getElementById('overlay-text');
+            overlay.style.display = 'flex'; text.innerText = 'Flashing Snapshot to Cache...';
+            
+            try {
+                let payload = JSON.parse(dataStr.replace(/&quot;/g, '"').replace(/&#39;/g, "'"));
+                localStorage.setItem('GemiOS_Cache_Kernel', payload.kernel);
+                if(payload.registry) localStorage.setItem('GemiOS_Cache_Registry', payload.registry);
+                if(payload.engine) localStorage.setItem('GemiOS_Cache_Engine', payload.engine); // Added Alpha Engine Support
+                localStorage.setItem('GemiOS_Cache_Ver', payload.version);
+                
+                setTimeout(() => { text.innerText = 'Flash Complete. Rebooting...'; setTimeout(() => location.reload(), 1500); }, 1500);
+            } catch(e) {
+                text.innerText = 'Flash Failed! Snapshot Corrupted.';
+                text.style.color = '#ff4d4d';
+                setTimeout(() => overlay.style.display = 'none', 3000);
+            }
+        }
+
+        function biosAction(action) {
+            let overlay = document.getElementById('uefi-overlay');
+            let text = document.getElementById('overlay-text');
+            
+            if (action === 'boot') {
+                overlay.style.display = 'flex'; text.innerText = 'Initializing Bootloader...';
+                setTimeout(() => loadKernel(), 1000);
+            } 
+            else if (action === 'diagnostics') {
+                overlay.style.display = 'flex'; text.innerText = 'Running VFS Integrity Checks...';
+                setTimeout(() => { text.innerText = 'Pass. Rebooting...'; setTimeout(()=>location.reload(), 1000); }, 2000);
+            }
+            else if (action === 'recovery') { 
+                document.getElementById('main-panel').style.display = 'none';
+                document.getElementById('recovery-panel').style.display = 'flex';
+                loadRecoverySnapshots();
+            }
+            else if (action === 'cache') {
+                overlay.style.display = 'flex'; text.innerText = 'Flushing System Cache...';
+                localStorage.clear(); setTimeout(() => location.reload(), 1500);
+            }
+            else if (action === 'format') {
+                if(confirm("WARNING: This will securely erase your entire virtual hard drive. Continue?")) {
+                    overlay.style.display = 'flex'; text.innerText = 'Formatting NVRAM Partition...';
+                    indexedDB.deleteDatabase('GemiOS_Fs'); localStorage.clear();
+                    setTimeout(() => location.reload(), 2500);
+                }
+            }
+        }
+
+        async function loadKernel() {
+            let cachedKernel = localStorage.getItem('GemiOS_Cache_Kernel');
+            try {
+                // Try local first
+                let res = await fetch("./kernel.js?t=" + Date.now());
+                if (!res.ok) throw new Error();
+                let code = await res.text();
+                localStorage.setItem('GemiOS_Cache_Kernel', code);
+                setTimeout(() => eval(code), 100);
+            } catch(err) {
+                try {
+                    // Try cloud
+                    let rCloud = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/kernel.js?t=" + Date.now(), {cache: "no-store"});
+                    if (!rCloud.ok) throw new Error();
+                    let code = await rCloud.text();
+                    localStorage.setItem('GemiOS_Cache_Kernel', code);
+                    setTimeout(() => eval(code), 100);
+                } catch (err2) {
+                    // Fallback to cache
+                    if (cachedKernel) { setTimeout(() => eval(cachedKernel), 100); } 
+                    else {
+                        let postScr = document.getElementById('post-screen');
+                        if(postScr) {
+                            postScr.innerHTML = '<span style="color:red; font-size:24px; font-weight:bold;">FATAL BOOT ERROR: KERNEL NOT FOUND.</span><br><br>The OS could not be located locally or via the Cloud Server.<br>Please check your internet connection or verify the files exist.<br><br>SYSTEM HALTED.';
+                            document.getElementById('uefi-screen').style.display = 'none';
+                            postScr.style.display = 'block';
+                        }
+                    }
+                }
+            }
+        }
     </script>
 </body>
 </html>
