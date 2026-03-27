@@ -1,6 +1,6 @@
 /*=====================================================================
-   GemiOS CLOUD HYPERVISOR - v51.0.0-ALPHA (MICRO-KERNEL)
-   Modular Architecture, Floating Dock, Dynamic Module Injection.
+   GemiOS CLOUD HYPERVISOR - v51.0.0-ALPHA (MICRO-KERNEL FIX)
+   VFS Auto-Recovery, IDB Version Bump, Core App Fallbacks.
 =====================================================================*/
 
 if (window.__GEMIOS_BOOTED__) {
@@ -15,9 +15,23 @@ if (window.__GEMIOS_BOOTED__) {
         /* --- OS CORE SYSTEMS --- */
         class EventBus { constructor() { this.handlers = new Map(); } on(ev, fn) { if (!this.handlers.has(ev)) this.handlers.set(ev, []); this.handlers.get(ev).push(fn); } off(ev, fn) { const arr = this.handlers.get(ev); if (!arr) return; this.handlers.set(ev, arr.filter(f => f !== fn)); } emit(ev, data) { const arr = this.handlers.get(ev); if (!arr) return; arr.forEach(fn => fn(data)); } }
 
+        // BUMPED TO IDB V3 TO FIX MISSING OBJECT STORE BUG
         class VFS {
             constructor(bus) { this.bus = bus; this.MAX_STORAGE = 10485760; this.DB_NAME = 'GemiOS_Fs'; this.STORE = 'nodes'; this.db = null; }
-            async _open() { if (this.db) return this.db; return new Promise((res, rej) => { const req = indexedDB.open(this.DB_NAME, 1); req.onupgradeneeded = ev => { ev.target.result.createObjectStore(this.STORE, { keyPath: 'path' }); }; req.onsuccess = ev => { this.db = ev.target.result; res(this.db); }; req.onerror = ev => rej(ev.target.error); }); }
+            async _open() { 
+                if (this.db) return this.db; 
+                return new Promise((res, rej) => { 
+                    const req = indexedDB.open(this.DB_NAME, 3); // BUMPED VERSION
+                    req.onupgradeneeded = ev => { 
+                        const db = ev.target.result;
+                        if (!db.objectStoreNames.contains(this.STORE)) {
+                            db.createObjectStore(this.STORE, { keyPath: 'path' }); 
+                        }
+                    }; 
+                    req.onsuccess = ev => { this.db = ev.target.result; res(this.db); }; 
+                    req.onerror = ev => rej(ev.target.error); 
+                }); 
+            }
             async _store(mode = 'readonly') { const db = await this._open(); return db.transaction(this.STORE, mode).objectStore(this.STORE); }
             async ensureRoot() { 
                 const store = await this._store('readwrite'); 
@@ -42,7 +56,7 @@ if (window.__GEMIOS_BOOTED__) {
             async write(dirPath, file, data) { 
                 let rootNode = await this.getNode('root'); 
                 if(!rootNode || !rootNode["C:"]) { await this.ensureRoot(); rootNode = await this.getNode('root'); }
-                if(!rootNode) return false; 
+                if(!rootNode) return false; // Graceful Fail
                 let parts = dirPath.split('/').filter(p => p); let curr = rootNode; 
                 for(let p of parts) { if(curr[p] === undefined) curr[p] = {}; curr = curr[p]; } 
                 curr[file] = data; return await this.saveNode('root', rootNode); 
@@ -79,7 +93,7 @@ if (window.__GEMIOS_BOOTED__) {
         class ProcessManager {
             constructor(bus, audio){ this.bus=bus; this.audio=audio; this.nextPid=1000; this.processes=new Map(); }
             async launch(appId, fileData=null){ 
-                const app = window.GemiRegistry[appId]; 
+                const app = window.GemiRegistry[appId] || window.GemiCoreApps[appId]; 
                 if (!app){ this.bus.emit('notify', {title: 'Execution Error', msg: `App [${appId}] missing.`, success: false}); this.audio.play('error'); return; } 
                 const pid = ++this.nextPid; this.processes.set(pid, {id: appId, app}); 
                 let sm = document.getElementById('start-menu'); if(sm) sm.classList.remove('open');
@@ -121,7 +135,6 @@ if (window.__GEMIOS_BOOTED__) {
                 this.focus(wid); 
                 let iframes = document.querySelectorAll('iframe'); iframes.forEach(ifr => ifr.style.pointerEvents = 'none'); 
                 const isAnim = localStorage.getItem('GemiOS_Driver_Anim') !== 'false'; if(isAnim) win.style.transition = 'none'; 
-                
                 const move = ev => { 
                     let newX = ev.clientX - offsetX; let newY = Math.max(0, ev.clientY - offsetY); 
                     newX = Math.min(newX, window.innerWidth - 50); newX = Math.max(newX, -win.offsetWidth + 50); newY = Math.min(newY, window.innerHeight - 50);
@@ -142,8 +155,7 @@ if (window.__GEMIOS_BOOTED__) {
                 
                 let html = '';
                 allDockApps.forEach(appId => {
-                    if(!window.GemiRegistry) return;
-                    const app = window.GemiRegistry[appId]; if(!app) return;
+                    const app = window.GemiRegistry[appId] || window.GemiCoreApps[appId]; if(!app) return;
                     let runningInstance = runningPids.find(p => p.id === appId);
                     let indicator = runningInstance ? `<div style="width:4px; height:4px; background:var(--accent); border-radius:50%; position:absolute; bottom:2px;"></div>` : '';
                     let clickAction = runningInstance ? `GemiOS.WM.minimize('win_${runningInstance.pid}')` : `GemiOS.pm.launch('${appId}')`;
@@ -152,6 +164,31 @@ if (window.__GEMIOS_BOOTED__) {
                 dock.innerHTML = html;
             }
         }
+
+        // FALLBACK CORE APPS (In case GitHub 404s the registry)
+        window.GemiCoreApps = {
+            'sys_term': { id: 'sys_term', tag: 'sys', icon: '💻', title: 'Terminal', width: 500, html: (pid) => `<div id="t-out-${pid}" style="flex-grow:1; background:#0a0a0a; color:#38ef7d; padding:10px; font-family:monospace; overflow-y:auto; border-radius:6px; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);">GemiOS v51.0-ALPHA Shell.<br>Type 'help' for commands.</div><div style="display:flex; background:#111; padding:8px; border-radius:6px; margin-top:5px; border:1px solid #333;"><span id="t-path-${pid}" style="color:#0078d7; margin-right:8px; font-weight:bold;">C:/Users/${GemiOS.user}></span><input type="text" id="t-in-${pid}" style="flex-grow:1; background:transparent; color:#38ef7d; border:none; outline:none; font-family:monospace; font-size:14px;" onkeydown="GemiOS.handleTerm(event, ${pid}, this)"></div>`, onLaunch: (pid) => { let p = `C:/Users/${GemiOS.user}`; GemiOS.termStates[pid] = p; document.getElementById(`t-path-${pid}`).innerText = p + '>'; setTimeout(()=>document.getElementById('t-in-'+pid).focus(),100); } },
+            'sys_drive': { id: 'sys_drive', tag: 'sys', icon: '📁', title: 'Explorer', width: 520, html: (pid) => `<div class="sys-card" style="display:flex; gap:10px; align-items:center; background:rgba(0,120,215,0.2);"><button onclick="GemiOS.navDrive(${pid}, 'UP')" class="btn-sec" style="width:auto; margin:0; padding:5px 10px;">⬆️ Up</button><input type="text" id="d-path-${pid}" value="C:/" disabled style="flex-grow:1; background:transparent; color:inherit; border:none; font-weight:bold; font-size:14px; outline:none;"></div><div id="d-list-${pid}" style="flex-grow:1; min-height:200px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:10px; padding:5px;"></div>`, onLaunch: (pid) => { GemiOS.driveStates[pid] = `C:/Users/${GemiOS.user}`; GemiOS.renderDrive(pid); } },
+            'sys_set': { id: 'sys_set', tag: 'sys', icon: '⚙️', title: 'Settings', width: 450, html: (pid) => `
+                <div class="sys-card"><h3 style="margin:0 0 10px 0; color:var(--accent);">🎨 Appearance</h3>
+                    <b style="font-size:12px;">Wallpaper URL</b><br>
+                    <div style="display:flex; gap:5px; margin:5px 0;"><input type="text" id="wp-in" style="flex:1; padding:8px; border-radius:4px; border:none; outline:none; background:rgba(0,0,0,0.3); color:white;" placeholder="Image URL..."><button onclick="localStorage.setItem('GemiOS_Wall', document.getElementById('wp-in').value); location.reload();" class="btn-primary" style="width:auto; margin:0;">Apply</button></div>
+                    <b style="font-size:12px;">Accent Color</b><br>
+                    <div style="display:flex; gap:10px; margin-top:5px;">
+                        <div onclick="localStorage.setItem('GemiOS_Accent', '#0078d7'); location.reload();" style="width:25px; height:25px; border-radius:50%; background:#0078d7; cursor:pointer;"></div>
+                        <div onclick="localStorage.setItem('GemiOS_Accent', '#ff00cc'); location.reload();" style="width:25px; height:25px; border-radius:50%; background:#ff00cc; cursor:pointer;"></div>
+                        <div onclick="localStorage.setItem('GemiOS_Accent', '#38ef7d'); location.reload();" style="width:25px; height:25px; border-radius:50%; background:#38ef7d; cursor:pointer;"></div>
+                        <div onclick="localStorage.setItem('GemiOS_Accent', '#ff4d4d'); location.reload();" style="width:25px; height:25px; border-radius:50%; background:#ff4d4d; cursor:pointer;"></div>
+                    </div>
+                </div>
+                <div class="sys-card" style="border-left:4px solid #ff4d4d; margin-bottom:0;"><h3 style="margin:0 0 10px 0; color:#ff4d4d;">🛡️ Recovery</h3>
+                    <div style="display:flex; gap:10px; margin-bottom:10px;"><button onclick="GemiOS.createSnapshot()" class="btn-sec" style="flex:1; margin:0;">Create Snapshot</button><button onclick="alert('Reboot and press F2 or DEL.')" class="btn-danger" style="flex:1; margin:0;">Format NVRAM</button></div>
+                    <div style="background:#000; border:1px solid #333; border-radius:4px; padding:10px; max-height:100px; overflow-y:auto;" id="snap-list-${pid}">Loading snapshots...</div>
+                </div>`, onLaunch: (pid) => { GemiOS.renderSnapshots(pid); } 
+            },
+            'sys_update': { id: 'sys_update', tag: 'sys', icon: '☁️', title: 'Updater', width: 380, html: () => `<div class="sys-card" style="text-align:center; flex-grow:1;"><div style="font-size:40px;">☁️</div><h3 style="margin:5px 0;">OTA Updater</h3><p style="font-size:13px; opacity:0.8;">Current OS: <b id="kern-ver">v${localStorage.getItem('GemiOS_Cache_Ver') || '51.0.0-ALPHA'}</b></p><div id="upd-stat" style="font-size:12px; min-height:15px; margin-bottom:10px;">Ready to fetch Cloud Update.</div><button onclick="GemiOS.triggerOTA(this)" class="btn-primary">Check for Updates</button></div>` },
+            'sys_store': { id: 'sys_store', tag: 'sys', icon: '🛒', title: 'GemiStore', width: 700, html: (pid) => `<div class="sys-card" style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg, var(--accent), #000); margin-bottom:10px;"><div style="font-size:24px; font-weight:bold;">GemiStore Hub</div><div style="font-size:40px;">🛒</div></div><div id="store-list-${pid}" style="flex-grow:1; overflow-y:auto; display:grid; grid-template-columns:1fr 1fr; gap:10px; padding-right:5px;"></div>`, onLaunch: (pid) => { GemiOS.renderStore(pid); } }
+        };
 
         class Core {
             constructor(){
@@ -168,8 +205,13 @@ if (window.__GEMIOS_BOOTED__) {
             }
 
             async init(){
-                this.injectStyles(); this._buildUI(); await this.VFS.ensureRoot(); await this.theme.applyFromStorage();
-                await this.loadDependencies(); this.patchDesktopData(); this._startOTADaemon();
+                this.injectStyles(); 
+                this._buildUI(); // FIXED: Changed back to _buildUI()
+                await this.VFS.ensureRoot(); 
+                await this.theme.applyFromStorage();
+                await this.loadDependencies(); 
+                this.patchDesktopData(); 
+                this._startOTADaemon();
                 
                 setTimeout(() => {
                     const bootScr = document.getElementById('boot-screen');
@@ -181,13 +223,6 @@ if (window.__GEMIOS_BOOTED__) {
                 this.audio._init(); this.audio.play('startup'); 
                 document.getElementById('login-screen').style.opacity = '0';
                 setTimeout(() => document.getElementById('login-screen').remove(), 500);
-                
-                if(!localStorage.getItem('GemiOS_V51_0_ALPHA_Celebrated')) {
-                    setTimeout(() => {
-                        this.bus.emit('notify', {title: "🚀 V51.0 ALPHA", msg: "Modular Micro-Kernel Architecture applied.", success: true});
-                        localStorage.setItem('GemiOS_V51_0_ALPHA_Celebrated', 'true');
-                    }, 1000);
-                }
             }
 
             shutdown() {
@@ -202,7 +237,6 @@ if (window.__GEMIOS_BOOTED__) {
 
             injectStyles() {
                 const s = document.createElement('style'); const isAnim = localStorage.getItem('GemiOS_Driver_Anim') !== 'false';
-                // ALPHA UI UPDATE: Floating Taskbar, more blur, rounded corners
                 s.textContent = `
                     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
                     :root { --accent: #0078d7; } body { margin:0 !important; padding:0 !important; background:#0f2027 !important; font-family:'Inter', "Segoe UI Emoji", "Apple Color Emoji", sans-serif !important; color:white !important; overflow:hidden; user-select:none; }
@@ -220,7 +254,6 @@ if (window.__GEMIOS_BOOTED__) {
                     .ctrl-btn { border:none; color:white; cursor:pointer; width:14px; height:14px; border-radius:50%; font-size:0px; transition:0.2s; display:inline-flex; align-items:center; justify-content:center; margin-left:6px; box-shadow:inset 0 1px 1px rgba(255,255,255,0.3);} .ctrl-btn:hover { font-size: 10px; font-weight:bold; } .close-btn { background:#ff5f56; } .min-btn { background:#ffbd2e; } .snap-btn { background:#27c93f; }
                     .resize-handle { position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: nwse-resize; z-index: 10000; background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.2) 50%); }
                     
-                    /* Alpha Floating Dock */
                     #taskbar-container { position:absolute; bottom:15px; width:100%; display:flex; justify-content:center; pointer-events:none; z-index:99999; }
                     #taskbar { pointer-events:auto; height:60px; background:rgba(20, 25, 30, 0.4); backdrop-filter:blur(40px); display:flex; align-items:center; padding: 0 15px; border-radius:30px; border:1px solid rgba(255,255,255,0.15); box-shadow: 0 15px 35px rgba(0,0,0,0.6); gap: 10px;} body.light-mode #taskbar { background: rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.1); color: #222; }
                     .start { width:42px; height:42px; background:linear-gradient(135deg, var(--accent), #005a9e); border-radius:50%; border:1px solid rgba(255,255,255,0.3); text-align:center; line-height:42px; cursor:pointer; font-weight: 600; font-size: 20px; transition: 0.2s;} .start:hover { transform: scale(1.05) translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.4); border-color:white; }
@@ -240,21 +273,22 @@ if (window.__GEMIOS_BOOTED__) {
 
             async loadDependencies() {
                 try {
-                    // DYNAMIC MICRO-KERNEL MODULE LOADING
+                    // Try to fetch modules, gracefully fallback if 404
+                    window.GemiRegistry = { ...window.GemiCoreApps }; // Fail-safe
                     let regRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/registry.js?t=" + Date.now(), {cache:"no-store"});
                     if(regRes.ok) eval(await regRes.text());
                     
                     let engRes = await fetch("https://raw.githubusercontent.com/Usernameistakenandnotavaliable/GemiOS/refs/heads/main/engine.js?t=" + Date.now(), {cache:"no-store"});
                     if(engRes.ok) eval(await engRes.text());
                     
-                    window.GemiRegistry = { ...(window.GemiCoreApps || {}) };
+                    window.GemiRegistry = { ...(window.GemiCoreApps || {}), ...(window.GemiRegistry || {}) };
 
                     let customApps = JSON.parse(localStorage.getItem('GemiOS_CustomApps') || '{}');
                     let globalNetwork = JSON.parse(localStorage.getItem('GemiOS_GlobalNetwork') || '[]');
                     for(let cFile in customApps) { window.GemiRegistry[cFile] = { ...customApps[cFile], isCustom: true }; }
                     globalNetwork.forEach(gApp => { window.GemiRegistry[gApp.title.replace(/\s/g, '') + '_net.app'] = { ...gApp, isNetwork: true }; });
                     
-                } catch(e) { console.error("Cloud Module Injection Failed", e); }
+                } catch(e) { console.error("Cloud Module Injection Failed. Loading local fallbacks.", e); }
             }
 
             _buildUI() {
@@ -281,22 +315,12 @@ if (window.__GEMIOS_BOOTED__) {
                         <div class="start-item" onclick="GemiOS.pm.launch('sys_store')"><span>🛒</span> GemiStore</div>
                         <div class="start-item" onclick="GemiOS.pm.launch('sys_drive')"><span>📁</span> Explorer</div>
                         <div class="start-item" onclick="GemiOS.pm.launch('sys_set')"><span>⚙️</span> Settings</div>
-                        <div class="start-item" onclick="GemiOS.pm.launch('sys_task')"><span>📊</span> Task Manager</div>
                         <div class="start-item" onclick="GemiOS.pm.launch('sys_update')"><span>☁️</span> Updater</div>
                         
                         <div style="font-size:11px; color:#888; margin:10px; margin-top:20px; letter-spacing:1px; font-weight:bold;">PRODUCTIVITY & ART</div>
                         <div class="start-item" onclick="GemiOS.pm.launch('sys_term')"><span>💻</span> Terminal</div>
                         <div class="start-item" onclick="GemiOS.pm.launch('app_calc')"><span>🧮</span> Calculator</div>
                         <div class="start-item" onclick="GemiOS.pm.launch('app_note')"><span>📝</span> Notepad</div>
-                        <div class="start-item" onclick="GemiOS.pm.launch('app_crypt')"><span>📈</span> GemiCrypt</div>
-                        <div class="start-item" onclick="GemiOS.pm.launch('app_draw')"><span>🎨</span> GemiDraw</div>
-                        <div class="start-item" onclick="GemiOS.pm.launch('app_synth')"><span>🎹</span> GemiSynth</div>
-
-                        <div style="font-size:11px; color:#888; margin:10px; margin-top:20px; letter-spacing:1px; font-weight:bold;">CREATOR STUDIO</div>
-                        <div class="start-item" onclick="GemiOS.pm.launch('app_dev')"><span>🛠️</span> GemiDev Studio</div>
-                        <div class="start-item" onclick="GemiOS.pm.launch('app_maker')"><span>🎮</span> GemiMaker Studio</div>
-                        <div class="start-item" onclick="GemiOS.pm.launch('app_beat')"><span>🥁</span> GemiBeat Maker</div>
-                        <div class="start-item" onclick="GemiOS.pm.launch('app_defend')"><span>🛡️</span> GemiDefender</div>
                     </div>
                 </div>
 
@@ -355,6 +379,7 @@ if (window.__GEMIOS_BOOTED__) {
                     let payload = JSON.parse(data);
                     localStorage.setItem('GemiOS_Cache_Kernel', payload.kernel);
                     if(payload.registry) localStorage.setItem('GemiOS_Cache_Registry', payload.registry);
+                    if(payload.engine) localStorage.setItem('GemiOS_Cache_Engine', payload.engine);
                     localStorage.setItem('GemiOS_Cache_Ver', payload.version);
                     this.bus.emit('notify', {title: "Restoring", msg: "Rebooting into snapshot...", success: true});
                     setTimeout(() => location.reload(), 1500);
@@ -427,8 +452,7 @@ if (window.__GEMIOS_BOOTED__) {
             for(let k in dir) { 
                 if(typeof dir[k] === 'object') { 
                     html += `<div style="text-align:center; padding:10px; background:rgba(0,0,0,0.2); border-radius:6px; position:relative;"><div style="font-size:30px; cursor:pointer;" onclick="GemiOS.navDrive(${pid}, '${k}')">📁</div><div style="font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${k}</div><button onclick="GemiOS.VFS.delete('${path}', '${k}').then(()=>GemiOS.renderDrive(${pid}))" style="position:absolute; top:2px; right:2px; background:#ff4d4d; color:white; border:none; border-radius:3px; cursor:pointer; font-size:10px; padding:2px 5px;">X</button></div>`; 
-                } 
-                else { 
+                } else { 
                     let fileAppId = dir[k];
                     let launchCmd = `if('${k}'.endsWith('.app')) GemiOS.pm.launch('${fileAppId}'); else if('${k}'.endsWith('.png')) { GemiOS.VFS.read('${path}', '${k}').then(data => GemiOS.pm.launch('sys_view', data)); } else { GemiOS.VFS.read('${path}', '${k}').then(data => GemiOS.pm.launch('app_note', data)); }`;
                     html += `<div style="text-align:center; padding:10px; background:rgba(255,255,255,0.1); border-radius:6px; position:relative;"><div style="font-size:30px; cursor:pointer;" onclick="${launchCmd}">📄</div><div style="font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${k}</div><button onclick="GemiOS.VFS.delete('${path}', '${k}').then(()=>{ GemiOS.renderDrive(${pid}); GemiOS.renderDesktopIcons(); })" style="position:absolute; top:2px; right:2px; background:#ff4d4d; color:white; border:none; border-radius:3px; cursor:pointer; font-size:10px; padding:2px 5px;">X</button></div>`; 
@@ -458,24 +482,10 @@ if (window.__GEMIOS_BOOTED__) {
             if(await this.VFS.write(`C:/Users/${this.user}/Desktop`, filename, appId)) { this.bus.emit('notify', {title:"Success", msg:`Downloaded ${filename}!`}); this.renderDesktopIcons(); let btn = document.getElementById(btnId); if(btn) { btn.className = 'btn-sec'; btn.innerText = 'Installed'; btn.disabled = true; } } 
         }
 
-        async publishApp(pid) {
-            let title = document.getElementById(`dev-title-${pid}`).value.trim(); let icon = document.getElementById(`dev-icon-${pid}`).value.trim() || '📦'; let price = parseInt(document.getElementById(`dev-price-${pid}`).value) || 0; let htmlStr = document.getElementById(`dev-html-${pid}`).value.trim();
-            if(!title || !htmlStr) { this.bus.emit('notify', {title:"Publish Error", msg:"Required fields missing.", success:false}); return; }
-            let safeId = 'app_custom_' + Date.now(); let fileName = title.replace(/\s/g, '') + '.app';
-            let appObj = { id: safeId, title: title, icon: icon, price: price, desc: 'Local Custom App.', htmlString: htmlStr, isCustom: true };
-            let customApps = JSON.parse(localStorage.getItem('GemiOS_CustomApps') || '{}'); customApps[fileName] = appObj; localStorage.setItem('GemiOS_CustomApps', JSON.stringify(customApps)); window.GemiRegistry[fileName] = appObj; 
-            await this.VFS.write(`C:/Users/${this.user}/Desktop`, fileName, safeId); this.bus.emit('notify', {title:"GemiDev Studio", msg:`${title} published Locally!`, success:true}); this.audio.play('success'); this.renderDesktopIcons();
-        }
-
-        tradeCrypt(action, pid) {
-            if(typeof this.cryptPrice === 'undefined') this.cryptPrice = 100.00; if(typeof this.cryptShares === 'undefined') this.cryptShares = 0; let cost = Math.floor(this.cryptPrice);
-            if(action === 'buy') { if(this.wallet >= cost) { this.wallet -= cost; this.cryptShares++; localStorage.setItem('GemiOS_Wallet', this.wallet); document.getElementById('wallet-text').innerText = this.wallet; let shEl = document.getElementById(`crypt-shares-${pid}`); if(shEl) shEl.innerText = this.cryptShares; this.audio.play('click'); } else { this.bus.emit('notify', {title:"Trade Failed", msg:"Insufficient funds.", success:false}); this.audio.play('error'); } } 
-            else { if(this.cryptShares > 0) { this.wallet += cost; this.cryptShares--; localStorage.setItem('GemiOS_Wallet', this.wallet); document.getElementById('wallet-text').innerText = this.wallet; let shEl = document.getElementById(`crypt-shares-${pid}`); if(shEl) shEl.innerText = this.cryptShares; this.audio.play('click'); } else { this.bus.emit('notify', {title:"Trade Failed", msg:"No shares to sell.", success:false}); this.audio.play('error'); } }
-        }
-        
         async createSnapshot(auto = false) {
             let k = localStorage.getItem('GemiOS_Cache_Kernel') || ""; let r = localStorage.getItem('GemiOS_Cache_Registry') || ""; let v = localStorage.getItem('GemiOS_Cache_Ver') || "51.0.0-ALPHA";
-            let date = new Date().toLocaleString().replace(/[\/:]/g, '-'); let snapName = `Snapshot_v${v}_${date}.sys`; let payload = JSON.stringify({kernel: k, registry: r, version: v});
+            let eng = localStorage.getItem('GemiOS_Cache_Engine') || "";
+            let date = new Date().toLocaleString().replace(/[\/:]/g, '-'); let snapName = `Snapshot_v${v}_${date}.sys`; let payload = JSON.stringify({kernel: k, registry: r, engine: eng, version: v});
             await this.VFS.write('C:/System/Snapshots', snapName, payload); if(!auto) this.bus.emit('notify', {title: "Backup Complete", msg: `Saved as ${snapName} in NVRAM.`, success: true});
         }
 
