@@ -1,5 +1,5 @@
 {
-  "version": "51.0.0-ALPHA - V.2",
+  "version": "51.0.0-ALPHA - V.3",
   "codename": "Modular Micro-Kernel",
   "release_notes": "Alpha Release! Complete backend rewrite. Engine and Registry dynamically injected from cloud."
 }
