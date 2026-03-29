@@ -1,61 +1,52 @@
 /*=====================================================================
-   GEMIOS CHAMELEON HYPERVISOR (legacy-BIOS.js)
-   Fusing v49 Networking with modern v53 logic.
+   GEMIOS CHAMELEON CONFIGURATOR (legacy-BIOS.js)
+   Fusing v49 Aesthetics with Aegis Hardware Logic.
 =====================================================================*/
 
-window.Chameleon = {
-    version: "v53-ALPHA-HYPERVISOR",
-    
-    // 🦎 THE ENGINE: Translates modern VFS calls for legacy compatibility
-    initEngine: () => {
-        console.log("🦎 Chameleon Engine: Shimming APIs...");
-        window.VFS_LEGACY = GemiOS.vfs; // Map modern VFS to legacy name
-        window.NET_STATUS = "FIRMWARE_LEVEL";
-    },
+(() => {
+    log("🦎 Chameleon Engine: Virtualizing v49 Environment...");
 
-    // 🖥️ THE INTERFACE: Recreating the v49 Blue BIOS for Networking
-    renderBlueBIOS: () => {
-        document.body.innerHTML = '';
-        const style = document.createElement('style');
-        style.textContent = `
-            body { background:#0000aa !important; color:#aaaaaa !important; font-family:monospace !important; padding:40px !important; }
-            .bios-header { background:#aaaaaa; color:#0000aa; padding:2px 10px; font-weight:bold; margin-bottom:20px; }
-            .menu-item { margin-bottom:10px; cursor:pointer; }
-            .menu-item:hover { color:#fff; }
-            .input-box { background:transparent; border:1px solid #fff; color:#fff; font-family:monospace; padding:5px; width:300px; outline:none; }
-            .status-bar { position:fixed; bottom:20px; left:40px; color:#fff; }
-        `;
-        document.head.appendChild(style);
+    const style = document.createElement('style');
+    style.textContent = `
+        #bios-container { position:fixed; top:0; left:0; width:100vw; height:100vh; background:#0000aa; color:#fff; font-family:monospace; padding:50px; box-sizing:border-box; z-index:100000; }
+        .bios-title { background:#fff; color:#0000aa; padding:5px 20px; font-weight:bold; display:inline-block; margin-bottom:20px; }
+        .bios-item { margin-bottom:15px; color:#aaa; cursor:pointer; }
+        .bios-item.active { color:#fff; text-decoration:underline; }
+        .bios-input { background:transparent; border:1px solid #fff; color:#fff; padding:5px; width:400px; outline:none; font-family:monospace; }
+    `;
+    document.head.appendChild(style);
 
-        document.body.innerHTML = `
-            <div class="bios-header">GEMIOS SETUP UTILITY - GemiNet Config (v53 Prototype)</div>
-            <div style="margin-bottom:30px;">Main > Networking > Advanced</div>
-            
-            <div class="menu-item">Cloud Manifest URL:</div>
-            <input type="text" id="net-url" class="input-box" value="${localStorage.getItem('GemiNet_Source') || 'https://raw.githubusercontent.com/...' }">
-            
-            <div class="menu-item" style="margin-top:20px;">Proxy Mode: [ DISABLED ]</div>
-            <div class="menu-item">Handshake Protocol: [ LEGACY_v49 ]</div>
-            <div class="menu-item">Force Encryption: [ ENABLED ]</div>
-            
-            <div style="margin-top:40px;">
-                <button onclick="Chameleon.saveAndExit()" style="background:#aaaaaa; border:none; padding:5px 15px; cursor:pointer;">F10: Save and Exit</button>
-                <button onclick="location.reload()" style="background:transparent; border:1px solid #aaa; color:#aaa; margin-left:10px; cursor:pointer;">ESC: Discard Changes</button>
-            </div>
+    const container = document.createElement('div');
+    container.id = "bios-container";
+    container.innerHTML = `
+        <div class="bios-title">GEMIOS SETUP UTILITY - NETWORKING v53</div>
+        <p>Aegis Interface: Virtual v49 Protocol</p>
+        <hr>
+        <div class="bios-item">GemiNet Manifest URL:</div>
+        <input type="text" id="manifest-url" class="bios-input" value="${localStorage.getItem('GemiNet_Source') || 'https://raw.githubusercontent.com/...'}">
+        <br><br>
+        <div class="bios-item">Security Level: [ MAX_ENCRYPT ]</div>
+        <div class="bios-item">Math Kernel: [ ENABLED ]</div>
+        <div class="bios-item">VFS Bridge: [ ACTIVE ]</div>
+        <hr>
+        <p>F10: Save and Handoff | ESC: Reboot Present</p>
+    `;
+    document.body.appendChild(container);
 
-            <div class="status-bar">🦎 Chameleon Engine Active | Mode: v49 Emulation</div>
-        `;
-    },
+    // Save Logic
+    window.addEventListener('keydown', (e) => {
+        if(e.key === 'F10') {
+            const url = document.getElementById('manifest-url').value;
+            localStorage.setItem('GemiNet_Source', url);
+            localStorage.setItem('GemiOS_Boot_Target', 'MODERN');
+            log("Config Saved to Aegis NVRAM. Resetting...");
+            location.reload();
+        }
+    });
 
-    saveAndExit: () => {
-        const url = document.getElementById('net-url').value;
-        localStorage.setItem('GemiNet_Source', url);
-        localStorage.setItem('GemiOS_Boot_Target', 'MODERN');
-        alert("Configuration Saved to NVRAM. Rebooting to v53 Kernel...");
-        location.reload();
-    }
-};
+    // Subscribing to Aegis Loop for a retro "flicker"
+    Aegis.Loop.subscribe((t) => {
+        container.style.opacity = 0.98 + Math.sin(t/50) * 0.02;
+    });
 
-// Auto-start on load
-Chameleon.initEngine();
-Chameleon.renderBlueBIOS();
+})();
