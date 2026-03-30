@@ -1,6 +1,6 @@
 /*=====================================================================
-   GemiOS KERNEL - v53.2.0 (THE MASTER LINK)
-   Cloud Module Loader, CSS Variables, & Glassmorphism VM.
+   GemiOS KERNEL - v53.3.0 (THE DIAGNOSTIC UPDATE)
+   Added deep error tracing, Recovery Mode, and safe evaluation.
 =====================================================================*/
 
 if (window.__GEMIOS_BOOTED__) {
@@ -70,7 +70,7 @@ if (window.__GEMIOS_BOOTED__) {
     // --- CORE KERNEL ---
     class GemiOS_v53 {
         constructor() {
-            this.version = "53.2.0-PROTOTYPE";
+            this.version = "53.3.0-PROTOTYPE";
             this.user = localStorage.getItem('GemiOS_User') || 'Admin';
             
             this.bus = new Gemi_Bus();
@@ -82,17 +82,16 @@ if (window.__GEMIOS_BOOTED__) {
             this.bus.on('notify', ({msg, err}) => {
                 const n = document.createElement('div'); n.className = 'gemi-notif';
                 n.innerHTML = `<b style="color:${err?'#ff4d4d':'#38ef7d'}">${err?'Error':'System'}</b><br>${msg}`;
-                document.body.appendChild(n); setTimeout(()=>n.remove(), 3000);
+                document.body.appendChild(n); setTimeout(()=>n.remove(), 4000);
             });
         }
 
         async init() {
             this.injectStyles();
             this.renderDesktop();
-            await this.loadCloudModules();
+            await this.loadCloudModules(); // Now safely wrapped!
             this.refreshDesktop();
             this.buildStartMenu();
-            this.bus.emit('notify', {msg: 'Aegis Core Loaded & Cloud Synced.'});
         }
 
         async loadCloudModules() {
@@ -101,15 +100,33 @@ if (window.__GEMIOS_BOOTED__) {
             const ts = Date.now();
             
             try {
-                // Fetching the Registry
-                const reg = await fetch(`${GITHUB_BASE}/registry.js?t=${ts}`);
-                if(reg.ok) eval(await reg.text());
-
-                // Fetching the Engine
-                const eng = await fetch(`${GITHUB_BASE}/engine.js?t=${ts}`);
-                if(eng.ok) eval(await eng.text());
+                this.bus.emit('notify', {msg: 'Pinging GitHub...'});
                 
-            } catch(e) { console.warn("Cloud Sync Failed. Check GitHub URLs."); }
+                // 1. Fetch & Eval Registry
+                const regRes = await fetch(`${GITHUB_BASE}/registry.js?t=${ts}`);
+                if (!regRes.ok) throw new Error("Registry 404 - File Not Found");
+                const regText = await regRes.text();
+                
+                try {
+                    eval(regText); 
+                    this.bus.emit('notify', {msg: 'Registry Parsed Successfully.'});
+                } catch(syntaxError) {
+                    console.error(syntaxError);
+                    throw new Error("Registry Syntax Error! Check F12 Console.");
+                }
+
+                // 2. Fetch & Eval Engine
+                const engRes = await fetch(`${GITHUB_BASE}/engine.js?t=${ts}`);
+                if (engRes.ok) {
+                    const engText = await engRes.text();
+                    try { eval(engText); } catch(e) { console.error("Engine Syntax Error", e); }
+                }
+
+            } catch(e) {
+                // If ANYTHING fails, we trigger Recovery Mode!
+                console.error("Cloud Boot Failure:", e.message);
+                this.bus.emit('notify', {msg: e.message, err: true});
+            }
         }
 
         renderDesktop() {
@@ -123,7 +140,7 @@ if (window.__GEMIOS_BOOTED__) {
                 <div id="start-menu">
                     <div class="sm-header">👑 ${this.user}</div>
                     <div class="sm-grid" id="sm-apps"></div>
-                    <div class="sm-footer" onclick="GemiOS.pm.launch('sys_update')">🔄 Cloud Sync & Restart</div>
+                    <div class="sm-footer" onclick="localStorage.removeItem('GemiOS_Boot_Target'); location.reload(true);">🔄 Hard Reboot</div>
                 </div>
 
                 <div id="taskbar-container">
@@ -172,8 +189,8 @@ if (window.__GEMIOS_BOOTED__) {
         injectStyles() {
             const s = document.createElement('style');
             s.textContent = `
-                :root { --accent: #0078d7; --accent-hover: #005a9e; }
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; margin:0; overflow:hidden; }
+                :root { --accent: #0078d7; }
+                body { font-family: 'Segoe UI', Tahoma, sans-serif; color: white; margin:0; overflow:hidden; }
                 #desktop-bg { position:absolute; top:0; left:0; width:100vw; height:100vh; background: url('${localStorage.getItem('GemiOS_Wall') || ''}') center/cover, linear-gradient(135deg, #0f2027, #203a43, #2c5364); z-index:-1; }
                 #desktop-icons { display:grid; grid-template-columns:repeat(auto-fill, 90px); gap:15px; padding:20px; position:absolute; height:calc(100vh - 80px); align-content:start; }
                 .desk-icon { display:flex; flex-direction:column; align-items:center; text-align:center; font-size:11px; cursor:pointer; padding:10px 5px; border-radius:8px; transition:0.2s; text-shadow:0 2px 4px rgba(0,0,0,0.8); }
@@ -184,16 +201,16 @@ if (window.__GEMIOS_BOOTED__) {
                 .start-btn { width:40px; height:40px; background:linear-gradient(135deg, #38ef7d, var(--accent)); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:900; font-size:20px; box-shadow:0 0 15px rgba(56,239,125,0.4); transition:0.3s; }
                 .start-btn:hover { transform:rotate(15deg) scale(1.1); }
                 
-                #start-menu { position:absolute; bottom:85px; left:50%; transform:translateX(-50%) translateY(20px); width:380px; background:rgba(15,20,25,0.7); backdrop-filter:blur(40px); border-radius:16px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 20px 50px rgba(0,0,0,0.5); display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index:99999; }
+                #start-menu { position:absolute; bottom:85px; left:50%; transform:translateX(-50%) translateY(20px); width:380px; background:rgba(15,20,25,0.8); backdrop-filter:blur(40px); border-radius:16px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 20px 50px rgba(0,0,0,0.5); display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:0.3s; z-index:99999; }
                 #start-menu.open { opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
-                .sm-header { padding:20px; border-bottom:1px solid rgba(255,255,255,0.05); font-weight:bold; font-size:18px; display:flex; align-items:center; gap:10px; }
+                .sm-header { padding:20px; border-bottom:1px solid rgba(255,255,255,0.05); font-weight:bold; font-size:18px; }
                 .sm-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; padding:20px; max-height:350px; overflow-y:auto; }
-                .sm-item { background:rgba(255,255,255,0.03); border-radius:8px; padding:15px 5px; text-align:center; font-size:11px; cursor:pointer; transition:0.2s; border:1px solid transparent; }
-                .sm-item:hover { background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.2); transform:translateY(-2px); }
+                .sm-item { background:rgba(255,255,255,0.05); border-radius:8px; padding:15px 5px; text-align:center; font-size:11px; cursor:pointer; transition:0.2s; border:1px solid transparent; }
+                .sm-item:hover { background:rgba(255,255,255,0.15); border-color:rgba(255,255,255,0.3); transform:translateY(-2px); }
                 .sm-footer { padding:15px; border-top:1px solid rgba(255,255,255,0.05); text-align:center; cursor:pointer; font-size:12px; color:#aaa; transition:0.2s; }
                 .sm-footer:hover { background:rgba(255,255,255,0.1); color:white; }
 
-                .gemi-window { position:absolute; background:rgba(20,25,30,0.85); backdrop-filter:blur(30px); border-radius:12px; border:1px solid rgba(255,255,255,0.15); display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.6); animation:popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); overflow:hidden; }
+                .gemi-window { position:absolute; background:rgba(20,25,30,0.85); backdrop-filter:blur(30px); border-radius:12px; border:1px solid rgba(255,255,255,0.15); display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.6); animation:popIn 0.3s; overflow:hidden; }
                 @keyframes popIn { 0% { opacity:0; transform:scale(0.9) translateY(20px); } 100% { opacity:1; transform:scale(1) translateY(0); } }
                 .title-bar { padding:10px 15px; background:rgba(0,0,0,0.4); border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center; cursor:grab; font-size:13px; }
                 .close-btn { background:#ff4d4d; border:none; color:white; width:16px; height:16px; border-radius:50%; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0.8; transition:0.2s; }
@@ -207,8 +224,20 @@ if (window.__GEMIOS_BOOTED__) {
         }
     }
 
-    // Failsafe
-    window.GemiCoreApps = {};
+    // THE RECOVERY APPS (Always loaded, just in case)
+    window.GemiCoreApps = {
+        'sys_recovery': {
+            id: 'sys_recovery', tag: 'sys', icon: '🛠️', title: 'System Recovery', width: 400,
+            html: () => `
+                <div style="color:white; text-align:center;">
+                    <div style="font-size:40px; margin-bottom:10px;">⚠️</div>
+                    <h3>Cloud Sync Failed</h3>
+                    <p style="font-size:12px; color:#aaa;">The system could not load registry.js. Please check your GitHub URL or syntax.</p>
+                    <button onclick="localStorage.removeItem('GemiOS_Boot_Target'); location.reload(true);" style="padding:10px 20px; background:#ff4d4d; color:white; border:none; border-radius:20px; cursor:pointer; font-weight:bold;">Force Reboot</button>
+                </div>`
+        }
+    };
+
     const OS = new GemiOS_v53();
     OS.init();
 }
